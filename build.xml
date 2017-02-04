@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="FRC Deployment" default="compile" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property name="wpilib" value="wpilib"/>
+  <property name="userLibs.dir" value="${wpilib}/userLibs"/>
+  <property file="build.properties"/>
+  <property file="${wpilib}/ant/build.properties"/>
+  <property file="${wpilib}/ant/ni_image.properties"/>
+  <import file="${wpilib.ant.dir}/build.xml"/>
+
+  <property name="ivy.install.version" value="2.1.0-rc2"/>
+  <condition property="ivy.home" value="${env.IVY_HOME}">
+    <isset property="env.IVY_HOME"/>
+  </condition>
+  <property name="ivy.home" value="${user.home}/.ant"/>
+  <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+  <target name="download-ivy" unless="offline">
+
+    <mkdir dir="${ivy.jar.dir}"/>
+    <!-- download Ivy from web site so that it can be used even without any special installation -->
+    <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+         dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <target name="init-ivy" depends="download-ivy">
+    <!-- try to load ivy here from ivy home, in case the user has not already dropped
+            it into ant's lib dir (note that the latter copy will always take precedence).
+            We will not fail as long as local lib dir exists (it may be empty) and
+            ivy is in at least one of ant's lib dir or the local lib dir. -->
+    <path id="ivy.lib.path">
+      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+    </path>
+
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
+  <ivy:retrieve/>
+    <target name="init-checkstyle">
+  	<path id="checkstyle.lib.path">
+              <fileset dir="lib" includes="*.jar"/>
+  	</path>
+  	<!-- Sevntu custom checks are retrieved by Ivy into lib folder and will be accessible to checkstyle-->
+  	<taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties" classpathref="checkstyle.lib.path"/>
+  </target>
+  <target name="checkstyle"
+          description="Generates a report of code convention violations."
+  	depends="init-checkstyle">
+    <!-- See http://checkstyle.sourceforge.net/anttask.html for full options of using checkstyle with ant-->
+    <checkstyle config="docs/google_checks.xml"
+                failureProperty="checkstyle.failure"
+                failOnViolation="false">
+      <formatter type="plain"/>
+      <fileset dir="src" includes="**/*.java"/>
+      <fileset dir="test" includes="**/*.java"/>
+    </checkstyle>
+    <fail message="Style failure detected, check." if="checkstyle.failure" />
+  </target>
+
+  <target name="compile" description="Try to override WPILib's compile step">
+    <ant antfile="FRamework/build.xml" target="compile" useNativeBasedir="true" />
+    <mkdir dir="${build.dir}"/>
+    <path id="classpath.path">
+      <fileset dir="${userLibs.dir}" includes="*.jar"/>
+      <fileset file="${wpilib.jar}"/>
+      <fileset file="${networktables.jar}"/>
+      <fileset file="${opencv.jar}"/>
+      <fileset file="${cscore.jar}"/>
+      <fileset dir="${userLibs}" erroronmissingdir="false"/>
+      <fileset dir="lib/" includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+      <pathelement path="FRamework/build" />
+    </path>
+    <pathconvert property="classpathProp" refid="classpath.path"/>
+    <echo>[athena-compile] Compiling ${src.dir} with classpath=${classpathProp} to ${build.dir}</echo>
+    <javac srcdir="${src.dir}"
+           destdir="${build.dir}"
+           includeAntRuntime="no"
+           includeJavaRuntime="no"
+           classpathref="classpath.path"
+           target="${ant.java.version}"
+           source="${ant.java.version}"
+           compiler="javac${ant.java.version}"
+           debug="true">
+    </javac>
+  </target>
+
+  <target name="test" depends="checkstyle,compile,init-ivy">
+    <path id="classpath.path">
+      <fileset dir="${userLibs}" erroronmissingdir="false"/>
+      <fileset dir="lib/" includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+    </path>
+    <javac srcdir="${test.dir}"
+           destdir="${build.dir}"
+           includeAntRuntime="no"
+           includeJavaRuntime="no"
+           classpathref="classpath.path"
+           target="1.8"
+           source="1.8"
+           compiler="javac1.8"
+           debug="true">
+    </javac>
+    <junit haltonfailure="no" failureproperty="test.failed" >
+      <classpath location="${build.dir}"/>
+
+      <!-- Make sure these two libraries are included -->
+      <classpath location="lib/junit-4.12.jar"/>
+      <classpath location="lib/hamcrest-core-1.3.jar"/>
+	  <classpath refid="classpath.path"/>
+      <batchtest>
+        <fileset dir="test">
+          <include name="**/*Test*"/>
+        </fileset>
+      </batchtest>
+      <formatter type="brief" usefile="false"/>
+    </junit>
+    <fail message="Test failure detected, check test results." if="test.failed" />
+  </target>
+
+  <target name="jar" depends="compile">
+    <echo>[athena-jar] Making jar ${dist.jar}.</echo>
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.jars}" />
+
+    <echo>[athena-jar] Copying jars to ${build.jars}.</echo>
+    <copy todir="${build.jars}" flatten="true">
+      <path refid="classpath.path"/>
+    </copy>
+
+    <jar destfile="${dist.jar}" update="false">
+      <manifest>
+        <attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
+        <attribute name="Robot-Class" value="${robot.class}"/>
+        <attribute name="Class-Path" value="."/>
+      </manifest>
+
+      <fileset dir="${build.dir}" includes="**/*.class"/>
+      <fileset dir="FRamework/build" includes="**/*.class"/>
+      <zipgroupfileset dir="${build.jars}"/>
+    </jar>
+  </target>
+
+</project>

@@ -1,0 +1,17 @@
+language: java
+sudo: false
+git:
+  submodules: false
+jdk:
+  - oraclejdk8
+before_install:
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
+  - ant init-ivy -buildfile install-ivy.xml
+install:
+  - ant install -buildfile install.xml
+  - sed -i 's/${ant\.java\.version}/1.8/g' wpilib/ant/build.xml
+  - sed -i 's/${ant\.java\.version}/1.8/g' build.xml
+  - sed -i 's/compiler="javac1.8"//g' wpilib/ant/build.xml
+  - sed -i 's/compiler="javac1.8"//g' build.xml
+
