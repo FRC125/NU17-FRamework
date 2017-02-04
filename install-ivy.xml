@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="FRC Deployment" default="compile" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="Ivy install" default="init-ivy" xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <property name="ivy.install.version" value="2.1.0-rc2"/>
   <condition property="ivy.home" value="${env.IVY_HOME}">
@@ -10,15 +10,20 @@
   <property name="ivy.jar.dir" value="${ivy.home}/lib"/>
   <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
 
-  <target name="download-ivy" unless="offline">
+  <target name="ivy.check">
+    <condition property="ivy.installed">
+      <available file="${ivy.jar.file}" type="file"/>
+    </condition>
+  </target>
 
+  <target name="download-ivy" depends="ivy.check" unless="ivy.installed">
     <mkdir dir="${ivy.jar.dir}"/>
     <!-- download Ivy from web site so that it can be used even without any special installation -->
     <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
          dest="${ivy.jar.file}" usetimestamp="true"/>
   </target>
 
-  <target name="init-ivy" depends="download-ivy">
+  <target name="init-ivy" depends="download-ivy" unless="offline">
     <!-- try to load ivy here from ivy home, in case the user has not already dropped
             it into ant's lib dir (note that the latter copy will always take precedence).
             We will not fail as long as local lib dir exists (it may be empty) and
