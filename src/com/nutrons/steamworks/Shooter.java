@@ -7,9 +7,6 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
 
-/**
- * Created by Brian on 2/1/2017.
- */
 public class Shooter implements Subsystem {
     private final Flowable<ControllerEvent> runShooter;
     private final Consumer<ControllerEvent> shooterController;

@@ -6,9 +6,6 @@ import com.nutrons.framework.controllers.RunAtPowerEvent;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
-/**
- * Created by Brian on 1/31/2017.
- */
 public class Feeder implements Subsystem {
     private final Flowable<ControllerEvent> intakeSpeed;
     private final Consumer<ControllerEvent> intakeController;
