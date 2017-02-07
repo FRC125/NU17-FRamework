@@ -28,7 +28,7 @@
     <!-- See http://checkstyle.sourceforge.net/anttask.html for full options of using checkstyle with ant-->
     <checkstyle config="docs/google_checks.xml"
                 failureProperty="checkstyle.failure"
-                failOnViolation="false">
+                failOnViolation="true">
       <formatter type="plain"/>
       <fileset dir="src" includes="**/*.java"/>
       <fileset dir="test" includes="**/*.java"/>
