@@ -4,8 +4,9 @@ The codebase for our 2017 robot, implemented using our functional reactive libra
 
 ## Installation
 
-1. Install ant.
-2. Install ivy. This can be done using our install-ivy.xml buildfile.
-`ant download-ivy -buildfile install-ivy.xml`
-3. Install the project dependencies.
-`ant install -buildfile install.xml`
+This repository has a submodule dependency.  Make sure you clone with the `--recursive` option.
+
+To get started run
+```ant install-ivy install compile```
+
+From here on out, you can just run `ant compile`.

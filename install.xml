@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="WPILib Installation" default="install">
-  <ant antfile="FRamework/install.xml" target="install" useNativeBasedir="true" />
+<project name="WPILib Installation" default="install" xmlns:ivy="antlib:org.apache.ivy.ant">
   <!-- Load the build properties file. -->
   <property file="build.properties"/>
 
@@ -9,13 +8,8 @@
   <property name="wpilib" value="wpilib"/>
   <property name="userLibs.dir" value="${wpilib}/userLibs"/>
 
-  <target name="clean" depends="wpilib.check" if="wpilib.exists">
-    <delete dir="${wpilib}"/>
-    <echo>WPILib Removed</echo>
-  </target>
-
   <!-- Main target, chains the installation of WPILib, and user libraries as needed. -->
-  <target name="install" depends="doInstall, installCtre"/>
+  <target name="install" depends="installLibs, doInstall, installCtre"/>
 
   <!-- Install the WPILib library, but check to see if it's installed first, and abort if it is. -->
   <target name="doInstall" depends="wpilib.check" unless="wpilib.exists">
@@ -44,6 +38,11 @@
     <mkdir dir="${userLibs.dir}/docs"/>
 
     <echo>WPILib Installed</echo>
+
+  </target>
+
+  <target name="installLibs" depends="lib.check" unless="lib.exists">
+	<ivy:retrieve/>
   </target>
 
   <!-- Target to install the CTRE Libraries for the CAN Talon, HERO board and other hardware.
@@ -61,6 +60,18 @@
       <mapper type="flatten"/>
     </unzip>
     <delete file="${wpilib}/CTRE.zip"/>
+
+	<!-- Get the CTRE Library - the URL should be in build.properties. -->
+    <get src="${userLibInstallCtreTalon.URL}" dest="${wpilib}/CTRE_Talon.zip"/>
+
+    <!-- Unzip the java portion of the library only, and delete when done. -->
+    <unzip src="${wpilib}/CTRE_Talon.zip" dest="${userLibs.dir}">
+      <patternset>
+        <include name="java/lib/*"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+    <delete file="${wpilib}/CTRE_Talon.zip"/>
 
     <!-- Get the CTRE Documentation - the URL should be in build.properties. -->
     <get src="${userLibInstallCtre.docURL}" dest="${wpilib}/CTRE_docs.zip"/>
@@ -84,6 +95,12 @@
     </condition>
     <condition property="wpilib.installCtre">
       <istrue value="${userLibInstallCtre}"/>
+    </condition>
+  </target>
+
+  <target name="lib.check">
+    <condition property="lib.exists">
+      <available file="lib/" type="dir"/>
     </condition>
   </target>
 
