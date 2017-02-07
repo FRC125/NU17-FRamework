@@ -63,16 +63,6 @@
   </target>
 
   <target name="test" depends="checkstyle,compile,init-ivy">
-	<!-- Included to handle situation where we don't have a test directory -->
-	<if>
-	  <available file="test" type="dir"/>
-	  <then>
-		<fail message="No test directory" status="0"/>
-	  </then>
-	  <else>
-	  </else>
-	</if>
-	
     <path id="classpath.path">
       <fileset dir="${userLibs}" erroronmissingdir="false"/>
       <fileset dir="lib/" includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
