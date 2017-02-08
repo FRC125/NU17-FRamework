@@ -19,7 +19,6 @@ public class Hopper implements Subsystem {
   public Hopper(Consumer<ControllerEvent> hopperController) {
     this.runHopper = Flowable.just(Events.power(SPIN_POWER));
     this.hopperController = hopperController;
-
   }
 
   @Override
