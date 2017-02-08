@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="userlibs">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/wpilib/userLibs" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="file://$PROJECT_DIR$/wpilib/userLibs/docs/ctre" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/wpilib/userLibs" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/wpilib/userLibs" recursive="true" />
+    <jarDirectory url="file://$PROJECT_DIR$/wpilib/userLibs" recursive="true" type="SOURCES" />
+  </library>
+</component>
