@@ -1,6 +1,5 @@
 package com.nutrons.steamworks;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 
 public class Vision {
