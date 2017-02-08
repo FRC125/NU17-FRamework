@@ -47,6 +47,12 @@ void loop() {
      Serial.write(sendBytes, toSend.length() + 1);
      Serial.flush();
   }  
+
+  //If we don't see anything, just send -1000 for both values!
+  toSend = String(-1000, 4).substring(0,5) + ":" + String(-1000, 4).substring(0,5) + "\n";
+  toSend.getBytes(sendBytes, toSend.length() + 1);
+  Serial.write(sendBytes, toSend.length() + 1);
+  Serial.flush();
 }
 
 //******THE IMPORTANT STUFF******
