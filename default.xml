@@ -38,7 +38,7 @@
   </target>
 
   <target name="compile" description="Try to override WPILib's compile step"
-    depends="compileFRamework,install">
+    depends="compileFRamework">
     <mkdir dir="${build.dir}"/>
     <path id="classpath.path">
       <fileset dir="${userLibs.dir}" includes="*.jar"/>
@@ -66,7 +66,7 @@
     </javac>
   </target>
 
-  <target name="test" depends="checkstyle,compile,init-ivy">
+  <target name="test" depends="checkstyle,compile">
     <path id="classpath.path">
       <fileset dir="${userLibs}" erroronmissingdir="false"/>
       <fileset dir="lib/"
@@ -122,15 +122,10 @@
     </jar>
   </target>
 
-  <import file="install.xml"/>
-  <import file="install-ivy.xml"/>
   <import file="${wpilib.ant.dir}/build.xml"/>
 
   <target name="compileFRamework">
     <echo>Installing FRamework and compiling dependencies</echo>
-    <subant target="install">
-      <fileset dir="FRamework/" includes="install.xml"/>
-    </subant>
     <subant target="compile">
       <fileset dir="FRamework/" includes="build.xml"/>
     </subant>
