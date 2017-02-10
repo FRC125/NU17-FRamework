@@ -14,11 +14,17 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> yaw;
   private final Consumer<ControllerEvent> leftDrive;
   private final Consumer<ControllerEvent> rightDrive;
-  private double coeff = 1.0;
 
-  // Does cheezy drive.
-  public Drivetrain(Flowable<Double> throttle, Flowable<Double> yaw,
-                    Consumer<ControllerEvent> leftDrive, Consumer<ControllerEvent> rightDrive) {
+  /**
+   * A drivetrain which uses Arcade Drive.
+   *
+   * @param leftDrive  all controllers on the left of the drivetrain
+   * @param rightDrive all controllers on the right of the drivetrain
+   */
+  public Drivetrain(Flowable<Double> throttle,
+                    Flowable<Double> yaw,
+                    Consumer<ControllerEvent> leftDrive,
+                    Consumer<ControllerEvent> rightDrive) {
     this.throttle = deadband(throttle);
     this.yaw = deadband(yaw);
     this.leftDrive = leftDrive;
@@ -27,7 +33,9 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> x * coeff).map(RunAtPowerEvent::new).subscribe(leftDrive);
-    combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> x * coeff).map(RunAtPowerEvent::new).subscribe(rightDrive);
+    combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> x)
+        .map(RunAtPowerEvent::new).subscribe(leftDrive);
+    combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> x)
+        .map(RunAtPowerEvent::new).subscribe(rightDrive);
   }
 }
