@@ -35,8 +35,7 @@ public class RobotBootstrapper extends Robot {
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    //hoodMaster.configNominalOutputVoltage(+0f, -0f);
-    //hoodMaster.configPeakOutputVoltage(+12f, -12f);
+    this.hoodMaster.setOutputVoltage(-12f, +12f);
     //TODO: add these methods somehow and reset position of hoodMaster
 
     this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
