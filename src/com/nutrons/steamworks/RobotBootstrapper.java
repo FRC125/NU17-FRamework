@@ -20,6 +20,20 @@ public class RobotBootstrapper extends Robot {
     @Override
     protected void constructStreams() {
 
+        /**
+         * notes for when we want to implement motion profile:
+         *
+         * CANTalon talon = new CANTalon(0); --> talon we want to act on
+         * Set up w. feedbackdevice
+         * MotionProfile profile = new MotionProfile();
+         * talon.changeControlMode(TalonControlMode.MotionProfile);
+         * CANTalon.SetValueMotionProfile setOutput = talon.getSetValue();
+         * talon.set(setOutput.value);
+         * profile.startMotionProfile();
+         *
+         * when it's done --> profile.reset();
+         */
+
         this.serial = new Serial(34, 17);
         this.vision = new Vision(serial.getDataStream());
 
