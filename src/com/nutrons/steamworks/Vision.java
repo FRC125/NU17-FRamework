@@ -8,7 +8,7 @@ public class Vision {
   private Flowable<Double[]> dataStreamDouble;
   private Flowable<Double> angle;
   private Flowable<Double> distance;
-  private static final String DUMMY_VALUE = "-1000.0:-1000.0"; //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  private static final String DUMMY_VALUE = "-1000:-1000"; //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
                                                                //robot sending an exception "no serial port found"
 
   Vision(Flowable<byte[]> dataStream) {

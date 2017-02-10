@@ -38,10 +38,10 @@ void loop() {
      arr[0] = distanceToTarget;
      arr[1] = angleToTarget_x;
      
-     //toSend = String(getDistance(), 3) + ":" + String(angleToTarget_x, 3);
-     //Serial.print(toSend + "\n");
+     //substring is (inclusive, exclusive)
+     //String(val, decimalPlaces)
  
-     toSend = String(getDistance(), 3).substring(0,4) + ":" + String(angleToTarget_x, 3).substring(0,4) + "\n";
+     toSend = String(getDistance(), 4).substring(0,4) + ":" + String(angleToTarget_x, 4).substring(0,4) + "\n";
      byte sendBytes[toSend.length() + 1];
      toSend.getBytes(sendBytes, toSend.length() + 1);
      Serial.write(sendBytes, toSend.length() + 1);
