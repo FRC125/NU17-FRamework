@@ -12,6 +12,8 @@ public class RobotBootstrapper extends Robot {
     private Talon shooterMotor2;
     private Talon topHopperMotor;
     private Talon spinHopperMotor;
+    private Talon climberController;
+    private Talon climberMotor2;
 
     @Override
     protected void constructStreams() {
@@ -20,6 +22,8 @@ public class RobotBootstrapper extends Robot {
         this.intakeController = new Talon(RobotMap.INTAKE_MOTOR);
         this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
         this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, this.shooterMotor1);
+        this.climberController = new Talon(RobotMap.CLIMBER_MOTOR_1);
+        this.climberMotor2 = new Talon(RobotMap.CLIMBER_MOTOR_2, this.climberController);
         this.controller = new WpiXboxGamepad(0);
         this.enabledStream();
     }
@@ -30,6 +34,7 @@ public class RobotBootstrapper extends Robot {
         sm.registerSubsystem(new Shooter(shooterMotor1));
         sm.registerSubsystem(new Feeder(intakeController));
         sm.registerSubsystem(new Hopper(spinHopperMotor));
+        sm.registerSubsystem(new Climber(climberController));
         return sm;
     }
 }
