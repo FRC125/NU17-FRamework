@@ -9,7 +9,7 @@ import io.reactivex.functions.Consumer;
 /**
  * Created by Brian on 2/10/2017.
  */
-public class Climber implements Subsystem{
+public class Climber implements Subsystem {
     private final Flowable<ControllerEvent> climb;
     private final Consumer<ControllerEvent> climberController;
 
@@ -18,7 +18,7 @@ public class Climber implements Subsystem{
         this.climberController = climberController;
     }
 
-   public void registerSubscriptions() {
+    public void registerSubscriptions() {
         climb.subscribe(climberController);
-   }
+    }
 }
