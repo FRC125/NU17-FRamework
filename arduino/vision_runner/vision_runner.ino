@@ -15,13 +15,13 @@ double FOV_X = 75; //horizontal Field of View in degrees
 double FOV_Y = 47; //vertical Field of View in degrees
 double RESOLUTION_WIDTH = 320; //in pixels, 320 x 200
 double RESOLUTION_HEIGHT = 200; //in pixels
-double VERTICAL_ZERO_OFFSET = 15; //shifts the 0 degree line down by given value, relies on consistent angle of camera
-double CAMERA_ANGLE = 19.5; //angle of Camera
+double VERTICAL_ZERO_OFFSET = 23.5; //shifts the 0 degree line down by given value, relies on consistent angle of camera
+double CAMERA_ANGLE = 19; //angle of Camera
 
 //******DISTANCE VARIABLES******
 double distanceToTarget; //inches
-double CAMERA_HEIGHT = 39; //inches
-double TARGET_HEIGHT = 68.5; //inches
+double CAMERA_HEIGHT = 86; //inches
+double TARGET_HEIGHT = 42.5; //inches
 
 void setup() {
   Serial.begin(9600);
@@ -37,16 +37,20 @@ void loop() {
      distanceToTarget = getDistance();
      arr[0] = distanceToTarget;
      arr[1] = angleToTarget_x;
-     
-     //substring is (inclusive, exclusive)
-     //String(val, decimalPlaces)
  
-     toSend = String(getDistance(), 4).substring(0,4) + ":" + String(angleToTarget_x, 4).substring(0,4) + "\n";
+     toSend = String(getDistance(), 4).substring(0,5) + ":" + String(angleToTarget_x, 4).substring(0,5) + "\n";
      byte sendBytes[toSend.length() + 1];
      toSend.getBytes(sendBytes, toSend.length() + 1);
      Serial.write(sendBytes, toSend.length() + 1);
      Serial.flush();
-  }  
+  }
+
+  //If we don't see anything, just send -1000 for both values!
+  toSend = String(-1000.0, 5).substring(0,5) + ":" + String(-1000.0, 4).substring(0,5) + "\n";
+  byte sendBytes[toSend.length() + 1];
+  toSend.getBytes(sendBytes, toSend.length() + 1);
+  Serial.write(sendBytes, toSend.length() + 1);
+  Serial.flush();
 }
 
 //******THE IMPORTANT STUFF******
