@@ -1,9 +1,11 @@
 package com.nutrons.steamworks;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Test;
+
 public class TestUniverse {
+
   @Test
   public void testUniverse() {
     // Is the universe still functioning?
