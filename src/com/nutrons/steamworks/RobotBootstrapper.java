@@ -1,10 +1,8 @@
 package com.nutrons.steamworks;
 
-import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.Talon;
-import com.nutrons.framework.controllers.WpiTalonProxy;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
@@ -16,7 +14,6 @@ public class RobotBootstrapper extends Robot {
     private Talon topHopperMotor;
     private Talon spinHopperMotor;
     public static Talon hoodMaster;
-    public static CANTalon hmt;
     private Serial serial;
     private Vision vision;
 
@@ -26,16 +23,12 @@ public class RobotBootstrapper extends Robot {
         this.serial = new Serial(24, 12);
         this.vision = new Vision(serial.getDataStream());
 
-        hmt = new CANTalon(RobotMap.HOOD_MOTOR_A);
-        this.hoodMaster = new Talon(new WpiTalonProxy(hmt));
-        hoodMaster.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-        hoodMaster.configNominalOutputVoltage(+0f, -0f);
-        hoodMaster.configPeakOutputVoltage(+12f, -12f);
-        hoodMaster.reverseOutput(false);
-        hoodMaster.reverseSensor(false);
-        hmt.clearStickyFaults();
-        hmt.setAllowableClosedLoopErr(0);
-        hmt.setProfile(0);
+        this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A);
+        //hoodMaster.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+        //hoodMaster.configNominalOutputVoltage(+0f, -0f);
+        //hoodMaster.configPeakOutputVoltage(+12f, -12f);
+        //TODO: add these methods somehow and reset position of hoodMaster
+
 
         this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
         this.spinHopperMotor = new Talon(RobotMap.SPIN_HOPPER_MOTOR, this.topHopperMotor);
