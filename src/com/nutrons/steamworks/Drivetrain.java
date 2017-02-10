@@ -5,7 +5,7 @@ import static io.reactivex.Flowable.combineLatest;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControllerEvent;
-import com.nutrons.framework.controllers.RunAtPowerEvent;
+import com.nutrons.framework.controllers.Events;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
@@ -33,9 +33,7 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> x)
-        .map(RunAtPowerEvent::new).subscribe(leftDrive);
-    combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> x)
-        .map(RunAtPowerEvent::new).subscribe(rightDrive);
+    combineLatest(throttle, yaw, (x, y) -> x + y).map(Events::power).subscribe(leftDrive);
+    combineLatest(throttle, yaw, (x, y) -> x - y).map(Events::power).subscribe(rightDrive);
   }
 }

@@ -44,7 +44,6 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Shooter(shooterMotor1));
     sm.registerSubsystem(new Feeder(intakeController));
     sm.registerSubsystem(new Hopper(spinHopperMotor));
-    // TODO: Get right button number for right trigger
     sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
         leftLeader, rightLeader));
     return sm;
