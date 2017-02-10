@@ -7,16 +7,17 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
 public class Feeder implements Subsystem {
-    private final Flowable<ControllerEvent> intakeSpeed;
-    private final Consumer<ControllerEvent> intakeController;
 
-    public Feeder(Consumer<ControllerEvent> intakeController) {
-        this.intakeSpeed = Flowable.just(new RunAtPowerEvent(1.0));
-        this.intakeController = intakeController;
-    }
+  private final Flowable<ControllerEvent> intakeSpeed;
+  private final Consumer<ControllerEvent> intakeController;
 
-    @Override
-    public void registerSubscriptions() {
-        intakeSpeed.subscribe(intakeController);
-    }
+  public Feeder(Consumer<ControllerEvent> intakeController) {
+    this.intakeSpeed = Flowable.just(new RunAtPowerEvent(1.0));
+    this.intakeController = intakeController;
+  }
+
+  @Override
+  public void registerSubscriptions() {
+    intakeSpeed.subscribe(intakeController);
+  }
 }
