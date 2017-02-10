@@ -16,7 +16,7 @@ public class Vision {
     this.dataStreamDouble = this.dataStream
         .filter(x -> x.length == 10)
         .map(x -> new String(x, "UTF-8"))
-        .map(x -> x == DUMMY_VALUE ? "0.0:0.0" : x) //vision will change any dummy values to 0.0
+        .map(x -> x.equals(DUMMY_VALUE) ? "0.0:0.0" : x) //vision will change any dummy values to 0.0
         .map(x -> x.split(":")).filter(x -> x.length == 2)
         .map(x -> new Double[]{Double.valueOf(x[0]),
             Double.valueOf(x[1])}); //Returns a double array[distance, angle]
