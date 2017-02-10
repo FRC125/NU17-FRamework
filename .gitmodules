@@ -1,3 +1,4 @@
 [submodule "FRamework"]
 	path = FRamework
 	url = https://github.com/FRC125/FRamework.git
+	branch = master
