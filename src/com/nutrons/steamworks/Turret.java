@@ -13,8 +13,7 @@ public class Turret implements Subsystem {
   private final LoopSpeedController hoodMaster;
 
   private volatile double motorRotation;
-  private static final double HOOD_RADIUS_IN = 10.5;
-  private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = 104/22;
+  private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = 104 / 22;
 
   public Turret(Flowable<Double> angle, LoopSpeedController master) {
     this.angle = angle;
