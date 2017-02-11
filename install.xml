@@ -9,7 +9,11 @@
   <property name="userLibs.dir" value="${wpilib}/userLibs"/>
 
   <!-- Main target, chains the installation of WPILib, and user libraries as needed. -->
-  <target name="install" depends="installLibs, doInstall, installCtre"/>
+  <target name="install" depends="installLibs, doInstall, installCtre">
+	<subant target="install">
+      <fileset dir="FRamework/" includes="install.xml"/>
+	</subant>
+  </target>
 
   <!-- Install the WPILib library, but check to see if it's installed first, and abort if it is. -->
   <target name="doInstall" depends="wpilib.check" unless="wpilib.exists">
@@ -48,16 +52,16 @@
   <!-- Target to install the CTRE Libraries for the CAN Talon, HERO board and other hardware.
        Only executes if the userLibInstallCtre property is set to true or yes. Will overwrite
        any existing versions. -->
-  <target name="installCtre" depends="wpilib.check" if="wpilib.installCtre">
+  <target name="installCtre" depends="wpilib.check" if="wpilib.installCtre" unless="${offline}">
     <!-- Get the CTRE Library - the URL should be in build.properties. -->
     <get src="${userLibInstallCtre.URL}" dest="${wpilib}/CTRE.zip"/>
 
     <!-- Unzip the java portion of the library only, and delete when done. -->
     <unzip src="${wpilib}/CTRE.zip" dest="${userLibs.dir}">
-      <patternset>
+	  <patternset>
         <include name="java/lib/*"/>
-      </patternset>
-      <mapper type="flatten"/>
+	  </patternset>
+	  <mapper type="flatten"/>
     </unzip>
     <delete file="${wpilib}/CTRE.zip"/>
 
@@ -66,10 +70,10 @@
 
     <!-- Unzip the java portion of the library only, and delete when done. -->
     <unzip src="${wpilib}/CTRE_Talon.zip" dest="${userLibs.dir}">
-      <patternset>
+	  <patternset>
         <include name="java/lib/*"/>
-      </patternset>
-      <mapper type="flatten"/>
+	  </patternset>
+	  <mapper type="flatten"/>
     </unzip>
     <delete file="${wpilib}/CTRE_Talon.zip"/>
 
@@ -79,10 +83,10 @@
     <!-- Create the CTRE documentation directory, and unzip the java docs into it, deleting when done. -->
     <mkdir dir="${userLibs.dir}/docs/ctre"/>
     <unzip src="${wpilib}/CTRE_docs.zip" dest="${userLibs.dir}/docs/ctre">
-      <patternset>
+	  <patternset>
         <include name="CTRE Toolsuite API Documentation/java/**"/>
-      </patternset>
-      <cutdirsmapper dirs="2"/>
+	  </patternset>
+	  <cutdirsmapper dirs="2"/>
     </unzip>
     <delete file="${wpilib}/CTRE_docs.zip"/>
 
