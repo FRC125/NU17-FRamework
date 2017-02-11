@@ -25,9 +25,9 @@ public class Drivetrain implements Subsystem {  // Right Trigger
   private final Flowable<Double> gyroAngles;
   private final Flowable<Double> error;
   private double gyroSetpoint = 0.0;
-  private static final double PROPORTIONAL = 0.3;
+  private static final double PROPORTIONAL = 0.025;
   private static final double INTEGRAL = 0.0;
-  private static final double DERIVATIVE = 0.0;
+  private static final double DERIVATIVE = 0.01;
   private final FlowingPID PIDControl;
   private final Command holdHeadingCmd;
   private final Command driveNormalCmd;

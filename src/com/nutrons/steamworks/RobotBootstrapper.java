@@ -5,9 +5,6 @@ import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
-import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.controllers.Events;
-
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
