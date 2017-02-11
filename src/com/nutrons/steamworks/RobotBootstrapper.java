@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
@@ -35,8 +36,8 @@ public class RobotBootstrapper extends Robot {
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    this.hoodMaster.setOutputVoltage(-12f, +12f);
-    //TODO: add these methods somehow and reset position of hoodMaster
+    Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
+    Events.resetPosition(0.0).actOn(this.hoodMaster);
 
     this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinHopperMotor = new Talon(RobotMap.SPIN_HOPPER_MOTOR, this.topHopperMotor);
