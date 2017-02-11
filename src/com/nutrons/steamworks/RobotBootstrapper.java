@@ -31,7 +31,7 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected void constructStreams() {
 
-    this.serial = new Serial(24, 12);
+    this.serial = new Serial(34, 17);
     this.vision = new Vision(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
