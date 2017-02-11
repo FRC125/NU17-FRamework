@@ -1,19 +1,19 @@
 package com.nutrons.steamworks;
 
-import static com.nutrons.framework.util.FlowOperators.deadband;
-import static io.reactivex.Flowable.combineLatest;
-
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopSpeedController;
 import io.reactivex.Flowable;
-import io.reactivex.functions.Consumer;
+
+import static com.nutrons.framework.util.FlowOperators.deadbandMap;
+import static io.reactivex.Flowable.combineLatest;
 
 public class Drivetrain implements Subsystem {
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
-  private final Consumer<ControllerEvent> leftDrive;
-  private final Consumer<ControllerEvent> rightDrive;
+  private final LoopSpeedController leftDrive;
+  private final LoopSpeedController rightDrive;
+  private final double deadband = 0.2;
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -23,17 +23,23 @@ public class Drivetrain implements Subsystem {
    */
   public Drivetrain(Flowable<Double> throttle,
                     Flowable<Double> yaw,
-                    Consumer<ControllerEvent> leftDrive,
-                    Consumer<ControllerEvent> rightDrive) {
-    this.throttle = deadband(throttle);
-    this.yaw = deadband(yaw);
+                    LoopSpeedController leftDrive,
+                    LoopSpeedController rightDrive) {
+
+    this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0));
+    this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0));
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
   }
 
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, (x, y) -> x + y).map(Events::power).subscribe(leftDrive);
-    combineLatest(throttle, yaw, (x, y) -> x - y).map(Events::power).subscribe(rightDrive);
+    combineLatest(throttle, yaw, (x, y) -> x + y)
+        .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+        .map(Events::power).subscribe(leftDrive);
+    combineLatest(throttle, yaw, (x, y) -> x - y)
+        .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+        .map(Events::power)
+        .subscribe(rightDrive);
   }
 }
