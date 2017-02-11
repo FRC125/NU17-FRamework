@@ -22,7 +22,6 @@ const double TARGET_HEIGHT_GEAR = 0.0; //in inches
 
 double angleToTarget_x; //horizontal angle in degrees
 double angleToTarget_y; //vertical angle in degrees
-<<<<<<< HEAD
 double distanceToTarget; //inches
 
 enum state {
@@ -33,19 +32,6 @@ enum state {
 
 //default values
 state currentState = NONE;
-=======
-double FOV_X = 75; //horizontal Field of View in degrees
-double FOV_Y = 47; //vertical Field of View in degrees
-double RESOLUTION_WIDTH = 320; //in pixels, 320 x 200
-double RESOLUTION_HEIGHT = 200; //in pixels
-double VERTICAL_ZERO_OFFSET = 23.5; //shifts the 0 degree line down by given value, relies on consistent angle of camera
-double CAMERA_ANGLE = 19; //angle of Camera
-
-//******DISTANCE VARIABLES******
-double distanceToTarget; //inches
-double CAMERA_HEIGHT = 86; //inches
-double TARGET_HEIGHT = 42.5; //inches
->>>>>>> master
 
 void setup() {
   Serial.begin(9600);
@@ -53,7 +39,6 @@ void setup() {
 }
 
 void loop() { 
-<<<<<<< HEAD
   blocks = pixy.getBlocks(2);
   
   //make sure we see two blocks
@@ -78,30 +63,6 @@ void loop() {
   //If we don't see anything, just send -1000 for both values!
   currentState = NONE;
   writeBytes(-1000.0, -1000.0);
-=======
-  blocks = pixy.getBlocks();
-
-  if (blocks) {
-     angleToTarget_x = getHorizontalAngleOffset(pixy.blocks[0].x);
-     angleToTarget_y = getVerticalAngleOffset(pixy.blocks[0].y);
-     distanceToTarget = getDistance();
-     arr[0] = distanceToTarget;
-     arr[1] = angleToTarget_x;
- 
-     toSend = String(getDistance(), 4).substring(0,5) + ":" + String(angleToTarget_x, 4).substring(0,5) + "\n";
-     byte sendBytes[toSend.length() + 1];
-     toSend.getBytes(sendBytes, toSend.length() + 1);
-     Serial.write(sendBytes, toSend.length() + 1);
-     Serial.flush();
-  }
-
-  //If we don't see anything, just send -1000 for both values!
-  toSend = String(-1000.0, 5).substring(0,5) + ":" + String(-1000.0, 4).substring(0,5) + "\n";
-  byte sendBytes[toSend.length() + 1];
-  toSend.getBytes(sendBytes, toSend.length() + 1);
-  Serial.write(sendBytes, toSend.length() + 1);
-  Serial.flush();
->>>>>>> master
 }
 
 //******THE IMPORTANT STUFF******
