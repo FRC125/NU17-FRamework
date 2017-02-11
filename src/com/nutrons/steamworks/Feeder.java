@@ -1,18 +1,19 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RunAtPowerEvent;
+import com.nutrons.framework.controllers.Talon;
 
 public class Feeder implements Subsystem {
 
-  private final LoopSpeedController intakeController;
+  private final Talon intakeMotor;
 
-  public Feeder(LoopSpeedController intakeController) {
-    this.intakeController = intakeController;
+  public Feeder(Talon intakeMotor) {
+    this.intakeMotor = intakeMotor;
   }
 
   @Override
   public void registerSubscriptions() {
-    intakeController.runAtPower(1.0);
+    new RunAtPowerEvent(1.0).actOn(intakeMotor);
   }
 }
