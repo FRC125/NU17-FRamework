@@ -1,34 +1,36 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.*;
-import com.nutrons.framework.util.FlowOperators;
+import com.nutrons.framework.controllers.ControllerEvent;
+import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Talon;
 import io.reactivex.Flowable;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class Turret implements Subsystem {
-    private final Flowable<Double> angle;
-    private final Consumer<ControllerEvent> hoodMaster;
+  private final Flowable<Double> angle;
+  private final Talon hoodMaster;
 
-    private volatile double motorRotation;
-    private static final double HOOD_RADIUS_IN = 10.5;
+  private static final double PVAL = 0.03;
+  private static final double IVAL = 0.0;
+  private static final double DVAL = 0.0;
+  private static final double FVAL = 0.0;
+  private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
 
-    public Turret(Flowable<Double> angle, LoopSpeedController master) {
-        this.angle = angle;
-        this.hoodMaster = master;
-        this.angle.map(x -> x / 360.0).subscribe(x -> this.motorRotation = x); // need to find out how many rotations of the motor to turn around turret 360 degrees
-        //Calculates arc length turret needs to travel to reach a certain angle,
-        //Finds ratio of angle to 360 and creates a proportion to ratio with arc length to full circumference
-    }
+  public Turret(Flowable<Double> angle, Talon master) {
+    this.angle = angle;
+    this.hoodMaster = master;
+    Events.resetPosition(0.0).actOn(this.hoodMaster);
+  }
 
-    @Override
-    public void registerSubscriptions() {
-        Flowable<ControllerEvent> source = toFlow(() -> new LoopPropertiesEvent(0 /** get current position of encoder**/ + this.motorRotation, 0.03, 0.0, 0.0, 0.0));
-               source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_POSITION))).subscribe(hoodMaster);
-    }
+  @Override
+  public void registerSubscriptions() {
+    Flowable<ControllerEvent> source = this.angle
+            .map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
+            .map(x -> Events.pid(hoodMaster.position() + x, PVAL, IVAL, DVAL, FVAL));
+
+    source.subscribe(hoodMaster);
+  }
 }
