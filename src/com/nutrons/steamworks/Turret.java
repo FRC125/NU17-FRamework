@@ -13,21 +13,24 @@ public class Turret implements Subsystem {
   private final Flowable<Double> angle;
   private final Talon hoodMaster;
 
-  private volatile double motorRotation;
+  private static final double PVAL = 0.03;
+  private static final double IVAL = 0.0;
+  private static final double DVAL = 0.0;
+  private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
 
   public Turret(Flowable<Double> angle, Talon master) {
     this.angle = angle;
     this.hoodMaster = master;
-    this.angle.map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0).subscribe(x -> this.motorRotation = x);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
   }
 
   @Override
   public void registerSubscriptions() {
-    Flowable<ControllerEvent> source =
-        toFlow(() -> Events.pid(hoodMaster.position() + this.motorRotation,
-            0.03, 0.0, 0.0, 0.0));
+    Flowable<ControllerEvent> source = this.angle
+            .map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
+            .map(x -> Events.pid(hoodMaster.position() + x, PVAL, IVAL, DVAL, FVAL));
+
     source.subscribe(hoodMaster);
   }
 }
