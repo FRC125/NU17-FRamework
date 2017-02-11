@@ -41,7 +41,7 @@ public class Drivetrain implements Subsystem {  // Right Trigger
   private final double deadband = 0.2;
 
   /**
-   * A drivetrain which uses Arcade Drive.
+   * A drivetrain which uses Arcade Drive. AKA Cheezy Drive
    *
    * @param leftDrive  all controllers on the left of the drivetrain
    * @param rightDrive all controllers on the right of the drivetrain
