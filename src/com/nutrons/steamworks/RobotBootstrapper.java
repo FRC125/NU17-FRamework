@@ -6,15 +6,23 @@ import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Events;
+
 import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
 public class RobotBootstrapper extends Robot {
-  private LoopSpeedController intakeController;
+
+  public final static int PACKET_LENGTH = 17;
+  private Talon intakeController;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
   private Talon topHopperMotor;
   private Talon spinHopperMotor;
+  public static Talon hoodMaster;
+  private Serial serial;
+  private Vision vision;
 
   private Talon leftLeader;
   private Talon leftFollower;
@@ -26,6 +34,15 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
+
+    this.serial = new Serial(PACKET_LENGTH *2, PACKET_LENGTH);
+    this.vision = new Vision(serial.getDataStream());
+
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
+    Events.resetPosition(0.0).actOn(this.hoodMaster);
+
     this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinHopperMotor = new Talon(RobotMap.SPIN_HOPPER_MOTOR, this.topHopperMotor);
     this.intakeController = new Talon(RobotMap.INTAKE_MOTOR);
@@ -44,6 +61,7 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
     sm.registerSubsystem(new Shooter(shooterMotor1));
     sm.registerSubsystem(new Feeder(intakeController));
     sm.registerSubsystem(new Hopper(spinHopperMotor));
