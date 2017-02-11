@@ -23,7 +23,6 @@ public class Drivetrain implements Subsystem {  // Right Trigger
     private final Consumer<ControllerEvent> leftDrive;
     private final Consumer<ControllerEvent> rightDrive;
     private final Flowable<Command> holdHeading;
-    private boolean holdHeadingEnabled = false;
     private final Flowable<Double> gyroAngles;
     private double coeff = 1.0;
     private double gyroSetpoint = 0.0;
@@ -58,7 +57,7 @@ public class Drivetrain implements Subsystem {  // Right Trigger
         this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
         this.driveNormalCmd = Command.create(() -> driveNormalAction());
         this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
-        Command.fromSwitch(this.holdHeading);
+
     }
 
     private double getSetpoint() { return gyroSetpoint; }
@@ -76,6 +75,6 @@ public class Drivetrain implements Subsystem {  // Right Trigger
 
     @Override
     public void registerSubscriptions() {
-
+        Command.fromSwitch(this.holdHeading);
     }
 }
