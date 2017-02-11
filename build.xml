@@ -1,64 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="NU17-FRamework buildfile" default="compile">
   <!-- This is a hack to fix scope issues -->
-  <property name="custom-ant" value="default.xml" />
-  <property name="install-ivy-ant" value="install-ivy.xml" />
-  <property name="install-ant" value="install.xml" />
-  
+  <property name="custom-ant" value="default.xml"/>
+  <property name="install-ivy-ant" value="install-ivy.xml"/>
+  <property name="install-ant" value="install.xml"/>
+
   <target name="install-ivy">
-	<ant antfile="${install-ivy-ant}" target="init-ivy"/>
+    <ant antfile="${install-ivy-ant}" target="init-ivy"/>
   </target>
   <target name="init-checkstyle">
-	<ant antfile="${custom-ant}" target="init-checkstyle"/>
+    <ant antfile="${custom-ant}" target="init-checkstyle"/>
   </target>
   <target name="checkstyle">
-	<ant antfile="${custom-ant}" target="checkstyle" />
+    <ant antfile="${custom-ant}" target="checkstyle"/>
   </target>
-  <target name="compile" depends="install-ivy,install">
-	<ant antfile="${custom-ant}" target="compile" />
+  <target name="compile">
+    <ant antfile="${custom-ant}" target="compile"/>
   </target>
   <target name="test">
-	<ant antfile="${custom-ant}" target="test"/>
+    <ant antfile="${custom-ant}" target="test"/>
   </target>
   <target name="jar">
-	<ant antfile="${custom-ant}" target="jar"/>
+    <ant antfile="${custom-ant}" target="jar"/>
   </target>
   <target name="compileFRamework">
-	<ant antfile="${custom-ant}" target="compileFRamework" />
+    <ant antfile="${custom-ant}" target="compileFRamework"/>
   </target>
   <target name="clean">
-	<ant antfile="${custom-ant}" target="clean" />
+    <ant antfile="${custom-ant}" target="clean"/>
   </target>
 
   <target name="get-target-ip">
-	<ant antfile="${custom-ant}" target="get-target-ip" />
+    <ant antfile="${custom-ant}" target="get-target-ip"/>
   </target>
   <target name="deploy" depends="test">
-	<ant antfile="${custom-ant}" target="deploy" />
+    <ant antfile="${custom-ant}" target="deploy"/>
   </target>
   <target name="debug-deploy" description="Deploy the jar and start the program running.">
-	<ant antfile="${custom-ant}" target="debug-deploy" />
+    <ant antfile="${custom-ant}" target="debug-deploy"/>
   </target>
   <target name="jar-for-simulation">
-	<ant antfile="${custom-ant}" target="jar-for-simulation" />
+    <ant antfile="${custom-ant}" target="jar-for-simulation"/>
   </target>
   <target name="simulate">
-	<ant antfile="${custom-ant}" target="simulate" />
+    <ant antfile="${custom-ant}" target="simulate"/>
   </target>
   <target name="debug-simulate">
-	<ant antfile="${custom-ant}" target="debug-simulate" />
+    <ant antfile="${custom-ant}" target="debug-simulate"/>
   </target>
-  <target name="dependencies">
-	<ant antfile="${custom-ant}" target="dependencies" />
-  </target>
-
 
   <target name="install" depends="install-ivy">
-	<ant antfile="${install-ant}" target="install" />
+    <ant antfile="${install-ant}" target="install"/>
   </target>
 
   <target name="native-deploy">
-	<ant antfile="${custom-ant}" target="deploy-native-libs" />
+    <ant antfile="${custom-ant}" target="deploy-native-libs"/>
   </target>
-  
+
 </project>

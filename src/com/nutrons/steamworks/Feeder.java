@@ -1,22 +1,18 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.ControllerEvent;
-import com.nutrons.framework.controllers.RunAtPowerEvent;
-import io.reactivex.Flowable;
-import io.reactivex.functions.Consumer;
+import com.nutrons.framework.controllers.LoopSpeedController;
 
 public class Feeder implements Subsystem {
-    private final Flowable<ControllerEvent> intakeSpeed;
-    private final Consumer<ControllerEvent> intakeController;
 
-    public Feeder(Consumer<ControllerEvent> intakeController) {
-        this.intakeSpeed = Flowable.just(new RunAtPowerEvent(1.0));
-        this.intakeController = intakeController;
-    }
+  private final LoopSpeedController intakeController;
 
-    @Override
-    public void registerSubscriptions() {
-        intakeSpeed.subscribe(intakeController);
-    }
+  public Feeder(LoopSpeedController intakeController) {
+    this.intakeController = intakeController;
+  }
+
+  @Override
+  public void registerSubscriptions() {
+    intakeController.runAtPower(1.0);
+  }
 }
