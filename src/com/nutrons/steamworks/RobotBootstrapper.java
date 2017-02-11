@@ -16,7 +16,7 @@ public class RobotBootstrapper extends Robot {
   private Talon shooterMotor2;
   private Talon topHopperMotor;
   private Talon spinHopperMotor;
-  public static Talon hoodMaster;
+  private Talon hoodMaster;
   private Serial serial;
   private Vision vision;
 
@@ -32,7 +32,7 @@ public class RobotBootstrapper extends Robot {
   protected void constructStreams() {
 
     this.serial = new Serial(PACKET_LENGTH *2, PACKET_LENGTH);
-    this.vision = new Vision(serial.getDataStream());
+    this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
