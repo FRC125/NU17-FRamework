@@ -10,7 +10,7 @@ import com.nutrons.framework.inputs.WpiXboxGamepad;
 
 public class RobotBootstrapper extends Robot {
 
-  private LoopSpeedController intakeController;
+  private Talon intakeController;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
   private Talon topHopperMotor;

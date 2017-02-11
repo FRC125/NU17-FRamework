@@ -1,7 +1,6 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.RunAtPowerEvent;
 import com.nutrons.framework.controllers.Talon;
 
