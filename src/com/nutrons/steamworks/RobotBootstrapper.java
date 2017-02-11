@@ -9,10 +9,11 @@ import com.nutrons.framework.inputs.WpiXboxGamepad;
 public class RobotBootstrapper extends Robot {
 
   private LoopSpeedController intakeController;
+  private LoopSpeedController intakeController2;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
-  private Talon topHopperMotor;
-  private Talon spinHopperMotor;
+  private Talon topFeederMotor;
+  private Talon spinFeederMotor;
   private Talon climberController;
   private Talon climberMotor2;
 
@@ -26,13 +27,14 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
-    this.spinHopperMotor = new Talon(RobotMap.SPIN_HOPPER_MOTOR, this.topHopperMotor);
-    this.intakeController = new Talon(RobotMap.INTAKE_MOTOR);
+    this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
+    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
+    this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
+    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon)this.intakeController);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, this.shooterMotor1);
-    this.climberController = new Talon(RobotMap.CLIMBER_MOTOR_1);
-    this.climberMotor2 = new Talon(RobotMap.CLIMBER_MOTOR_2, this.climberController);
+    this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
+    this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, this.climberController);
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
@@ -47,12 +49,10 @@ public class RobotBootstrapper extends Robot {
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(new Shooter(shooterMotor1));
-    sm.registerSubsystem(new Feeder(intakeController));
-    sm.registerSubsystem(new Hopper(spinHopperMotor));
-    sm.registerSubsystem(new Climber(climberController));
+    sm.registerSubsystem(new Feeder(spinFeederMotor));
+    sm.registerSubsystem(new Climbtake(climberController, intakeController));
     sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
         leftLeader, rightLeader));
-    sm.registerSubsystem(new Climber(climberController));
     return sm;
   }
 

@@ -5,14 +5,16 @@ import com.nutrons.framework.controllers.LoopSpeedController;
 
 public class Feeder implements Subsystem {
 
-  private final LoopSpeedController intakeController;
-
-  public Feeder(LoopSpeedController intakeController) {
-    this.intakeController = intakeController;
+  // TODO: tune as needed
+  private static final double SPIN_POWER = 0.9;
+  private final LoopSpeedController feederController;
+  
+  public Feeder(LoopSpeedController feederController) {
+    this.feederController = feederController;
   }
 
   @Override
   public void registerSubscriptions() {
-    intakeController.runAtPower(1.0);
+    feederController.runAtPower(SPIN_POWER);
   }
 }
