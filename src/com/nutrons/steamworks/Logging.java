@@ -12,14 +12,15 @@ public class Logging implements Subsystem {
 
     Logging(){
         this.sd = new WpiSmartDashboard();
-        this.angle = sd.getTextField("angle");
-        this.distance = sd.getTextField("distance");
-        //this.state = sd.getTextField("state"); TODO: get daniel and lucia to add more smartdashboard methods
+        this.angle = sd.getTextFieldDouble("angle");
+        this.distance = sd.getTextFieldDouble("distance");
+        this.state = sd.getTextFieldString("state");
     }
 
     @Override
     public void registerSubscriptions() {
         Vision.getInstance().getAngle().subscribe(this.angle);
         Vision.getInstance().getDistance().subscribe(this.distance);
+        Vision.getInstance().getState().subscribe(this.state);
     }
 }
