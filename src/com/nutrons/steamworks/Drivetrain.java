@@ -1,12 +1,9 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.ControllerEvent;
-import com.nutrons.framework.controllers.RunAtPowerEvent;
+import com.nutrons.framework.controllers.*;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.util.Command;
-import com.nutrons.framework.controllers.Events;
-import com.nutrons.framework.controllers.LoopSpeedController;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
@@ -23,19 +20,15 @@ public class Drivetrain implements Subsystem {  // Right Trigger
   private final Consumer<ControllerEvent> leftDrive;
   private final Consumer<ControllerEvent> rightDrive;
   private final Flowable<Command> holdHeading;
-  private final Flowable<Double> gyroAngles;
-  private double coeff = 1.0;
-  private double gyroSetpoint = 0.0;
   private final HeadingGyro headingGyro;
   private final Flowable<Double> setpoint;
+  private final Flowable<Double> gyroAngles;
   private final Flowable<Double> error;
-  private final Flowable<Double> errorP;
-  private final Flowable<Double> errorI;
-  private final Flowable<Double> errorD;
-  private final Flowable<Double> controlOutput;
+  private double gyroSetpoint = 0.0;
   private static final double PROPORTIONAL = 0.3;
   private static final double INTEGRAL = 0.0;
   private static final double DERIVATIVE = 0.0;
+  private final FlowingPID PIDControl;
   private final Command holdHeadingCmd;
   private final Command driveNormalCmd;
   private final double deadband = 0.2;
@@ -57,10 +50,7 @@ public class Drivetrain implements Subsystem {  // Right Trigger
     this.gyroAngles = toFlow(() -> headingGyro.getAngle());
     this.setpoint = toFlow(() -> getSetpoint());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y);
-    this.errorP = error.map(x -> x * PROPORTIONAL);
-    this.errorI = error.buffer(10, 1).map(list -> list.stream().reduce(0.0, (x, acc) -> x + acc)).map(x -> x * INTEGRAL);
-    this.errorD = error.buffer(2, 1).map(last -> last.stream().reduce(0.0, (x, y) -> x - y)).map(x -> x * DERIVATIVE);
-    this.controlOutput = combineLatest(errorP, errorI, errorD, (p, i, d) -> p + i + d);
+    this.PIDControl = new FlowingPID(error, PROPORTIONAL, INTEGRAL, DERIVATIVE);
     this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     this.driveNormalCmd = Command.create(() -> driveNormalAction());
     this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
@@ -77,11 +67,11 @@ public class Drivetrain implements Subsystem {  // Right Trigger
 
   private void holdHeadingAction() {
 
-    combineLatest(throttle, yaw, controlOutput, (x, y, z) -> x + y + z)
+    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power).subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, controlOutput, (x, y, z) -> x - y - z)
+    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x - y - z)
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
