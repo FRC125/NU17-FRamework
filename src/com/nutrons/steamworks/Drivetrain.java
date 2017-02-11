@@ -34,8 +34,8 @@ public class Drivetrain implements Subsystem {  // Right Trigger
   private final Flowable<Double> errorD;
   private final Flowable<Double> controlOutput;
   private static final double PROPORTIONAL = 0.3;
-  private static final double INTEGRAL = 0.3;
-  private static final double DERIVATIVE = 0.3;
+  private static final double INTEGRAL = 0.0;
+  private static final double DERIVATIVE = 0.0;
   private final Command holdHeadingCmd;
   private final Command driveNormalCmd;
   private final double deadband = 0.2;
@@ -76,8 +76,6 @@ public class Drivetrain implements Subsystem {  // Right Trigger
   }
 
   private void holdHeadingAction() {
-    combineLatest(throttle, yaw, controlOutput, (x, y, z) -> x + y + z).map(x -> x * coeff).map(RunAtPowerEvent::new).subscribe(leftDrive);
-    combineLatest(throttle, yaw, controlOutput, (x, y, z) -> x - y - z).map(x -> x * coeff).map(RunAtPowerEvent::new).subscribe(rightDrive);
 
     combineLatest(throttle, yaw, controlOutput, (x, y, z) -> x + y + z)
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
