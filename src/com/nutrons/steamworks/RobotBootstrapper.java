@@ -7,11 +7,14 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
 public class RobotBootstrapper extends Robot {
+
   private LoopSpeedController intakeController;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
   private Talon topHopperMotor;
   private Talon spinHopperMotor;
+  private Talon climberController;
+  private Talon climberMotor2;
 
   private Talon leftLeader;
   private Talon leftFollower;
@@ -28,6 +31,8 @@ public class RobotBootstrapper extends Robot {
     this.intakeController = new Talon(RobotMap.INTAKE_MOTOR);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, this.shooterMotor1);
+    this.climberController = new Talon(RobotMap.CLIMBER_MOTOR_1);
+    this.climberMotor2 = new Talon(RobotMap.CLIMBER_MOTOR_2, this.climberController);
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
@@ -44,6 +49,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Shooter(shooterMotor1));
     sm.registerSubsystem(new Feeder(intakeController));
     sm.registerSubsystem(new Hopper(spinHopperMotor));
+    sm.registerSubsystem(new Climber(climberController));
     sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
         leftLeader, rightLeader));
     return sm;
