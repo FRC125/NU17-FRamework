@@ -16,7 +16,7 @@ public class Vision {
   Vision(Flowable<byte[]> dataStream) {
     this.dataStream = dataStream;
     this.dataStreamDouble = this.dataStream
-        .filter(x -> x.length == 12)
+        .filter(x -> x.length == RobotBootstrapper.PACKET_LENGTH)
         .map(x -> new String(x, "UTF-8"))
         .map(x -> x.equals(DUMMY_VALUE) ? "0.0:0.0" : x) //vision will change any dummy values to 0.0
         .map(x -> x.split(":")).filter(x -> x.length == 2)

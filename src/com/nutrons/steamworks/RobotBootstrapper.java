@@ -4,13 +4,13 @@ import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.Events;
-import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
 public class RobotBootstrapper extends Robot {
 
+  public final static int PACKET_LENGTH = 17;
   private Talon intakeController;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
@@ -31,7 +31,7 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected void constructStreams() {
 
-    this.serial = new Serial(34, 17);
+    this.serial = new Serial(PACKET_LENGTH *2, PACKET_LENGTH);
     this.vision = new Vision(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
