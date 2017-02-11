@@ -5,18 +5,21 @@ Pixy pixy;
 uint16_t blocks;
 String toSend;
 String stateToSend; 
-  
-struct Vars {
-  double VERTICAL_ZERO_OFFSET;
-  double CAMERA_ANGLE;
-  double CAMERA_HEIGHT;
-  double TARGET_HEIGHT;
-};
 
 const double FOV_X = 75; //horizontal Field of View in degrees
 const double FOV_Y = 47; //vertical Field of View in degrees
 const double RESOLUTION_WIDTH = 320; //in pixels, 320 x 200
 const double RESOLUTION_HEIGHT = 200; //in pixels
+const double CAMERA_ANGLE = 0.0; //in degrees -- see wiki
+const double CAMERA_HEIGHT = 0.0; //in inches
+
+//TODO: Edit these values
+const double VERTICAL_ZERO_OFFSET_BOILER = 0.0; //in degrees -- see wiki
+const double TARGET_HEIGHT_BOILER = 0.0; //in inches
+
+const double VERTICAL_ZERO_OFFSET_GEAR = 0.0; //in degrees -- see wiki
+const double TARGET_HEIGHT_GEAR = 0.0; //in inches
+
 double angleToTarget_x; //horizontal angle in degrees
 double angleToTarget_y; //vertical angle in degrees
 double distanceToTarget; //inches
@@ -29,7 +32,6 @@ enum state {
 
 //default values
 state currentState = NONE;
-Vars constants = {23.5, 19, 86, 42.5};
 
 void setup() {
   Serial.begin(9600);
@@ -42,14 +44,18 @@ void loop() {
   //make sure we see two blocks
   if (blocks == 2) { 
      if(abs(pixy.blocks[0].y - pixy.blocks[1].y) > abs(pixy.blocks[0].x - pixy.blocks[1].x)){ //checks that vertical distance between blocks is greater than horizontal distance between blocks, meaning that we are seeing the boiler target
-       constants = {23.5, 19, 86, 42.5};
+       angleToTarget_x = getHorizontalAngleOffset(pixy.blocks[0].x);
+       angleToTarget_y = getVerticalAngleOffset(pixy.blocks[0].y, VERTICAL_ZERO_OFFSET_BOILER);
+       distanceToTarget = getDistance(angleToTarget_y, TARGET_HEIGHT_BOILER);
+
        currentState = BOIL;
-       updateValuesBoiler(pixy.blocks[0].x, pixy.blocks[0].y);
        writeBytes(distanceToTarget, angleToTarget_x);
      }else{ //then that means we're seeing the gears!
-       constants = {23.5, 19, 86, 42.5};
+       angleToTarget_x = getHorizontalAngleOffset(pixy.blocks[0].x);
+       angleToTarget_y = getVerticalAngleOffset(pixy.blocks[0].y, VERTICAL_ZERO_OFFSET_GEAR);
+       distanceToTarget = getDistance(angleToTarget_y, TARGET_HEIGHT_GEAR);
+       
        currentState = GEAR;
-       updateValuesGears(pixy.blocks[0].x, pixy.blocks[1].x, pixy.blocks[0].y);
        writeBytes(distanceToTarget, angleToTarget_x);
      }
   }
@@ -65,28 +71,16 @@ double getHorizontalAngleOffset(double x){
   return (x*FOV_X/RESOLUTION_WIDTH) - 37.5;
 }
 
-double getVerticalAngleOffset(double y) {
-  return (constants.VERTICAL_ZERO_OFFSET - (y*FOV_Y/RESOLUTION_HEIGHT )) + constants.CAMERA_ANGLE; //
+double getVerticalAngleOffset(double y, double verticalZeroOffset) {
+  return (verticalZeroOffset - (y*FOV_Y/RESOLUTION_HEIGHT )) + CAMERA_ANGLE; 
 }
 
 double degreesToRadians(double deg){
   return (deg * 3.1415926)/180;
 }
 
-double getDistance(double angleToTargetY){
-  return (constants.TARGET_HEIGHT-constants.CAMERA_HEIGHT)/tan(degreesToRadians((angleToTargetY)));
-}
-
-void updateValuesBoiler(double x, double y){
-  angleToTarget_x = getHorizontalAngleOffset(x);
-  angleToTarget_y = getVerticalAngleOffset(y);
-  distanceToTarget = getDistance(angleToTarget_y);
-}
-
-void updateValuesGears(double x1, double x2, double y){
-  angleToTarget_x = getHorizontalAngleOffset((x1 + x2) / 2); //find the midline between the gear targets, this is what we want to turn to
-  angleToTarget_y = getVerticalAngleOffset(y);
-  distanceToTarget = getDistance(angleToTarget_y);
+double getDistance(double angleToTargetY, double targetHeight){
+  return (targetHeight - CAMERA_HEIGHT)/tan(degreesToRadians((angleToTargetY)));
 }
 
 void writeBytes(double distance, double angle){
