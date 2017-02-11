@@ -1,7 +1,10 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.*;
+import io.reactivex.Flowable;
+
+import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 
 public class Shooter implements Subsystem {
@@ -14,7 +17,7 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    shooterController.setPID(0.05, 0.0, 0.33, 0.035);
-    shooterController.setSetpoint(2950.0);
+    Flowable<ControllerEvent> source = toFlow(() -> new LoopPropertiesEvent(2950.0, 0.05, 0.0, 0.33, 0.035));
+        source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController);
   }
 }
