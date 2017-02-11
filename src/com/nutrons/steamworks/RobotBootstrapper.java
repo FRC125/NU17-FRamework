@@ -38,18 +38,18 @@ public class RobotBootstrapper extends Robot {
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
     // Gamepads
     this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
-    // this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+    this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
   }
 
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
-    //  sm.registerSubsystem(new Shooter(shooterMotor1));
-    //  sm.registerSubsystem(new Feeder(intakeController));
-    //  sm.registerSubsystem(new Hopper(spinHopperMotor));
+    sm.registerSubsystem(new Shooter(shooterMotor1));
+    sm.registerSubsystem(new Feeder(intakeController));
+    sm.registerSubsystem(new Hopper(spinHopperMotor));
     Events.mode(ControlMode.MANUAL).actOn(leftLeader);
     Events.mode(ControlMode.MANUAL).actOn(rightLeader);
-    sm.registerSubsystem(new Drivetrain(driverPad.joy2X(), driverPad.joy1Y().map(x -> -x),
+    sm.registerSubsystem(new Drivetrain(driverPad.joy2X(), driverPad.joy1Y().map(x -> -x), this.driverPad.button(1),
         leftLeader, rightLeader));
     return sm;
   }
