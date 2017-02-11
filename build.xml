@@ -14,7 +14,7 @@
   <target name="checkstyle">
     <ant antfile="${custom-ant}" target="checkstyle"/>
   </target>
-  <target name="compile" depends="install-ivy,install">
+  <target name="compile">
     <ant antfile="${custom-ant}" target="compile"/>
   </target>
   <target name="test">
@@ -48,10 +48,6 @@
   <target name="debug-simulate">
     <ant antfile="${custom-ant}" target="debug-simulate"/>
   </target>
-  <target name="dependencies">
-    <ant antfile="${custom-ant}" target="dependencies"/>
-  </target>
-
 
   <target name="install" depends="install-ivy">
     <ant antfile="${install-ant}" target="install"/>
