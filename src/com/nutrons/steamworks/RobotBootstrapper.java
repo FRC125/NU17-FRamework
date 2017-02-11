@@ -16,9 +16,9 @@ public class RobotBootstrapper extends Robot {
   private Talon shooterMotor2;
   private Talon topHopperMotor;
   private Talon spinHopperMotor;
-  public static Talon hoodMaster;
+  private Talon hoodMaster;
   private Serial serial;
-  public static Vision vision;
+  private Vision vision;
 
   private Talon leftLeader;
   private Talon leftFollower;
