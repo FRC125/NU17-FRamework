@@ -9,20 +9,22 @@ import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class Shooter implements Subsystem {
 
-  private final LoopSpeedController shooterController;
-  private static final double SETPOINT = 2950.0;
-  private static final double PVAL = 0.05;
-  private static final double IVAL = 0.0;
-  private static final double DVAL = 0.33;
-  private static final double FVAL = 0.035;
+    private final LoopSpeedController shooterController;
+    private final Flowable<Boolean> shooterButton;
+    private static final double SETPOINT = 2950.0;
+    private static final double PVAL = 0.05;
+    private static final double IVAL = 0.0;
+    private static final double DVAL = 0.33;
+    private static final double FVAL = 0.035;
 
-  public Shooter(LoopSpeedController shooterController) {
-    this.shooterController = shooterController;
-  }
+    public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton) {
+        this.shooterController = shooterController;
+        this.shooterButton = shooterButton;
+    }
 
-  @Override
-  public void registerSubscriptions() {
-    Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
-    source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController);
-  }
+    @Override
+    public void registerSubscriptions() {
+        Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
+        shooterButton.map(b -> b ? source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController) : 0.0);
+    }
 }

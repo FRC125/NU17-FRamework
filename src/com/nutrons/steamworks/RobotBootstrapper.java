@@ -9,19 +9,17 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
-import static com.nutrons.framework.controllers.Events.setOutputVoltage;
-
 public class RobotBootstrapper extends Robot {
 
     public final static int PACKET_LENGTH = 17;
     private LoopSpeedController intakeController;
     private LoopSpeedController intakeController2;
-    private Talon shooterMotor1;
-    private Talon shooterMotor2;
+    private LoopSpeedController shooterMotor1;
+    private LoopSpeedController shooterMotor2;
     private Talon topFeederMotor;
     private Talon spinFeederMotor;
-    private Talon climberController;
-    private Talon climberMotor2;
+    private LoopSpeedController climberController;
+    private LoopSpeedController climberMotor2;
     private Talon hoodMaster;
     private Serial serial;
     private Vision vision;
@@ -36,7 +34,7 @@ public class RobotBootstrapper extends Robot {
 
     @Override
     protected void constructStreams() {
-        this.serial = new Serial(PACKET_LENGTH *2, PACKET_LENGTH);
+        this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
         this.vision = Vision.getInstance(serial.getDataStream());
 
         this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
@@ -48,9 +46,9 @@ public class RobotBootstrapper extends Robot {
         this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
         this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
         this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
-        this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, this.shooterMotor1);
+        this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, (Talon) this.shooterMotor1);
         this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-        this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, this.climberController);
+        this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.climberController);
         // Drivetrain Motors
         this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
         this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
@@ -65,9 +63,9 @@ public class RobotBootstrapper extends Robot {
     protected StreamManager provideStreamManager() {
         StreamManager sm = new StreamManager(this);
         sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-        sm.registerSubsystem(new Shooter(shooterMotor1));
-        sm.registerSubsystem(new Feeder(spinFeederMotor));
-        sm.registerSubsystem(new Climbtake(climberController, intakeController));
+        sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
+        sm.registerSubsystem(new Feeder(spinFeederMotor, this.driverPad.button(2)));
+        sm.registerSubsystem(new Climbtake(climberController, intakeController, this.driverPad.button(4), this.driverPad.button(3)));
         sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
                 leftLeader, rightLeader));
         return sm;
