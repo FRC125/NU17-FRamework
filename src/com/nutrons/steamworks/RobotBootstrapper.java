@@ -34,12 +34,12 @@ public class RobotBootstrapper extends Robot {
 
     @Override
     protected void constructStreams() {
-        this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-        this.vision = Vision.getInstance(serial.getDataStream());
+        //this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+        //this.vision = Vision.getInstance(serial.getDataStream());
 
-        this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-        Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
-        Events.resetPosition(0.0).actOn(this.hoodMaster);
+        //this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+        //Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
+        //Events.resetPosition(0.0).actOn(this.hoodMaster);
 
         this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
         this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
@@ -62,12 +62,12 @@ public class RobotBootstrapper extends Robot {
     @Override
     protected StreamManager provideStreamManager() {
         StreamManager sm = new StreamManager(this);
-        sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-        sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
-        sm.registerSubsystem(new Feeder(spinFeederMotor, this.driverPad.button(2)));
+        //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+        //sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
+        sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
         sm.registerSubsystem(new Climbtake(climberController, intakeController, this.driverPad.button(4), this.driverPad.button(3)));
-        sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
-                leftLeader, rightLeader));
+        //sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
+                //leftLeader, rightLeader));
         return sm;
     }
 
