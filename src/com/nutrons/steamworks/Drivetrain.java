@@ -3,9 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.*;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.util.Command;
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
