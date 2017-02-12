@@ -29,7 +29,8 @@ public class Vision {
     this.dataStreamString = this.dataStream
         .filter(x -> x.length == 17)
         .map(x -> new String(x, "UTF-8"))
-        .map(x -> x == DUMMY_VALUE ? "NONE:0.0:0.0" : x) //vision will change any dummy values to 0.0
+        .map(x -> x == DUMMY_VALUE ? "NONE:0.0:360.0" : x) //vision will change any dummy values to 360 to make the turret
+                                                           //scan for a target (but distance stays as 0.0)
         .map(x -> x.split(":")).filter(x -> x.length == 3);
     //Returns a string array[state, distance, angle]
     //states are NONE, GEAR, or BOIL

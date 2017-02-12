@@ -5,7 +5,9 @@ import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
 
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
@@ -18,6 +20,8 @@ public class Turret implements Subsystem {
   private static final double DVAL = 0.0;
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
+  private WpiSmartDashboard sd;
+  private Consumer<Double> position;
 
   public Turret(Flowable<Double> angle, Talon master) {
     this.angle = angle;
@@ -31,6 +35,8 @@ public class Turret implements Subsystem {
             .map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
             .map(x -> Events.pid(hoodMaster.position() + x, PVAL, IVAL, DVAL, FVAL));
 
+    position = sd.getTextFieldDouble("position");
+    toFlow(() -> hoodMaster.position()).subscribe(position);
     source.subscribe(hoodMaster);
   }
 }
