@@ -34,6 +34,7 @@ public class Drivetrain implements Subsystem {
    * @param leftDrive  all controllers on the left of the drivetrain
    * @param rightDrive all controllers on the right of the drivetrain
    */
+
   public Drivetrain(Flowable<Double> throttle, Flowable<Double> yaw, Flowable<Boolean> holdHeading,
                     Consumer<ControllerEvent> leftDrive, Consumer<ControllerEvent> rightDrive) {
 
@@ -79,7 +80,8 @@ public class Drivetrain implements Subsystem {
             .map(Events::power)
             .subscribe(rightDrive);
   }
-    private void driveNormalAction() {
+
+  private void driveNormalAction() {
     combineLatest(throttle, yaw, (x, y) -> x + y)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
@@ -114,6 +116,5 @@ public class Drivetrain implements Subsystem {
             .map(Events::power)
             .subscribe(rightDrive);
     this.PIDControl.getOutput().subscribe(pidControlLog);
-
   }
 }
