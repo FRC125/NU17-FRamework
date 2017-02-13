@@ -40,6 +40,8 @@ public class RobotBootstrapper extends Robot {
     //this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     //Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     //Events.resetPosition(0.0).actOn(this.hoodMaster);
+    Events.setOutputVoltage(-12f, +12f).actOn((Talon)this.shooterMotor1);
+    Events.mode(ControlMode.LOOP_SPEED);
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
