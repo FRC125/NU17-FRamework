@@ -22,7 +22,7 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> setpoint;
   private final Flowable<Double> gyroAngles;
   private final Flowable<Double> error;
-  private double gyroSetpoint = 0.0;
+  private double gyroSetpoint = 15.0;
   private final FlowingPID PIDControl;
   //private final Command holdHeadingCmd;
   //private final Command driveNormalCmd;
@@ -52,7 +52,7 @@ public class Drivetrain implements Subsystem {
             });
     this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
-    this.PIDControl = new FlowingPID(error, 0.015, 0.001, 0.0);
+    this.PIDControl = new FlowingPID(error, 0.055, 0.001, 0.015);
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
