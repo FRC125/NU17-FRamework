@@ -3,26 +3,14 @@ package com.nutrons.steamworks;
 import io.reactivex.Flowable;
 
 public class Vision {
-
+  private static final String DUMMY_VALUE = "NONE:-1000:-1000"; //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  //robot sending an exception "no serial port found"
+  private static Vision instance;
   private Flowable<byte[]> dataStream;
   private Flowable<String[]> dataStreamString;
   private Flowable<Double> angle;
   private Flowable<Double> distance;
   private Flowable<String> state;
-  private static final String DUMMY_VALUE = "NONE:-1000:-1000"; //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
-                                                               //robot sending an exception "no serial port found"
-  private static Vision instance;
-
-  public static Vision getInstance(Flowable<byte[]> dataStream){
-    if(instance == null){
-      instance = new Vision(dataStream);
-    }
-    return instance;
-  }
-
-  public static Vision getInstance(){
-    return instance;
-  }
 
   private Vision(Flowable<byte[]> dataStream) {
     this.dataStream = dataStream;
@@ -37,6 +25,17 @@ public class Vision {
     this.state = dataStreamString.map(x -> x[0]);
     this.distance = dataStreamString.map(x -> Double.valueOf(x[1]));
     this.angle = dataStreamString.map(x -> Double.valueOf(x[2]));
+  }
+
+  public static Vision getInstance(Flowable<byte[]> dataStream) {
+    if (instance == null) {
+      instance = new Vision(dataStream);
+    }
+    return instance;
+  }
+
+  public static Vision getInstance() {
+    return instance;
   }
 
   public Flowable<Double> getAngle() {
