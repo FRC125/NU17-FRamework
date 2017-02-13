@@ -44,11 +44,11 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.headingGyro = new HeadingGyro();
-    this.gyroAngles = headingGyro.getGyroReadings().subscribeOn(Schedulers.io())
+    this.gyroAngles = headingGyro.getGyroReadings()
             .map(x -> {
-          System.out.println(x + "  = Gyro Angles");
-          return x;
-      });
+              System.out.println(x + " = Gyro Readings");
+              return x;
+            });
     this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
     this.PIDControl = new FlowingPID(error, 0.025, 0.0, 0.01);
@@ -67,7 +67,7 @@ public class Drivetrain implements Subsystem {
   }
 
   private void holdHeadingAction() {
-    headingGyro.reset();
+    headingGyro.resetGyro();
     setSetpoint(0.0);
     combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
             .subscribeOn(Schedulers.io())
@@ -102,7 +102,7 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    headingGyro.reset();
+    headingGyro.resetGyro();
     setSetpoint(0.0);
 
     combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
