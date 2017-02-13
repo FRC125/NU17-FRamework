@@ -24,8 +24,8 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
-    shooterButton.map(b -> b ? source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController) : 0.0);
+    /**Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
+    shooterButton.map(b -> b ? source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController) : 0.0);**/
     shooterButton.map(b -> b ? SHOOTER_POWER : 0.0).map(Events::power).subscribe(shooterController);
   }
 }
