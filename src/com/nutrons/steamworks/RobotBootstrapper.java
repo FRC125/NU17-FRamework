@@ -48,7 +48,7 @@ public class RobotBootstrapper extends Robot {
         this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
         this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, (Talon) this.shooterMotor1);
         this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-        this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.climberController);
+        this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
         // Drivetrain Motors
         this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
         this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
@@ -63,11 +63,11 @@ public class RobotBootstrapper extends Robot {
     protected StreamManager provideStreamManager() {
         StreamManager sm = new StreamManager(this);
         //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-        //sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
+        sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
         sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
-        sm.registerSubsystem(new Climbtake(climberController, intakeController, this.driverPad.button(4), this.driverPad.button(3)));
-        //sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
-                //leftLeader, rightLeader));
+        sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
+        sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
+                leftLeader, rightLeader));
         return sm;
     }
 

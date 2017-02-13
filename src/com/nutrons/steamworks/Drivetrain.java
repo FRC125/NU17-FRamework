@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
@@ -33,7 +34,7 @@ public class Drivetrain implements Subsystem {
 
     @Override
     public void registerSubscriptions() {
-        combineLatest(throttle, yaw, (x, y) -> x + y).map(Events::power).subscribe(leftDrive);
-        combineLatest(throttle, yaw, (x, y) -> x - y).map(Events::power).subscribe(rightDrive);
+        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x + y) / 2)).map(Events::power).subscribe(leftDrive);
+        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x - y) / 2)).map(Events::power).subscribe(rightDrive);
     }
 }

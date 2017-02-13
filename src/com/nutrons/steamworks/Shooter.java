@@ -11,6 +11,7 @@ public class Shooter implements Subsystem {
 
     private final LoopSpeedController shooterController;
     private final Flowable<Boolean> shooterButton;
+    private static final double SHOOTER_POWER = 1.0;
     private static final double SETPOINT = 2950.0;
     private static final double PVAL = 0.05;
     private static final double IVAL = 0.0;
@@ -24,7 +25,8 @@ public class Shooter implements Subsystem {
 
     @Override
     public void registerSubscriptions() {
-        Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
-        shooterButton.map(b -> b ? source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController) : 0.0);
+        /**Flowable<ControllerEvent> source = Flowable.just(Events.pid(SETPOINT, PVAL, IVAL, DVAL, FVAL));
+        shooterButton.map(b -> b ? source.mergeWith(toFlow(() -> new LoopModeEvent(ControlMode.LOOP_SPEED))).subscribe(shooterController) : 0.0);**/
+        shooterButton.map(b -> b ? SHOOTER_POWER : 0.0).map(Events::power).subscribe(shooterController);
     }
 }
