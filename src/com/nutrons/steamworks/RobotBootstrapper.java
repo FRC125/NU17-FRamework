@@ -67,7 +67,7 @@ public class RobotBootstrapper extends Robot {
         sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
         sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
         sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
-                leftLeader, rightLeader));
+                leftLeader, rightLeader, this.driverPad.button(5)));
         return sm;
     }
 

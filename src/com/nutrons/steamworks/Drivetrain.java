@@ -15,6 +15,8 @@ public class Drivetrain implements Subsystem {
     private final Flowable<Double> yaw;
     private final Consumer<ControllerEvent> leftDrive;
     private final Consumer<ControllerEvent> rightDrive;
+    private final Flowable<Boolean> flipHeading;
+    private double flip;
 
     /**
      * A drivetrain which uses Arcade Drive.
@@ -25,16 +27,20 @@ public class Drivetrain implements Subsystem {
     public Drivetrain(Flowable<Double> throttle,
                       Flowable<Double> yaw,
                       Consumer<ControllerEvent> leftDrive,
-                      Consumer<ControllerEvent> rightDrive) {
+                      Consumer<ControllerEvent> rightDrive,
+                      Flowable<Boolean> flipHeading) {
         this.throttle = deadband(throttle);
         this.yaw = deadband(yaw);
         this.leftDrive = leftDrive;
         this.rightDrive = rightDrive;
+        this.flipHeading = flipHeading;
+        this.flip = 1;
     }
 
     @Override
     public void registerSubscriptions() {
-        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x + y) / 2)).map(Events::power).subscribe(leftDrive);
-        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x - y) / 2)).map(Events::power).subscribe(rightDrive);
+        flip = FlowOperators.getLastValue(flipHeading.map(b -> b ? 1.0 : -1.0));
+        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x*flip + y) / 2)).map(Events::power).subscribe(leftDrive);
+        FlowOperators.deadband(combineLatest(throttle, yaw, (x, y) -> -(x*flip - y) / 2)).map(Events::power).subscribe(rightDrive);
     }
 }
