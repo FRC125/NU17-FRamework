@@ -2,6 +2,8 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.controllers.ControlMode;
+import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
@@ -45,6 +47,8 @@ public class RobotBootstrapper extends Robot {
     this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, (Talon) this.shooterMotor1);
+    Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
+    Events.mode(ControlMode.LOOP_SPEED);
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
     // Drivetrain Motors
