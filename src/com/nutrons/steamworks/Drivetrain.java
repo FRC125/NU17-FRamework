@@ -7,12 +7,9 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
-
 
 public class Drivetrain implements Subsystem {
   private final Flowable<Double> throttle;
