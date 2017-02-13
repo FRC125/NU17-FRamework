@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.*;
 import com.nutrons.framework.inputs.HeadingGyro;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
@@ -27,6 +28,7 @@ public class Drivetrain implements Subsystem {
   //private final Command driveNormalCmd;
   private final double deadband = 0.3;
   private Consumer<Double> pidControlLog;
+  private WpiSmartDashboard sd;
 
   /**
    * A drivetrain which uses Arcade Drive. AKA Cheezy Drive
@@ -50,10 +52,12 @@ public class Drivetrain implements Subsystem {
             });
     this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
-    this.PIDControl = new FlowingPID(error, 0.025, 0.0, 0.01);
+    this.PIDControl = new FlowingPID(error, 0.015, 0.001, 0.0);
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
+    this.sd = new WpiSmartDashboard();
+    pidControlLog = sd.getTextFieldDouble("Control Output");
   }
 
   private synchronized double getSetpoint() {
@@ -103,7 +107,7 @@ public class Drivetrain implements Subsystem {
   public void registerSubscriptions() {
     headingGyro.reset();
     setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
+    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
