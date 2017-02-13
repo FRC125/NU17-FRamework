@@ -53,16 +53,16 @@ public class RobotBootstrapper extends Robot {
     this.leftLeader.setControlMode(ControlMode.MANUAL);
 
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
-    this.leftFollower.setControlMode(ControlMode.MANUAL);
+
 
     this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
 
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
-    this.rightFollower.setControlMode(ControlMode.MANUAL);
+
     // Gamepads
     this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
-    this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+    //this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
   }
 
   @Override
