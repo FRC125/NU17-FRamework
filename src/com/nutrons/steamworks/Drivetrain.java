@@ -29,6 +29,7 @@ public class Drivetrain implements Subsystem {
   //private final Command holdHeadingCmd;
   //private final Command driveNormalCmd;
   private final double deadband = 0.3;
+  private Consumer<Double> pidControlLog;
 
   /**
    * A drivetrain which uses Arcade Drive. AKA Cheezy Drive
@@ -115,6 +116,7 @@ public class Drivetrain implements Subsystem {
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
+    this.PIDControl.getOutput().subscribe(pidControlLog);
 
   }
 }
