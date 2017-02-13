@@ -55,7 +55,6 @@ public class Drivetrain implements Subsystem {
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
-
   }
 
   private synchronized double getSetpoint() {
@@ -67,7 +66,7 @@ public class Drivetrain implements Subsystem {
   }
 
   private void holdHeadingAction() {
-    headingGyro.resetGyro();
+    headingGyro.reset();
     setSetpoint(0.0);
     combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
             .subscribeOn(Schedulers.io())
@@ -102,9 +101,8 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    headingGyro.resetGyro();
+    headingGyro.reset();
     setSetpoint(0.0);
-
     combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
