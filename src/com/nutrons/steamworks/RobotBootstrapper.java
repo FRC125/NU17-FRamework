@@ -1,5 +1,6 @@
 package com.nutrons.steamworks;
 
+import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
@@ -34,12 +35,12 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    //this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    //this.vision = Vision.getInstance(serial.getDataStream());
+    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+    this.vision = Vision.getInstance(serial.getDataStream());
 
-    //this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    //Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
-    //Events.resetPosition(0.0).actOn(this.hoodMaster);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
+    Events.resetPosition(0.0).actOn(this.hoodMaster);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon)this.shooterMotor1);
     Events.mode(ControlMode.LOOP_SPEED);
 
@@ -66,7 +67,7 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
-    //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
     sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));

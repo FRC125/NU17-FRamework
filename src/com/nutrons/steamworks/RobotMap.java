@@ -11,7 +11,7 @@ public class RobotMap {
   // TODO: Change hopper ports to match robot
   public static final int TOP_HOPPER_MOTOR = 6;
   public static final int SPIN_FEEDER_MOTOR = 4;
-  //public static final int HOOD_MOTOR_A = 5;
+  public static final int HOOD_MOTOR_A = 5;
   // Ports of wheels TODO: Fix ports to match robot motors
   public static final int FRONT_LEFT = 1;
   public static final int BACK_LEFT = 20;
