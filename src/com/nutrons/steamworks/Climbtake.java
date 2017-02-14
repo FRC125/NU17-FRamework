@@ -7,7 +7,7 @@ import io.reactivex.Flowable;
 
 public class Climbtake implements Subsystem {
   private static final double CLIMBTAKE_SPEED_LEFT = 1.0;
-  private static final double CLIMBTAKE_SPEED_RIGHT = 1.0;
+  private static final double CLIMBTAKE_SPEED_RIGHT = -1.0;
   private final LoopSpeedController climbtakeControllerLeft;
   private final LoopSpeedController climbtakeControllerRight;
   private final Flowable<Boolean> forward;
