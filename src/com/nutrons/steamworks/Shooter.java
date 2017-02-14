@@ -35,7 +35,7 @@ public class Shooter implements Subsystem {
     Events.pid(PVAL, IVAL, DVAL, FVAL).actOn(shooterController);
 
     this.speedLog = sd.getTextFieldDouble("shooter speed");
-    FlowOperators.toFlow(this.shooterController::speed).subscribe(speedLog);
+    //FlowOperators.toFlow(this.shooterController::speed).subscribe(speedLog);
     shooterButton.subscribe(System.out::println);
 
     shooterButton.map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
