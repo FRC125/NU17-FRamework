@@ -9,6 +9,10 @@ import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
+import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
+
+import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
@@ -75,4 +79,16 @@ public class RobotBootstrapper extends Robot {
     return sm;
   }
 
+  /**
+   * Converts booleans into streams, and if the boolean is true,
+   * delay the emission of the item by the specified amount.
+   * Useful as an argument of switchMap on button streams.
+   * The combination will delay all true value emissions by the specified delay,
+   * but if false is emitted within that delay, the delayed true value will be discarded.
+   * Effectively, subscribers will only receive true values if the button
+   * is held down past the time specified by the delay.
+   */
+  static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
+    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+  }
 }
