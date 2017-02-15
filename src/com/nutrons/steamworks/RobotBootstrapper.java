@@ -69,9 +69,9 @@ public class RobotBootstrapper extends Robot {
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
     //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-    sm.registerSubsystem(new Shooter((Talon)shooterMotor2, this.driverPad.button(6)));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
+    sm.registerSubsystem(new Shooter((Talon)shooterMotor2, this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
     sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
         leftLeader, rightLeader, this.driverPad.button(5)));
     return sm;

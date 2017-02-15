@@ -30,7 +30,7 @@ public class Shooter implements Subsystem {
   @Override
   public void registerSubscriptions() {
     this.shooterController.setControlMode(ControlMode.MANUAL);
-    this.shooterController.setReversedSensor(true);
+    this.shooterController.setReversedSensor(false);
     Events.pid(PVAL, IVAL, DVAL, FVAL).actOn(shooterController);
 
     this.speedLog = sd.getTextFieldDouble("shooter speed");
