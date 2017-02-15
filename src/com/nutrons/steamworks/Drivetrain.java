@@ -45,7 +45,7 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.headingGyro = new HeadingGyro();
-    this.gyroAngles = headingGyro.getGyroReadings()
+    this.gyroAngles = headingGyro.getGyroReadings()     
             .map(x -> {
               System.out.println(x + " = Gyro Readings");
               return x;
