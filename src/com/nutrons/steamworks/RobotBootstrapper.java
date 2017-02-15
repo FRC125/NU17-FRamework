@@ -18,8 +18,8 @@ public class RobotBootstrapper extends Robot {
   public final static int PACKET_LENGTH = 17;
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
-  private Talon shooterMotor1;
-  private Talon shooterMotor2;
+  private LoopSpeedController shooterMotor1;
+  private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
   private Talon spinFeederMotor;
   private LoopSpeedController climberController;
@@ -49,7 +49,6 @@ public class RobotBootstrapper extends Robot {
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
-
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
@@ -70,7 +69,7 @@ public class RobotBootstrapper extends Robot {
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
     //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.driverPad.button(6)));
+    sm.registerSubsystem(new Shooter((Talon)shooterMotor2, this.driverPad.button(6)));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
     sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
