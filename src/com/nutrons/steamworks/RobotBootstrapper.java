@@ -3,12 +3,11 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
-import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.inputs.WpiXboxGamepad;
+import com.nutrons.framework.inputs.CommonController;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -34,8 +33,8 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private WpiXboxGamepad driverPad;
-  private WpiXboxGamepad operatorPad;
+  private CommonController driverPad;
+  private CommonController operatorPad;
 
   @Override
   protected void constructStreams() {
@@ -63,8 +62,8 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
     // Gamepads
-    this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
-   // this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
   }
 
   @Override
@@ -74,7 +73,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Shooter(shooterMotor2, this.driverPad.button(6)));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
-    sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
+    sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
         leftLeader, rightLeader, this.driverPad.button(5)));
     return sm;
   }

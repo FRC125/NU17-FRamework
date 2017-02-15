@@ -5,7 +5,6 @@ import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
