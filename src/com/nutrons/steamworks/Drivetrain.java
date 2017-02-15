@@ -19,25 +19,32 @@ public class Drivetrain implements Subsystem {
   private final Consumer<ControllerEvent> rightDrive;
   //private final Flowable<Command> holdHeading;
   private final HeadingGyro headingGyro;
-  private final Flowable<Double> setpoint;
+  private final Flowable<Double> angleSetpoint;
   private final Flowable<Double> gyroAngles;
-  private final Flowable<Double> error;
-  private double gyroSetpoint = 15.0;
-  private final FlowingPID PIDControl;
-  //private final Command holdHeadingCmd;
-  //private final Command driveNormalCmd;
-  private final double deadband = 0.3;
-  private Consumer<Double> pidControlLog;
+  private final Flowable<Double> headingError;
+  private double gyroSetpoint = 0.0;
+  //public final Command holdHeadingCmd;
+  //public final Command driveNormalCmd;
+  private final FlowingPID pidHeadingControl;
+  private Consumer<Double> pidHeadingControlLog;
+  private final Flowable<Double> distanceSetpoint;
+  private final Flowable<Double> encoderValues;
+  private final Flowable<Double> distanceError;
+  private double encoderSetpoint = 0.0;
+  private final FlowingPID pidDistanceControl;
+  private Consumer<Double> pidDistanceControlLog;
   private WpiSmartDashboard sd;
+  private final double deadband = 0.3;
 
   /**
    * A drivetrain which uses Arcade Drive. AKA Cheezy Drive
+   *
    *
    * @param leftDrive  all controllers on the left of the drivetrain
    * @param rightDrive all controllers on the right of the drivetrain
    */
 
-  public Drivetrain(Flowable<Double> throttle, Flowable<Double> yaw, Flowable<Boolean> holdHeading,
+  public Drivetrain(Flowable<Double> throttle, Flowable<Double> yaw, Flowable<Boolean> holdHeading, Talon encoderMotor,
                     Consumer<ControllerEvent> leftDrive, Consumer<ControllerEvent> rightDrive) {
 
     this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0)).subscribeOn(Schedulers.io()).onBackpressureDrop();
@@ -50,50 +57,63 @@ public class Drivetrain implements Subsystem {
               System.out.println(x + " = Gyro Readings");
               return x;
             });
-    this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
-    this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
-    this.PIDControl = new FlowingPID(error, 0.01, 0.0, 0.0);
+    this.angleSetpoint = toFlow(() -> getAngleSetpoint()).subscribeOn(Schedulers.io());
+    this.headingError = combineLatest(angleSetpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
+    this.pidHeadingControl = new FlowingPID(headingError, 0.01, 0.0, 0.0);
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
+    this.encoderValues = toFlow(() -> encoderMotor.position())
+            .map(x -> {
+              System.out.println(x + " = Encoder Readings");
+              return x;
+            });
+    this.
+    this.distanceSetpoint = toFlow(() -> getEncoderSetpoint()).subscribeOn(Schedulers.io());
+    this.distanceError = combineLatest(distanceSetpoint, encoderValues, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
+    this.pidDistanceControl = new FlowingPID(distanceError, 0.01, 0.0, 0.0);
     this.sd = new WpiSmartDashboard();
-    pidControlLog = sd.getTextFieldDouble("Control Output");
+    pidHeadingControlLog = sd.getTextFieldDouble("Heading Control Output");
+    pidDistanceControlLog =  sd.getTextFieldDouble("Distance Control Log");
+
+  }
+  private double getEncoderSetpoint() {
+    return encoderSetpoint;
   }
 
-  private synchronized double getSetpoint() {
+  private void setEncoderSetpoint (double setpoint) {
+    this.encoderSetpoint = setpoint;
+  }
+  private synchronized double getAngleSetpoint() {
     return gyroSetpoint;
   }
 
-  private void setSetpoint (double setpoint) {
-    this.gyroSetpoint = setpoint;
+  private void setAngleSetpoint(double angleSetpoint) {
+    this.gyroSetpoint = angleSetpoint;
   }
 
   private void holdHeadingAction() {
     headingGyro.reset();
-    setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y - z)
+    setAngleSetpoint(0.0);
+    combineLatest(throttle, yaw, pidHeadingControl.getOutput(), (x, y, z) -> x + y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
-            .map(Events::power).subscribe(leftDrive);
+            .map(Events::power)
+            .subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x - y - z)
+    combineLatest(throttle, yaw, pidHeadingControl.getOutput(), (x, y, z) -> x - y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
-    this.PIDControl.getOutput().subscribe(pidControlLog);
   }
 
   private void driveNormalAction() {
     combineLatest(throttle, yaw, (x, y) -> x + y)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
-            .map(x -> {
-              System.out.println(x);
-              return x;
-            })
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power).subscribe(leftDrive);
     combineLatest(throttle, yaw, (x, y) -> x - y)
@@ -104,22 +124,28 @@ public class Drivetrain implements Subsystem {
             .subscribe(rightDrive);
   }
 
-  @Override
-  public void registerSubscriptions() {
-    headingGyro.reset();
-    setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y - z)
+  private void driveDistanceAction() {
+    encoderValues..reset();
+    setAngleSetpoint(0.0);
+    combineLatest(throttle, yaw, pidHeadingControl.getOutput(), (x, y, z) -> x + y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
-            .map(Events::power).subscribe(leftDrive);
+            .map(Events::power)
+            .subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x - y - z)
+    combineLatest(throttle, yaw, pidHeadingControl.getOutput(), (x, y, z) -> x - y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
-    this.PIDControl.getOutput().subscribe(pidControlLog);
+  }
+
+  @Override
+  public void registerSubscriptions() {
+
+    this.pidHeadingControl.getOutput().subscribe(pidHeadingControlLog);
+    this.pidDistanceControl.getOutput().subscribe(pidDistanceControlLog);
   }
 }

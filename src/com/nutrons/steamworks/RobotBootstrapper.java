@@ -9,6 +9,8 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 public class RobotBootstrapper extends Robot {
 
   public final static int PACKET_LENGTH = 17;
@@ -77,7 +79,7 @@ public class RobotBootstrapper extends Robot {
     Events.mode(ControlMode.MANUAL).actOn(leftLeader);
     Events.mode(ControlMode.MANUAL).actOn(rightLeader);
     */
-    sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y().map(x -> x), this.driverPad.button(1),
+    sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y().map(x -> x), this.driverPad.button(1), leftLeader,
         leftLeader, rightLeader));
     return sm;
   }
