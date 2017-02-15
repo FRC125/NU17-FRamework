@@ -52,7 +52,7 @@ public class Drivetrain implements Subsystem {
             });
     this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
-    this.PIDControl = new FlowingPID(error, 0.055, 0.001, 0.015);
+    this.PIDControl = new FlowingPID(error, 0.01, 0.0, 0.0);
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
@@ -71,7 +71,7 @@ public class Drivetrain implements Subsystem {
   private void holdHeadingAction() {
     headingGyro.reset();
     setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
+    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
@@ -83,6 +83,7 @@ public class Drivetrain implements Subsystem {
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
+    this.PIDControl.getOutput().subscribe(pidControlLog);
   }
 
   private void driveNormalAction() {
