@@ -71,7 +71,7 @@ public class RobotBootstrapper extends Robot {
     //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
     sm.registerSubsystem(driverPad);
     sm.registerSubsystem(operatorPad);
-    sm.registerSubsystem(new Shooter((Talon)shooterMotor2, this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
     sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
