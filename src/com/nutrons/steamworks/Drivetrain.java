@@ -8,6 +8,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
+import static com.nutrons.framework.util.FlowOperators.pidLoop;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
@@ -23,7 +24,7 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> gyroAngles;
   private final Flowable<Double> error;
   private double gyroSetpoint = 15.0;
-  private final FlowingPID PIDControl;
+  private final Flowable<Double> PIDOutput;
   //private final Command holdHeadingCmd;
   //private final Command driveNormalCmd;
   private final double deadband = 0.3;
@@ -52,7 +53,7 @@ public class Drivetrain implements Subsystem {
             });
     this.setpoint = toFlow(() -> getSetpoint()).subscribeOn(Schedulers.io());
     this.error = combineLatest(setpoint, gyroAngles, (x, y) -> x - y).subscribeOn(Schedulers.io()).onBackpressureDrop();
-    this.PIDControl = new FlowingPID(error, 0.045, 0.0, 0.0065);
+    this.PIDOutput = error.compose(pidLoop(0.045, 10,0.0, 0.0065));
     //this.holdHeadingCmd = Command.create(() -> holdHeadingAction());
     //this.driveNormalCmd = Command.create(() -> driveNormalAction());
     //this.holdHeading = holdHeading.map(x -> x ? holdHeadingCmd : driveNormalCmd); // Right Trigger
@@ -71,19 +72,19 @@ public class Drivetrain implements Subsystem {
   private void holdHeadingAction() {
     headingGyro.reset();
     setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y - z)
+    combineLatest(throttle, yaw, PIDOutput, (x, y, z) -> x + y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power).subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x - y - z)
+    combineLatest(throttle, yaw, PIDOutput, (x, y, z) -> x - y - z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
-    this.PIDControl.getOutput().subscribe(pidControlLog);
+    this.PIDOutput.subscribe(pidControlLog);
   }
 
   private void driveNormalAction() {
@@ -108,18 +109,18 @@ public class Drivetrain implements Subsystem {
   public void registerSubscriptions() {
     headingGyro.reset();
     setSetpoint(0.0);
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x + y + z)
+    combineLatest(throttle, yaw, PIDOutput, (x, y, z) -> x + y + z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power).subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, PIDControl.getOutput(), (x, y, z) -> x - y + z)
+    combineLatest(throttle, yaw, PIDOutput, (x, y, z) -> x - y + z)
             .subscribeOn(Schedulers.io())
             .onBackpressureDrop()
             .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
             .map(Events::power)
             .subscribe(rightDrive);
-    this.PIDControl.getOutput().subscribe(pidControlLog);
+    this.PIDOutput.subscribe(pidControlLog);
   }
 }
