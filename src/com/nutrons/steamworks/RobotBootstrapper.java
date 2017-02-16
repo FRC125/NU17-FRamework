@@ -4,9 +4,9 @@ import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.inputs.WpiXboxGamepad;
 import io.reactivex.Flowable;
 
 public class RobotBootstrapper extends Robot {
@@ -26,8 +26,8 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private WpiXboxGamepad driverPad;
-  private WpiXboxGamepad operatorPad;
+  private CommonController driverPad;
+  private CommonController operatorPad;
   private HeadingGyro gyro;
 
   @Override
@@ -62,8 +62,8 @@ public class RobotBootstrapper extends Robot {
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
 
     // Gamepads
-    this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
-    //this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
 
     this.gyro = new HeadingGyro();
   }
@@ -71,6 +71,8 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+    sm.registerSubsystem(this.driverPad);
+    sm.registerSubsystem(this.operatorPad);
     /*
     sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
     sm.registerSubsystem(new Shooter(shooterMotor1));
@@ -82,7 +84,7 @@ public class RobotBootstrapper extends Robot {
     */
     sm.registerSubsystem(new Drivetrain(driverPad.button(1),
         gyro.getGyroReadings(), Flowable.just(0.0),
-        driverPad.joy2X().map(x -> -x), driverPad.joy1Y().map(x -> x),
+        driverPad.rightStickX().map(x -> -x), driverPad.leftStickY().map(x -> x),
         leftLeader, rightLeader));
     return sm;
   }
