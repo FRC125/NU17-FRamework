@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
@@ -16,12 +17,12 @@ public class Shooter implements Subsystem {
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.33;
   private static final double FVAL = 0.035;
-  private final Talon shooterController;
+  private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private Consumer<Double> speedLog;
   private WpiSmartDashboard sd;
 
-  public Shooter(Talon shooterController, Flowable<Boolean> shooterButton) {
+  public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton) {
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.sd = new WpiSmartDashboard();
@@ -31,7 +32,7 @@ public class Shooter implements Subsystem {
   public void registerSubscriptions() {
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(false);
-    Events.pid(PVAL, IVAL, DVAL, FVAL).actOn(shooterController);
+    this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
 
     this.speedLog = sd.getTextFieldDouble("shooter speed");
     //FlowOperators.toFlow(this.shooterController::speed).subscribe(speedLog);
