@@ -1,13 +1,13 @@
 package com.nutrons.steamworks;
 
-import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
-import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.WpiXboxGamepad;
+import io.reactivex.Flowable;
 
 public class RobotBootstrapper extends Robot {
 
@@ -28,6 +28,7 @@ public class RobotBootstrapper extends Robot {
 
   private WpiXboxGamepad driverPad;
   private WpiXboxGamepad operatorPad;
+  private HeadingGyro gyro;
 
   @Override
   protected void constructStreams() {
@@ -63,6 +64,8 @@ public class RobotBootstrapper extends Robot {
     // Gamepads
     this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
     //this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+
+    this.gyro = new HeadingGyro();
   }
 
   @Override
@@ -77,7 +80,9 @@ public class RobotBootstrapper extends Robot {
     Events.mode(ControlMode.MANUAL).actOn(leftLeader);
     Events.mode(ControlMode.MANUAL).actOn(rightLeader);
     */
-    sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y().map(x -> x), this.driverPad.button(1),
+    sm.registerSubsystem(new Drivetrain(driverPad.button(1),
+        gyro.getGyroReadings(), Flowable.just(0.0),
+        driverPad.joy2X().map(x -> -x), driverPad.joy1Y().map(x -> x),
         leftLeader, rightLeader));
     return sm;
   }
