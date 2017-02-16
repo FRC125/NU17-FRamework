@@ -2,7 +2,6 @@ package com.nutrons.steamworks;
 
 public class RobotMap {
   // Intake or Shooter
-
   public static final int INTAKE_MOTOR = 4;
   public static final int SHOOTER_MOTOR_1 = 2;
   public static final int SHOOTER_MOTOR_2 = 3;
@@ -16,6 +15,7 @@ public class RobotMap {
   public static final int BACK_LEFT = 20;
   public static final int FRONT_RIGHT = 14;
   public static final int BACK_RIGHT = 15;
+
   // Controllers
   public static final int DRIVER_PAD = 1;
   public static final int OP_PAD = 0;
