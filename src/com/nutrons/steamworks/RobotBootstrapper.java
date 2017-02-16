@@ -35,13 +35,13 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected void constructStreams() {
 
-    this.serial = new Serial(PACKET_LENGTH *2, PACKET_LENGTH);
+    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
-            CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-            Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
-            Events.resetPosition(0.0).actOn(this.hoodMaster);
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
+    Events.resetPosition(0.0).actOn(this.hoodMaster);
 
 
     this.topHopperMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
@@ -53,13 +53,10 @@ public class RobotBootstrapper extends Robot {
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
-
 
     this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
 
     // Gamepads
