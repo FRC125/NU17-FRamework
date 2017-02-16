@@ -79,7 +79,7 @@ public class RobotBootstrapper extends Robot {
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.button(1),
+    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
         gyro.getGyroReadings(), Flowable.just(0.0),
         driverPad.rightStickX().map(x -> -x), driverPad.leftStickY().map(x -> x),
         leftLeader, rightLeader));
