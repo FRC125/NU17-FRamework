@@ -7,7 +7,11 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.inputs.WpiXboxGamepad;
+import com.nutrons.framework.inputs.CommonController;
+import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
+
+import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
@@ -29,15 +33,15 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private WpiXboxGamepad driverPad;
-  private WpiXboxGamepad operatorPad;
+  private CommonController driverPad;
+  private CommonController operatorPad;
 
   @Override
   protected void constructStreams() {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
@@ -45,8 +49,10 @@ public class RobotBootstrapper extends Robot {
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
-    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1);
-    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, (Talon) this.shooterMotor1);
+    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
+    Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
+
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
     // Drivetrain Motors
@@ -55,20 +61,35 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
     // Gamepads
-    this.driverPad = new WpiXboxGamepad(RobotMap.DRIVER_PAD);
-    this.operatorPad = new WpiXboxGamepad(RobotMap.OP_PAD);
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
   }
 
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-    sm.registerSubsystem(new Shooter(shooterMotor1, this.driverPad.button(6)));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.driverPad.button(2)));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.button(4), this.driverPad.button(1)));
-    sm.registerSubsystem(new Drivetrain(driverPad.joy2X().map(x -> -x), driverPad.joy1Y(),
+    sm.registerSubsystem(driverPad);
+    sm.registerSubsystem(operatorPad);
+    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
         leftLeader, rightLeader, this.driverPad.button(5)));
+    this.operatorPad.buttonA().subscribe(System.out::println);
     return sm;
   }
 
+  /**
+   * Converts booleans into streams, and if the boolean is true,
+   * delay the emission of the item by the specified amount.
+   * Useful as an argument of switchMap on button streams.
+   * The combination will delay all true value emissions by the specified delay,
+   * but if false is emitted within that delay, the delayed true value will be discarded.
+   * Effectively, subscribers will only receive true values if the button
+   * is held down past the time specified by the delay.
+   */
+  static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
+    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+  }
 }
