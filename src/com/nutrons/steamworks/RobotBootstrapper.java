@@ -34,7 +34,6 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
@@ -80,8 +79,9 @@ public class RobotBootstrapper extends Robot {
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
-        gyro.getGyroReadings(), Flowable.just(0.0),
-        driverPad.rightStickX().map(x -> -x), driverPad.leftStickY().map(x -> x),
+        gyro.getGyroReadings(), Flowable.just(0.0)
+            .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
+        driverPad.rightStickX(), driverPad.leftStickY(),
         leftLeader, rightLeader));
     return sm;
   }

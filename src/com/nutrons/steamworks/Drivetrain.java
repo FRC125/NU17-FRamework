@@ -19,7 +19,7 @@ public class Drivetrain implements Subsystem {
 
   private final Flowable<Double> error;
   private final Flowable<Double> output;
-  private final double deadband = 0.3;
+  private final double deadband = 0.2;
   private final Flowable<Boolean> holdHeading;
 
   /**
@@ -49,14 +49,14 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y + (h ? z : 0.0))
+    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
         .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
         .map(Events::power)
         .subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y + (h ? z : 0.0))
+    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y - (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
         .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
