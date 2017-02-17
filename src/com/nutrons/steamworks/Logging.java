@@ -9,12 +9,14 @@ public class Logging implements Subsystem {
   private Consumer<String> state;
   private Consumer<Double> angle;
   private Consumer<Double> distance;
+  private Consumer<Boolean> feederButton;
 
   Logging() {
     this.sd = new WpiSmartDashboard();
     this.angle = sd.getTextFieldDouble("angle");
     this.distance = sd.getTextFieldDouble("distance");
     this.state = sd.getTextFieldString("state");
+    this.feederButton = sd.getTextFieldBoolean("feeder-button-value");
   }
 
   @Override
