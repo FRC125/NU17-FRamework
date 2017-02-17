@@ -8,20 +8,20 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.Serial;
+// import com.nutrons.framework.inputs.Serial;
 import io.reactivex.Flowable;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
+  // public final static int PACKET_LENGTH = 17;
   private Talon intakeController;
   private Talon shooterMotor1;
   private Talon shooterMotor2;
   private Talon topHopperMotor;
   private Talon spinHopperMotor;
   private Talon hoodMaster;
-  private Serial serial;
-  private Vision vision;
+  // private Serial serial;
+  // private Vision vision;
 
   private Talon leftLeader;
   private Talon leftFollower;
@@ -34,11 +34,10 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    this.vision = Vision.getInstance(serial.getDataStream());
+   // this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+   // this.vision = Vision.getInstance(serial.getDataStream());
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
-        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
@@ -50,17 +49,17 @@ public class RobotBootstrapper extends Robot {
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, this.shooterMotor1);
 
     // Drivetrain Motors
-    this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
+    this.leftLeader = new Talon(RobotMap.FRONT_LEFT, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
 
-    this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
+    this.rightLeader = new Talon(RobotMap.FRONT_RIGHT, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
 
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
-    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
+    // this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
 
     this.gyro = new HeadingGyro();
   }
@@ -69,20 +68,24 @@ public class RobotBootstrapper extends Robot {
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(this.driverPad);
-    sm.registerSubsystem(this.operatorPad);
+    // sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-    sm.registerSubsystem(new Shooter(shooterMotor1));
-    sm.registerSubsystem(new Feeder(intakeController));
-    sm.registerSubsystem(new Hopper(spinHopperMotor));
+    // sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+    // sm.registerSubsystem(new Shooter(shooterMotor1));
+    // sm.registerSubsystem(new Feeder(intakeController));
+    // sm.registerSubsystem(new Hopper(spinHopperMotor));
 
-    leftLeader.setControlMode(ControlMode.MANUAL);
-    rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
-        gyro.getGyroReadings(), Flowable.just(0.0)
-            .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY(),
-        leftLeader, rightLeader));
+    sm.registerSubsystem(new Drivetrain(
+            leftLeader,
+            rightLeader,
+            driverPad.buttonA(),
+            gyro,
+            gyro.getGyroReadings(),
+            Flowable.just(0.0),
+            driverPad.rightStickX(),
+            driverPad.leftStickY(),
+            leftLeader,
+            rightLeader));
     return sm;
   }
 }
