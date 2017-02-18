@@ -10,8 +10,7 @@ import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.util.FlowOperators;
+// import com.nutrons.framework.inputs.Serial;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -32,8 +31,8 @@ public class RobotBootstrapper extends Robot {
   private LoopSpeedController climberMotor2;
 
   private Talon hoodMaster;
-  private Serial serial;
-  private Vision vision;
+  // private Serial serial;
+  // private Vision vision;
 
   private Talon leftLeader;
   private Talon leftFollower;
@@ -63,8 +62,8 @@ public class RobotBootstrapper extends Robot {
     @Override
     protected void constructStreams () {
       this.competitionStream().subscribe(System.out::println);
-      this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-      this.vision = Vision.getInstance(serial.getDataStream());
+      // this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+      // this.vision = Vision.getInstance(serial.getDataStream());
 
       this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
       Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
@@ -113,11 +112,12 @@ public class RobotBootstrapper extends Robot {
     @Override
     protected StreamManager provideStreamManager () {
       StreamManager sm = new StreamManager(this);
+
       sm.registerSubsystem(this.driverPad);
 
       sm.registerSubsystem(this.operatorPad);
 
-      sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+      // sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
 
       sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
       sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
@@ -132,7 +132,7 @@ public class RobotBootstrapper extends Robot {
 
     @Override
     protected Command registerAuto () {
-      return drivetrain.drive().delayTermination(3000, TimeUnit.MILLISECONDS);
+        return null;
     }
 
 }

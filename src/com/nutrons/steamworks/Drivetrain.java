@@ -82,16 +82,17 @@ public class Drivetrain implements Subsystem {
    * 1 Revolution = 0.85 Feet
    * @param targetRevolutions   Desired amount of revolutions... 1 Revolution = 0.85 Feet
    */
-  public  Runnable driveDistanceAction(double targetRevolutions) {
-    return () -> {
+  public  Command driveDistanceAction(double targetRevolutions) {
+    return Command.fromAction(() -> {
       // 1 Revolution = 0.85 Feet
+      System.out.println("Ran Drive Distance Action");
       leftLeader.setControlMode(ControlMode.LOOP_SPEED);
       rightLeader.setControlMode(ControlMode.LOOP_SPEED);
       leftLeader.setPID(0.001, 0.0, 0.0, 0.0);
       rightLeader.setPID(0.001, 0.0, 0.0, 0.0);
       leftLeader.setSetpoint(targetRevolutions);
       rightLeader.setSetpoint(targetRevolutions);
-    };
+    });
   }
 
    /**
@@ -99,37 +100,38 @@ public class Drivetrain implements Subsystem {
    * 1 Revolution = 0.85 Feet
    * @param targetAngle  Desired amount of revolutions... 1 Revolution = 0.85 Feet
    */
-  public  Runnable turnToAngleAction(double targetAngle) {
-    return () -> {
+  public  Command turnToAngleAction(double targetAngle) {
+      System.out.println("Ran Turn To Angle Action");
       gyro.reset();
       targetHeading = Flowable.just(targetAngle);
-                output
-              .subscribeOn(Schedulers.io())
-              .onBackpressureDrop()
-              .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
-              .map(x -> -x)
-              .map(Events::power).subscribe(leftDrive);
+      return Command.fromSubscription(() -> combineDisposable(
+            output
+            .subscribeOn(Schedulers.io())
+            .onBackpressureDrop()
+            .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+            .map(x -> -x)
+            .map(Events::power).subscribe(leftDrive),
 
-                output
-              .subscribeOn(Schedulers.io())
-              .onBackpressureDrop()
-              .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
-              .map(Events::power)
-              .subscribe(rightDrive);
-    };
+            output
+            .subscribeOn(Schedulers.io())
+            .onBackpressureDrop()
+            .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+            .map(Events::power)
+            .subscribe(rightDrive)
+    ));
   }
 
     public Command drive() {
-
-      return Command.fromSubscription(() -> {
-          System.out.println("Ran Drive");
-          Flowable<ControllerEvent> driveForward = Flowable.just(1.0)
-                   .subscribeOn(Schedulers.io())
-                   .map(Events::power);
-           return combineDisposable(driveForward.subscribe(leftLeader),
-           driveForward.subscribe(rightLeader));
+        return Command.fromSubscription(() -> {
+            System.out.println("Ran Drive");
+            Flowable<ControllerEvent> driveForward = Flowable.just(1.0)
+                    .subscribeOn(Schedulers.io())
+                    .map(Events::power);
+            return combineDisposable(driveForward.subscribe(leftLeader),
+                    driveForward.subscribe(rightLeader));
         });
     }
+
   @Override
   public void registerSubscriptions() {
       combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
