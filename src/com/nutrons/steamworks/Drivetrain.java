@@ -15,16 +15,15 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> yaw;
   private final Consumer<ControllerEvent> leftDrive;
   private final Consumer<ControllerEvent> rightDrive;
-
   private final Flowable<Double> error;
   private final Flowable<Double> output;
   private final double deadband = 0.2;
   private final Flowable<Boolean> holdHeading;
-
   private final double ANGLE_P = 0.045;
   private final double ANGLE_I = 0.0;
   private final double ANGLE_D = 0.0065;
   private final int ANGLE_BUFFER_LENGTH = 10;
+  private double flip;
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -35,7 +34,6 @@ public class Drivetrain implements Subsystem {
    * @param leftDrive      all controllers on the left of the drivetrain
    * @param rightDrive     all controllers on the right of the drivetrain
    */
-
   public Drivetrain(Flowable<Boolean> holdHeading,
                     Flowable<Double> currentHeading, Flowable<Double> targetHeading,
                     Flowable<Double> throttle, Flowable<Double> yaw,
