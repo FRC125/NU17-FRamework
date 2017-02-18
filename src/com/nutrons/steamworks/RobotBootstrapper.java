@@ -114,6 +114,6 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.drivetrain.driveTimeAction(100);
+    return this.drivetrain.driveTimeAction(3000);
   }
 }
