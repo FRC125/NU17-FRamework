@@ -37,6 +37,8 @@ public class Drivetrain implements Subsystem {
   private final double ANGLE_I = 0.0;
   private final double ANGLE_D = 0.0065;
   private final int ANGLE_BUFFER_LENGTH = 10;
+  private final Flowable<Boolean> slowDrive;
+  private final double slowDriveCoeff = 0.6;
 
    /**
    * A drivetrain which uses Arcade Drive.
@@ -51,6 +53,7 @@ public class Drivetrain implements Subsystem {
   public Drivetrain(Talon leftLeader,
                     Talon rightLeader,
                     Flowable<Boolean> holdHeading,
+                    Flowable<Boolean> slowDrive,
                     HeadingGyro gyro,
                     Flowable<Double> currentHeading,
                     Flowable<Double> targetHeading,
@@ -75,6 +78,8 @@ public class Drivetrain implements Subsystem {
               .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
 
       this.holdHeading = holdHeading;
+
+      this.slowDrive = slowDrive;
   }
 
     /**
@@ -134,13 +139,13 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-      combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
+      combineLatest(throttle, yaw, output, holdHeading, slowDrive,(t, y, o, h, s) -> t + y - (h ? o : 0.0) * (s ? slowDriveCoeff : 1.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
         .compose(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(leftDrive);
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y - (h ? z : 0.0))
+    combineLatest(throttle, yaw, output, holdHeading, slowDrive, (x, y, z, h, s) -> x - y - (h ? z : 0.0) * (s ? slowDriveCoeff : 1.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
         .compose(limitWithin(-1.0, 1.0))

@@ -100,6 +100,7 @@ public class RobotBootstrapper extends Robot {
               leftLeader,
               rightLeader,
               driverPad.buttonA(),
+              driverPad.rightBumper(),
               gyro,
               gyro.getGyroReadings(),
               Flowable.just(0.0),
