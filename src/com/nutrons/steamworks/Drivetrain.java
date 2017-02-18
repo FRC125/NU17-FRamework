@@ -1,6 +1,8 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
@@ -9,6 +11,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
+import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.pidLoop;
 import static io.reactivex.Flowable.combineLatest;
@@ -76,8 +79,10 @@ public class Drivetrain implements Subsystem {
   public  Runnable driveDistanceAction(double targetRevolutions) {
     return () -> {
       // 1 Revolution = 0.85 Feet
-      rightLeader.setPID(0.001, 0.0, 0.0, 0.0);
+      leftLeader.setControlMode(ControlMode.LOOP_SPEED);
+      rightLeader.setControlMode(ControlMode.LOOP_SPEED);
       leftLeader.setPID(0.001, 0.0, 0.0, 0.0);
+      rightLeader.setPID(0.001, 0.0, 0.0, 0.0);
       leftLeader.setSetpoint(targetRevolutions);
       rightLeader.setSetpoint(targetRevolutions);
     };
@@ -108,7 +113,17 @@ public class Drivetrain implements Subsystem {
     };
   }
 
+    public Command drive() {
 
+      return Command.fromSubscription(() -> {
+          System.out.println("Ran Drive");
+          Flowable<ControllerEvent> driveForward = Flowable.just(1.0)
+                   .subscribeOn(Schedulers.io())
+                   .map(Events::power);
+           return combineDisposable(driveForward.subscribe(leftLeader),
+           driveForward.subscribe(rightLeader));
+        });
+    }
   @Override
   public void registerSubscriptions() {
       combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))

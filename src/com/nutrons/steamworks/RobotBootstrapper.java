@@ -3,13 +3,17 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 // import com.nutrons.framework.inputs.Serial;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
+
+import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
@@ -32,11 +36,13 @@ public class RobotBootstrapper extends Robot {
   private CommonController operatorPad;
   private HeadingGyro gyro;
 
+  private Drivetrain drivetrain;
+
   @Override
   protected void constructStreams() {
    // this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
    // this.vision = Vision.getInstance(serial.getDataStream());
-
+    this.competitionStream().subscribe(System.out::println);
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
@@ -62,6 +68,18 @@ public class RobotBootstrapper extends Robot {
     // this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
 
     this.gyro = new HeadingGyro();
+
+    this.drivetrain = new Drivetrain(
+            leftLeader,
+            rightLeader,
+            driverPad.buttonA(),
+            gyro,
+            gyro.getGyroReadings(),
+            Flowable.just(0.0),
+            driverPad.rightStickX(),
+            driverPad.leftStickY(),
+            leftLeader,
+            rightLeader);
   }
 
   @Override
@@ -75,17 +93,12 @@ public class RobotBootstrapper extends Robot {
     // sm.registerSubsystem(new Feeder(intakeController));
     // sm.registerSubsystem(new Hopper(spinHopperMotor));
 
-    sm.registerSubsystem(new Drivetrain(
-            leftLeader,
-            rightLeader,
-            driverPad.buttonA(),
-            gyro,
-            gyro.getGyroReadings(),
-            Flowable.just(0.0),
-            driverPad.rightStickX(),
-            driverPad.leftStickY(),
-            leftLeader,
-            rightLeader));
+    sm.registerSubsystem(drivetrain);
     return sm;
+  }
+
+  @Override
+  protected Command registerAuto() {
+    return drivetrain.drive().delayTermination(3000, TimeUnit.MILLISECONDS);
   }
 }
