@@ -3,11 +3,13 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
-import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.inputs.CommonController;
+import com.nutrons.framework.inputs.HeadingGyro;
+import com.nutrons.framework.inputs.Serial;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -35,6 +37,20 @@ public class RobotBootstrapper extends Robot {
 
   private CommonController driverPad;
   private CommonController operatorPad;
+  private HeadingGyro gyro;
+
+  /**
+   * Converts booleans into streams, and if the boolean is true,
+   * delay the emission of the item by the specified amount.
+   * Useful as an argument of switchMap on button streams.
+   * The combination will delay all true value emissions by the specified delay,
+   * but if false is emitted within that delay, the delayed true value will be discarded.
+   * Effectively, subscribers will only receive true values if the button
+   * is held down past the time specified by the delay.
+   */
+  static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
+    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+  }
 
   @Override
   protected void constructStreams() {
@@ -55,41 +71,41 @@ public class RobotBootstrapper extends Robot {
 
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
+
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
+    this.leftLeader.setControlMode(ControlMode.MANUAL);
     this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
-    this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
-    this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
+
+    this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
+    this.rightLeader.setControlMode(ControlMode.MANUAL);
+    this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
+
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
+    this.gyro = new HeadingGyro();
   }
 
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+    sm.registerSubsystem(this.driverPad);
+    sm.registerSubsystem(this.operatorPad);
+
     sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-    sm.registerSubsystem(driverPad);
-    sm.registerSubsystem(operatorPad);
+
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
-    sm.registerSubsystem(new Drivetrain(driverPad.rightStickX().map(x -> -x), driverPad.leftStickY(),
-        leftLeader, rightLeader, this.driverPad.button(5)));
-    this.operatorPad.buttonA().subscribe(System.out::println);
-    return sm;
-  }
 
-  /**
-   * Converts booleans into streams, and if the boolean is true,
-   * delay the emission of the item by the specified amount.
-   * Useful as an argument of switchMap on button streams.
-   * The combination will delay all true value emissions by the specified delay,
-   * but if false is emitted within that delay, the delayed true value will be discarded.
-   * Effectively, subscribers will only receive true values if the button
-   * is held down past the time specified by the delay.
-   */
-  static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
-    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+    leftLeader.setControlMode(ControlMode.MANUAL);
+    rightLeader.setControlMode(ControlMode.MANUAL);
+    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
+        gyro.getGyroReadings(), Flowable.just(0.0)
+        .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
+        driverPad.rightStickX(), driverPad.leftStickY(),
+        leftLeader, rightLeader));
+    return sm;
   }
 }
