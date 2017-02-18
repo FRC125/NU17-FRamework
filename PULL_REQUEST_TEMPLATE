@@ -8,7 +8,7 @@ Drivetrain
 
 - [ ] Teleop w/ joysticks
 - [ ] Hold heading
-- [ ] ~Turn to angle~
+- [X] ~Turn to angle~
 
 Shooter
 --
@@ -22,7 +22,7 @@ Turret/Vision
 
 - [ ] All other subsystems work w/ camera unplugged
 - [ ] Turret turns to limit switches w/ manual control
-- [ ] ~Turns to target w/ vision~
+- [X] ~Turns to target w/ vision~
 
 Climbtake
 --
@@ -34,4 +34,4 @@ Climbtake
 Auto
 --
 
-- [ ] ~At least one auto mode has been run~
+- [X] ~At least one auto mode has been run~
