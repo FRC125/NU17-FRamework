@@ -103,11 +103,19 @@ public class RobotBootstrapper extends Robot {
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    this.drivetrain = new Drivetrain(driverPad.buttonA(),
-        gyro.getGyroReadings(), Flowable.just(0.0)
-        .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY(),
-        leftLeader, rightLeader);
+    this.drivetrain = new Drivetrain (
+            leftLeader,
+            rightLeader,
+            gyro,
+            driverPad.buttonA(),
+            driverPad.rightBumper(),
+            gyro.getGyroReadings(),
+            Flowable.just(0.0)
+            .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
+            driverPad.rightStickX(),
+            driverPad.leftStickY(),
+            leftLeader,
+            rightLeader);
     sm.registerSubsystem(this.drivetrain);
     return sm;
   }
