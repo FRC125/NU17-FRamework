@@ -14,6 +14,9 @@ import io.reactivex.schedulers.Schedulers;
 import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.pidLoop;
+
+import static com.nutrons.framework.util.FlowOperators.*;
+
 import static io.reactivex.Flowable.combineLatest;
 
 public class Drivetrain implements Subsystem {
@@ -24,13 +27,16 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> yaw;
   private final Consumer<ControllerEvent> leftDrive;
   private final Consumer<ControllerEvent> rightDrive;
-
   private final HeadingGyro gyro;
   private Flowable<Double> targetHeading;
   private final Flowable<Double> error;
   private final Flowable<Double> output;
   private final double deadband = 0.2;
   private final Flowable<Boolean> holdHeading;
+  private final double ANGLE_P = 0.045;
+  private final double ANGLE_I = 0.0;
+  private final double ANGLE_D = 0.0065;
+  private final int ANGLE_BUFFER_LENGTH = 10;
 
    /**
    * A drivetrain which uses Arcade Drive.
@@ -52,24 +58,24 @@ public class Drivetrain implements Subsystem {
                     Flowable<Double> yaw,
                     Consumer<ControllerEvent> leftDrive,
                     Consumer<ControllerEvent> rightDrive) {
-    this.leftLeader = leftLeader;
-    this.rightLeader = rightLeader;
+      this.leftLeader = leftLeader;
+      this.rightLeader = rightLeader;
 
-    this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0));
-    this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0));
-    this.leftDrive = leftDrive;
-    this.rightDrive = rightDrive;
+      this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0));
+      this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0));
+      this.leftDrive = leftDrive;
+      this.rightDrive = rightDrive;
 
-    this.gyro = gyro;
-    this.targetHeading = targetHeading
-            .concatWith(holdHeading.filter(x -> x).map(x -> this.gyro.getAngle()));
-    this.error = combineLatest(this.targetHeading, currentHeading, (x, y) -> x - y);
+      this.gyro = gyro;
+      this.targetHeading = targetHeading
+              .concatWith(holdHeading.filter(x -> x).map(x -> this.gyro.getAngle()));
+      this.error = combineLatest(this.targetHeading, currentHeading, (x, y) -> x - y);
 
-    this.holdHeading = holdHeading;
-    this.output = error
-            .compose(pidLoop(0.045, 10, 0.0, 0.0065));
+      this.output = error
+              .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
 
-      }
+      this.holdHeading = holdHeading;
+  }
 
     /**
    * Drive the motors a desired amount of revolutions
@@ -129,13 +135,13 @@ public class Drivetrain implements Subsystem {
       combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+        .compose(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(leftDrive);
     combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y - (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .map(x -> x > 1.0 ? 1.0 : x).map(x -> x < -1.0 ? -1.0 : x)
+        .compose(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(rightDrive);
   }
