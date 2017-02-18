@@ -57,7 +57,8 @@ public class RobotBootstrapper extends Robot {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
@@ -65,7 +66,8 @@ public class RobotBootstrapper extends Robot {
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
-    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
 
@@ -97,7 +99,8 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(),
+        this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);

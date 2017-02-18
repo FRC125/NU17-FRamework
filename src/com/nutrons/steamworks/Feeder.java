@@ -8,6 +8,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
 public class Feeder implements Subsystem {
+
   // TODO: tune as needed
   private static final double SPIN_POWER = 0.95;
   private static final double ROLLER_POWER = 1;
@@ -17,7 +18,8 @@ public class Feeder implements Subsystem {
   WpiSmartDashboard sd;
   Consumer<Boolean> feederButtonLog;
 
-  public Feeder(LoopSpeedController feederController, LoopSpeedController rollerController, Flowable<Boolean> feederButton) {
+  public Feeder(LoopSpeedController feederController, LoopSpeedController rollerController,
+      Flowable<Boolean> feederButton) {
     this.feederController = feederController;
     this.rollerController = rollerController;
     this.feederButton = feederButton;

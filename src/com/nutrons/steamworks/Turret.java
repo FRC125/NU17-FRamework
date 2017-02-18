@@ -7,6 +7,7 @@ import com.nutrons.framework.controllers.Talon;
 import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
+
   private static final double PVAL = 0.03;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.0;
