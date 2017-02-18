@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -38,6 +39,7 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+  private Drivetrain drivetrain;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -101,11 +103,17 @@ public class RobotBootstrapper extends Robot {
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
+    this.drivetrain = new Drivetrain(driverPad.buttonA(),
         gyro.getGyroReadings(), Flowable.just(0.0)
         .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
         driverPad.rightStickX(), driverPad.leftStickY(),
-        leftLeader, rightLeader));
+        leftLeader, rightLeader);
+    sm.registerSubsystem(this.drivetrain);
     return sm;
+  }
+
+  @Override
+  public Command registerAuto() {
+    return this.drivetrain.driveTimeAction(100);
   }
 }

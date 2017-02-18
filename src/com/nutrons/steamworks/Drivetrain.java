@@ -1,11 +1,14 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.nutrons.framework.util.FlowOperators.*;
 import static io.reactivex.Flowable.combineLatest;
@@ -47,6 +50,12 @@ public class Drivetrain implements Subsystem {
     this.output = error
         .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
     this.holdHeading = holdHeading;
+  }
+
+  public Command driveTimeAction(long time) {
+    Flowable<Double> move = toFlow(() -> 1.0);
+    return Command.fromSubscription(() -> combineDisposable(move.map(x -> Events.power(x)).subscribe(leftDrive),
+        move.map(x -> Events.power(-x)).subscribe(rightDrive))).killAfter(time, TimeUnit.MILLISECONDS);
   }
 
   @Override
