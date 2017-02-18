@@ -19,9 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class RobotBootstrapper extends Robot {
 
   public final static int PACKET_LENGTH = 17;
-  private LoopSpeedController intakeController;
-  private LoopSpeedController intakeController2;
-  private LoopSpeedController shooterMotor1;
+  private Drivetrain drivetrain;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
   private Talon spinFeederMotor;
@@ -30,16 +28,16 @@ public class RobotBootstrapper extends Robot {
   private Talon hoodMaster;
   private Serial serial;
   private Vision vision;
-
   private Talon leftLeader;
   private Talon leftFollower;
   private Talon rightLeader;
   private Talon rightFollower;
-
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
-  private Drivetrain drivetrain;
+  private Talon intakeController;
+  private Talon shooterMotor1;
+  private Talon intakeController2;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -55,6 +53,11 @@ public class RobotBootstrapper extends Robot {
   }
 
   @Override
+  public Command registerAuto() {
+    return this.drivetrain.driveTimeAction(3000);
+  }
+
+  @Override
   protected void constructStreams() {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
@@ -62,6 +65,8 @@ public class RobotBootstrapper extends Robot {
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
+    this.hoodMaster.setOutputFlipped(false);
+    this.hoodMaster.setReversedSensor(false);
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
@@ -70,6 +75,7 @@ public class RobotBootstrapper extends Robot {
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
+    Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
@@ -95,11 +101,10 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
-
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
+    sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickY())); //TODO: remove
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
@@ -110,10 +115,5 @@ public class RobotBootstrapper extends Robot {
         leftLeader, rightLeader);
     sm.registerSubsystem(this.drivetrain);
     return sm;
-  }
-
-  @Override
-  public Command registerAuto() {
-    return this.drivetrain.driveTimeAction(3000);
   }
 }

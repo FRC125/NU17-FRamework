@@ -13,14 +13,13 @@ public class RobotMap {
   public static final int SPIN_FEEDER_MOTOR = 4;
   public static final int HOOD_MOTOR_A = 5;
 
-  // Ports of wheels TODO: Fix ports to match robot motors
+  // Ports of Drivetrain
   public static final int FRONT_LEFT = 1;
   public static final int BACK_LEFT = 20;
   public static final int FRONT_RIGHT = 14;
   public static final int BACK_RIGHT = 15;
 
   // Controllers
-  public static final int DRIVER_PAD = 0;
-  public static final int OP_PAD = 1;
-
+  public static final int OP_PAD = 0;
+  public static final int DRIVER_PAD = 1;
 }

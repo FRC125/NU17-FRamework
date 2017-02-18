@@ -4,8 +4,14 @@ import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
 
+
+import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class Shooter implements Subsystem {
   private static final double SHOOTER_POWER = 1.0;
@@ -26,10 +32,16 @@ public class Shooter implements Subsystem {
   @Override
   public void registerSubscriptions() {
     this.shooterController.setControlMode(ControlMode.MANUAL);
-    this.shooterController.setReversedSensor(false);
+    this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
+    Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
+    toFlow(() -> this.shooterController.speed()).subscribe(speed);
 
-    shooterButton.map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
+    //shooterButton.subscribe(System.out::println);
+    //toFlow( () -> this.shooterController.speed()).subscribe(System.out::println);
+    //Consumer<Double> cle = new WpiSmartDashboard().getTextFieldDouble("error");
+    //toFlow(() -> ((Talon)this.shooterController).getClosedLoopError()).subscribe((cle));
+    shooterButton.map(FlowOperators::printId).map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
         Events.setpoint(SETPOINT)) : Events.combine(Events.setpoint(0), Events.power(0)))
         .subscribe(shooterController);
   }
