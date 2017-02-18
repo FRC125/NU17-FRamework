@@ -10,6 +10,7 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -54,8 +55,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    this.vision = Vision.getInstance(serial.getDataStream());
+    //this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+    //this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
@@ -68,6 +69,7 @@ public class RobotBootstrapper extends Robot {
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
+    Events.setOutputVoltage(-12f, +12f).actOn((Talon)this.shooterMotor1);
 
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
@@ -93,19 +95,19 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+    //sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    //sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    //sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
 
-    leftLeader.setControlMode(ControlMode.MANUAL);
+    /**leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
+    sm.registerSubsystem(new Drivetrain(driverPad.buttonB(),
         gyro.getGyroReadings(), Flowable.just(0.0)
-        .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY(),
-        leftLeader, rightLeader));
+        .concatWith(driverPad.buttonB().filter(x -> x).map(x -> this.gyro.getAngle())),
+        driverPad.rightStickX(), driverPad.leftStickY().map(x -> -x),
+        leftLeader, rightLeader));**/
     return sm;
   }
 }
