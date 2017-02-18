@@ -1,0 +1,37 @@
+Before Merging
+==
+
+Check the following subsystems work:
+
+Drivetrain
+--
+
+- [ ] Teleop w/ joysticks
+- [ ] Hold heading
+- [ ] ~Turn to angle~
+
+Shooter
+--
+
+- [ ] Shooter motor spins at right speed
+- [ ] Feeder runs forward and backwards on butttons
+- [ ] Shoot at least one ball
+
+Turret/Vision
+--
+
+- [ ] All other subsystems work w/ camera unplugged
+- [ ] Turret turns to limit switches w/ manual control
+- [ ] ~Turns to target w/ vision~
+
+Climbtake
+--
+
+- [ ] Intake runs forward
+- [ ] Runs backward
+- [ ] Climbs
+
+Auto
+--
+
+- [ ] ~At least one auto mode has been run~
