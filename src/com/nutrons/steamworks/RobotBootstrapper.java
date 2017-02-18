@@ -56,8 +56,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    //this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    //this.vision = Vision.getInstance(serial.getDataStream());
+    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+    this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
@@ -100,7 +100,7 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickY())); //TODO: remove
 
     leftLeader.setControlMode(ControlMode.MANUAL);
