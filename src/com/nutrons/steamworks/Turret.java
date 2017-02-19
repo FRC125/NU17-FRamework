@@ -1,7 +1,6 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
@@ -68,6 +67,5 @@ public class Turret implements Subsystem {
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));
 
-    //source.subscribe(hoodMaster);
   }
 }

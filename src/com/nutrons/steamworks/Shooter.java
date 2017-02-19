@@ -2,14 +2,13 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
+import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
-
 
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
@@ -21,6 +20,7 @@ public class Shooter implements Subsystem {
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.33;
   private static final double FVAL = 0.035;
+  private static final ControllerEvent stopEvent = Events.combine(Events.setpoint(0), Events.power(0));
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
 
@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
     //Consumer<Double> cle = new WpiSmartDashboard().getTextFieldDouble("error");
     //toFlow(() -> ((Talon)this.shooterController).getClosedLoopError()).subscribe((cle));
     shooterButton.map(FlowOperators::printId).map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
-        Events.setpoint(SETPOINT)) : Events.combine(Events.setpoint(0), Events.power(0)))
+        Events.setpoint(SETPOINT)) : stopEvent)
         .subscribe(shooterController);
   }
 }

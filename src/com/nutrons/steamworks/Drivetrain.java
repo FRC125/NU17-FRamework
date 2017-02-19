@@ -58,14 +58,14 @@ public class Drivetrain implements Subsystem {
     combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y + (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
+        .map(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(leftDrive);
 
     combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y + (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
+        .map(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(rightDrive);
   }
