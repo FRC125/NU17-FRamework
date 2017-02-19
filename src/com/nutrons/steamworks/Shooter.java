@@ -8,6 +8,7 @@ import io.reactivex.Flowable;
 
 
 public class Shooter implements Subsystem {
+
   private static final double SHOOTER_POWER = 1.0;
   private static final double SETPOINT = 3250.0;
   private static final double PVAL = 0.05;

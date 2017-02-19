@@ -8,7 +8,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
 public class Feeder implements Subsystem {
-  // TODO: tune as needed
+
   private static final double SPIN_POWER = 0.95;
   private static final double ROLLER_POWER = 1;
   private final LoopSpeedController feederController;
@@ -17,7 +17,15 @@ public class Feeder implements Subsystem {
   WpiSmartDashboard sd;
   Consumer<Boolean> feederButtonLog;
 
-  public Feeder(LoopSpeedController feederController, LoopSpeedController rollerController, Flowable<Boolean> feederButton) {
+  /**
+   * The feeder hopper used for primarily feeding balls to the shooter.
+   * @param feederController The controller responsible for the control of the feeder.
+   * @param rollerController The controller responsible for the control of the roller.
+   * @param feederButton The button mapped to running the hopper system.
+   */
+  public Feeder(LoopSpeedController feederController,
+      LoopSpeedController rollerController,
+      Flowable<Boolean> feederButton) {
     this.feederController = feederController;
     this.rollerController = rollerController;
     this.feederButton = feederButton;

@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
+  public static final int PACKET_LENGTH = 17;
+
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
@@ -39,6 +40,9 @@ public class RobotBootstrapper extends Robot {
   private CommonController operatorPad;
   private HeadingGyro gyro;
 
+
+
+
   /**
    * Converts booleans into streams, and if the boolean is true,
    * delay the emission of the item by the specified amount.
@@ -57,7 +61,8 @@ public class RobotBootstrapper extends Robot {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
@@ -65,7 +70,8 @@ public class RobotBootstrapper extends Robot {
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
-    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
 
@@ -97,7 +103,8 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(),
+        this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
