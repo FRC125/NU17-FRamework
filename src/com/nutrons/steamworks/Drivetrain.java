@@ -1,10 +1,10 @@
 package com.nutrons.steamworks;
 
 import static com.nutrons.framework.util.FlowOperators.combineDisposable;
+import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.limitWithin;
 import static com.nutrons.framework.util.FlowOperators.pidLoop;
-import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
 
 import com.nutrons.framework.Subsystem;
@@ -27,6 +27,7 @@ public class Drivetrain implements Subsystem {
   private final Talon leftLeader;
   private final Talon rightLeader;
   private final HeadingGyro gyro;
+
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final Consumer<ControllerEvent> leftDrive;
@@ -40,9 +41,9 @@ public class Drivetrain implements Subsystem {
   private static final double ANGLE_I = 0.0;
   private static final double ANGLE_D = 0.0065;
   private static final int ANGLE_BUFFER_LENGTH = 10;
-
   private final Flowable<Boolean> slowDrive;
   private final double slowDriveCoeff = 0.33;
+  private double flip;
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -53,7 +54,8 @@ public class Drivetrain implements Subsystem {
    * @param leftDrive all controllers on the left of the drivetrain
    * @param rightDrive all controllers on the right of the drivetrain
    */
-  public Drivetrain(Talon leftLeader,
+
+  public Drivetrain( Talon leftLeader,
       Talon rightLeader,
       HeadingGyro gyro,
       Flowable<Boolean> holdHeading,

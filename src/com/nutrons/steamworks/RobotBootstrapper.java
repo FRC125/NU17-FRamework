@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class RobotBootstrapper extends Robot {
 
   public static final int PACKET_LENGTH = 17;
+
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
@@ -40,6 +41,9 @@ public class RobotBootstrapper extends Robot {
   private CommonController operatorPad;
   private HeadingGyro gyro;
   private Drivetrain drivetrain;
+
+
+
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -65,15 +69,12 @@ public class RobotBootstrapper extends Robot {
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
-    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR,
-        this.topFeederMotor);
+    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2,
-        (Talon) this.intakeController);
+    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
         CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
-    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1,
-        (Talon) this.shooterMotor2);
+    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
 
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
@@ -111,6 +112,7 @@ public class RobotBootstrapper extends Robot {
         this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberController,
         climberMotor2, this.operatorPad.buttonY(),
+
         this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
