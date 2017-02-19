@@ -4,7 +4,8 @@ import io.reactivex.Flowable;
 
 public class Vision {
 
-  private static final String DUMMY_VALUE = "NONE:-1000:-1000"; //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  private static final String DUMMY_VALUE = "NONE:-1000:-1000";
   //robot sending an exception "no serial port found"
   private static Vision instance;
   private Flowable<byte[]> dataStream;
@@ -29,6 +30,11 @@ public class Vision {
     this.angle = dataStreamString.map(x -> Double.valueOf(x[2]));
   }
 
+  /**
+   * The dataStream is passed through to the method from the vision object returning the instance.
+   * @param dataStream The data passed through to the method for instance retrieval
+   * @return returns the instance of the vision object.
+   */
   public static Vision getInstance(Flowable<byte[]> dataStream) {
     if (instance == null) {
       instance = new Vision(dataStream);

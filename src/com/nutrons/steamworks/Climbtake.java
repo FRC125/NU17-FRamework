@@ -14,6 +14,13 @@ public class Climbtake implements Subsystem {
   private final Flowable<Boolean> forward;
   private final Flowable<Boolean> reverse;
 
+  /**
+   * Cliber and Intake subsystem, used for boarding the airship and intaking fuel.
+   * @param climbtakeControllerLeft Talon on left side of the climbtake.
+   * @param climbtakeControllerRight Talon on the right side of the climbtake.
+   * @param forward Button used for setting direction to forward.
+   * @param reverse Button used for setting direction to backward..
+   */
   public Climbtake(LoopSpeedController climbtakeControllerLeft,
       LoopSpeedController climbtakeControllerRight,
       Flowable<Boolean> forward, Flowable<Boolean> reverse) {

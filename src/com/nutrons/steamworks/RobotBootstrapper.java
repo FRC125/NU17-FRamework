@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
+  public static final int PACKET_LENGTH = 17;
+
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
@@ -38,6 +39,9 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+
+
+
 
   /**
    * Converts booleans into streams, and if the boolean is true,

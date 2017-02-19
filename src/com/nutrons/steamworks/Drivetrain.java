@@ -1,14 +1,16 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.deadbandMap;
+import static com.nutrons.framework.util.FlowOperators.limitWithin;
+import static com.nutrons.framework.util.FlowOperators.pidLoop;
+import static io.reactivex.Flowable.combineLatest;
+
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-
-import static com.nutrons.framework.util.FlowOperators.*;
-import static io.reactivex.Flowable.combineLatest;
 
 public class Drivetrain implements Subsystem {
 
@@ -20,10 +22,10 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> output;
   private final double deadband = 0.2;
   private final Flowable<Boolean> holdHeading;
-  private final double ANGLE_P = 0.045;
-  private final double ANGLE_I = 0.0;
-  private final double ANGLE_D = 0.0065;
-  private final int ANGLE_BUFFER_LENGTH = 10;
+  private final double angleP = 0.045;
+  private final double angleI = 0.0;
+  private final double angleD = 0.0065;
+  private final int angleBufferLength = 10;
   private double flip;
 
   /**
@@ -46,7 +48,7 @@ public class Drivetrain implements Subsystem {
     this.rightDrive = rightDrive;
     this.error = combineLatest(targetHeading, currentHeading, (x, y) -> x - y);
     this.output = error
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
+        .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
     this.holdHeading = holdHeading;
   }
 

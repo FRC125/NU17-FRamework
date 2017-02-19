@@ -18,6 +18,12 @@ public class Feeder implements Subsystem {
   WpiSmartDashboard sd;
   Consumer<Boolean> feederButtonLog;
 
+  /**
+   * The feeder hopper used for primarily feeding balls to the shooter.
+   * @param feederController The controller responsible for the control of the feeder.
+   * @param rollerController The controller responsible for the control of the roller.
+   * @param feederButton The button mapped to running the hopper system.
+   */
   public Feeder(LoopSpeedController feederController, LoopSpeedController rollerController,
       Flowable<Boolean> feederButton) {
     this.feederController = feederController;
