@@ -9,6 +9,7 @@ import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
+
   private static final double PVAL = 0.03;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.0;
@@ -22,6 +23,11 @@ public class Turret implements Subsystem {
   private final Flowable<Double> joyControl; //TODO: Remoove
 
   public Turret(Flowable<Double> angle, Flowable<String> state, Talon master, Flowable<Double> joyControl) { //TODO: remove joycontrol
+  /**
+   * The Turret System that is used for aiming our shooter.
+   * @param angle The flowable of doubles that is represent the angle the turret should be facing.
+   * @param master The talon controlling the movement of the turret.
+   */
     this.angle = angle;
     this.state = state;
     this.hoodMaster = master;

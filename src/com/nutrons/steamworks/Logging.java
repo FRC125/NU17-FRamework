@@ -5,6 +5,7 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.functions.Consumer;
 
 public class Logging implements Subsystem {
+
   private WpiSmartDashboard sd;
   private Consumer<String> state;
   private Consumer<Double> angle;

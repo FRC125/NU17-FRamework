@@ -11,6 +11,7 @@ import static com.nutrons.framework.util.FlowOperators.*;
 import static io.reactivex.Flowable.combineLatest;
 
 public class Drivetrain implements Subsystem {
+
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final Consumer<ControllerEvent> leftDrive;
@@ -19,25 +20,28 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> output;
   private final double deadband = 0.3;
   private final Flowable<Boolean> holdHeading;
-  private final double ANGLE_P = 0.045;
-  private final double ANGLE_I = 0.0;
-  private final double ANGLE_D = 0.0065;
-  private final int ANGLE_BUFFER_LENGTH = 10;
+  private static final double ANGLE_P = 0.045;
+  private static final double ANGLE_I = 0.0;
+  private static final double ANGLE_D = 0.0065;
+  private static final int ANGLE_BUFFER_LENGTH = 10;
   private double flip;
 
   /**
    * A drivetrain which uses Arcade Drive.
    *
-   * @param holdHeading    whether or not the drivetrain should maintain the target heading
+   * @param holdHeading whether or not the drivetrain should maintain the target heading
    * @param currentHeading the current heading of the drivetrain
-   * @param targetHeading  the target heading for the drivetrain to aquire
-   * @param leftDrive      all controllers on the left of the drivetrain
-   * @param rightDrive     all controllers on the right of the drivetrain
+   * @param targetHeading the target heading for the drivetrain to aquire
+   * @param leftDrive all controllers on the left of the drivetrain
+   * @param rightDrive all controllers on the right of the drivetrain
    */
   public Drivetrain(Flowable<Boolean> holdHeading,
-                    Flowable<Double> currentHeading, Flowable<Double> targetHeading,
-                    Flowable<Double> throttle, Flowable<Double> yaw,
-                    Consumer<ControllerEvent> leftDrive, Consumer<ControllerEvent> rightDrive) {
+      Flowable<Double> currentHeading,
+      Flowable<Double> targetHeading,
+      Flowable<Double> throttle,
+      Flowable<Double> yaw,
+      Consumer<ControllerEvent> leftDrive,
+      Consumer<ControllerEvent> rightDrive) {
 
     this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0));
     this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0));
