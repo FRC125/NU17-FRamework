@@ -32,18 +32,15 @@ public class Drivetrain implements Subsystem {
   private final double ANGLE_I = 0.0;
   private final double ANGLE_D = 0.0065;
   private final int ANGLE_BUFFER_LENGTH = 10;
-  private final double DRIVE_P = 0.0;
-  private final double DRIVE_I = 0.0;
-  private final double DRIVE_D = 0.0;
 
   /**
    * A drivetrain which uses Arcade Drive.
    *
-   * @param teleHoldHeading    whether or not the drivetrain should maintain the target heading during teleop
-   * @param currentHeading the current heading of the drivetrain
-   * @param targetHeading  the target heading for the drivetrain to aquire
-   * @param leftDrive      all controllers on the left of the drivetrain
-   * @param rightDrive     all controllers on the right of the drivetrain
+   * @param teleHoldHeading whether or not the drivetrain should maintain the target heading during teleop
+   * @param currentHeading  the current heading of the drivetrain
+   * @param targetHeading   the target heading for the drivetrain to aquire
+   * @param leftDrive       all controllers on the left of the drivetrain
+   * @param rightDrive      all controllers on the right of the drivetrain
    */
   public Drivetrain(Flowable<Boolean> teleHoldHeading,
                     Flowable<Double> currentHeading, Flowable<Double> targetHeading,
@@ -62,37 +59,38 @@ public class Drivetrain implements Subsystem {
 
   public Command driveTimeAction(long time) {
     Flowable<Double> move = toFlow(() -> 0.4);
-    return Command.fromSubscription(() -> combineDisposable(move.map(x -> Events.power(x)).subscribe(leftDrive),
-        move.map(x -> Events.power(-x)).subscribe(rightDrive))).killAfter(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
+    return Command.fromSubscription(() ->
+        combineDisposable(
+            move.map(x -> Events.power(x)).subscribe(leftDrive),
+            move.map(x -> Events.power(-x)).subscribe(rightDrive)
+        )
+    ).killAfter(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
       leftDrive.runAtPower(0);
       rightDrive.runAtPower(0);
     }));
   }
 
   /**
+   * Drive the robot a distance, using the gyro to hold the current heading.
+   *
    * @param distance the distance to drive forward in feet
+   * @param tolerance the command will stop once the distance is within the tolerance distance range
+   * @param speed    the controller's output speed
    */
-  public Command driveDistanceAction(double distance) {
-    return Command.just(() -> {
-      leftDrive.setControlMode(ControlMode.LOOP_POSITION);
-      rightDrive.setControlMode(ControlMode.LOOP_POSITION);
-      leftDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
-      rightDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
-      ControllerEvent reset = Events.resetPosition(0);
-      leftDrive.accept(reset);
+  public Command driveDistanceAction(double distance, double tolerance, double speed) {
+    ControllerEvent reset = Events.resetPosition(0);
+    double setpoint = distance / FEET_PER_ENCODER_ROTATION;
+    Command resetRight = Command.just(() -> {
       rightDrive.accept(reset);
-      double setpoint = distance / FEET_PER_ENCODER_ROTATION;
-      leftDrive.setSetpoint(setpoint);
-      rightDrive.setSetpoint(setpoint);
       return Flowable.just(() -> {
-        leftDrive.accept(reset);
         rightDrive.accept(reset);
-        leftDrive.setSetpoint(0);
         rightDrive.setSetpoint(0);
-        leftDrive.runAtPower(0);
         rightDrive.runAtPower(0);
       });
     });
+    return Command.parallel(resetRight,
+        driveHoldHeading(Flowable.just(speed), Flowable.just(speed), Flowable.just(true)))
+        .until(() -> rightDrive.position() < tolerance / FEET_PER_ENCODER_ROTATION);
   }
 
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading) {
