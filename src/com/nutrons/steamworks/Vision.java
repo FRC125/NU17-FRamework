@@ -20,7 +20,8 @@ public class Vision {
     this.dataStreamString = this.dataStream
         .filter(x -> x.length == 17)
         .map(x -> new String(x, "UTF-8"))
-        .map(x -> x == DUMMY_VALUE ? "NONE:0.0:0.0" : x) //vision will change any dummy values to 0.0
+        .map(
+            x -> x == DUMMY_VALUE ? "NONE:0.0:0.0" : x) //vision will change any dummy values to 0.0
         .map(x -> x.split(":")).filter(x -> x.length == 3);
     //Returns a string array[state, distance, angle], states are NONE, GEAR, or BOIL
 
@@ -31,6 +32,7 @@ public class Vision {
 
   /**
    * The dataStream is passed through to the method from the vision object returning the instance.
+   *
    * @param dataStream The data passed through to the method for instance retrieval
    * @return returns the instance of the vision object.
    */
