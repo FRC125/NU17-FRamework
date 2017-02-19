@@ -4,6 +4,8 @@ import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.commands.Terminator;
+import com.nutrons.framework.commands.TerminatorWrapper;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -12,6 +14,7 @@ import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -30,7 +33,7 @@ public class RobotBootstrapper extends Robot {
   private LoopSpeedController climberMotor2;
   private Talon hoodMaster;
   private Serial serial;
-  private Vision vision;
+  // private Vision vision;
   private Talon leftLeader;
   private Talon leftFollower;
   private Talon rightLeader;
@@ -57,17 +60,18 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.drivetrain.driveDistanceAction(1, 3.0, 0.4);
+    return this.drivetrain.driveDistanceAction(1, 3.0, 0.2);
   }
 
   @Override
   public Command registerTele() {
-    return this.drivetrain.driveTeleop();
+    return this.drivetrain.driveTeleop().terminable(Flowable.never());
   }
+
   @Override
   protected void constructStreams() {
-    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    this.vision = Vision.getInstance(serial.getDataStream());
+    //this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
+    //this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
@@ -109,18 +113,17 @@ public class RobotBootstrapper extends Robot {
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
-
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
-    sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickY())); //TODO: remove
+    //sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
+    //sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    //sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
+    //sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickY())); //TODO: remove
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.drivetrain = new Drivetrain(driverPad.buttonA(),
-        gyro.getGyroReadings(), Flowable.just(0.0)
-        .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY().map(x -> -x),
+        gyro.getGyroReadings(),
+        driverPad.leftStickY().map(x -> -x),
+        driverPad.rightStickX(),
         leftLeader, rightLeader);
     toFlow(() -> leftLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
