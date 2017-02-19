@@ -4,9 +4,9 @@ import io.reactivex.Flowable;
 
 public class Vision {
 
-  //Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  /* Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
+  robot sending an exception "no serial port found" */
   private static final String DUMMY_VALUE = "NONE:-1000:-1000";
-  //robot sending an exception "no serial port found"
   private static Vision instance;
   private Flowable<byte[]> dataStream;
   private Flowable<String[]> dataStreamString;
@@ -22,8 +22,7 @@ public class Vision {
         .map(
             x -> x == DUMMY_VALUE ? "NONE:0.0:0.0" : x) //vision will change any dummy values to 0.0
         .map(x -> x.split(":")).filter(x -> x.length == 3);
-    //Returns a string array[state, distance, angle]
-    //states are NONE, GEAR, or BOIL
+    //Returns a string array[state, distance, angle], states are NONE, GEAR, or BOIL
 
     this.state = dataStreamString.map(x -> x[0]);
     this.distance = dataStreamString.map(x -> Double.valueOf(x[1]));

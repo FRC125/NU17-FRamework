@@ -22,10 +22,10 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> output;
   private final double deadband = 0.2;
   private final Flowable<Boolean> holdHeading;
-  private final double angleP = 0.045;
-  private final double angleI = 0.0;
-  private final double angleD = 0.0065;
-  private final int angleBufferLength = 10;
+  private static final double ANGLE_P = 0.045;
+  private static final double ANGLE_I = 0.0;
+  private static final double ANGLE_D = 0.0065;
+  private static final int ANGLE_BUFFER_LENGTH = 10;
   private double flip;
 
   /**
@@ -48,7 +48,7 @@ public class Drivetrain implements Subsystem {
     this.rightDrive = rightDrive;
     this.error = combineLatest(targetHeading, currentHeading, (x, y) -> x - y);
     this.output = error
-        .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
     this.holdHeading = holdHeading;
   }
 

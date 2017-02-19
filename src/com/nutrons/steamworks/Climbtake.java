@@ -23,7 +23,8 @@ public class Climbtake implements Subsystem {
    */
   public Climbtake(LoopSpeedController climbtakeControllerLeft,
       LoopSpeedController climbtakeControllerRight,
-      Flowable<Boolean> forward, Flowable<Boolean> reverse) {
+      Flowable<Boolean> forward,
+      Flowable<Boolean> reverse) {
     this.climbtakeControllerLeft = climbtakeControllerLeft;
     this.climbtakeControllerRight = climbtakeControllerRight;
     this.forward = forward;
@@ -32,14 +33,18 @@ public class Climbtake implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    forward.map(b -> b ? CLIMBTAKE_SPEED_LEFT : 0.0).map(Events::power)
+    forward.map(b -> b ? CLIMBTAKE_SPEED_LEFT : 0.0)
+        .map(Events::power)
         .subscribe(climbtakeControllerLeft);
-    forward.map(b -> b ? CLIMBTAKE_SPEED_RIGHT : 0.0).map(Events::power)
+    forward.map(b -> b ? CLIMBTAKE_SPEED_RIGHT : 0.0)
+        .map(Events::power)
         .subscribe(climbtakeControllerRight);
 
-    reverse.map(b -> b ? -CLIMBTAKE_SPEED_LEFT : 0.0).map(Events::power)
+    reverse.map(b -> b ? -CLIMBTAKE_SPEED_LEFT : 0.0)
+        .map(Events::power)
         .subscribe(climbtakeControllerLeft);
-    reverse.map(b -> b ? -CLIMBTAKE_SPEED_RIGHT : 0.0).map(Events::power)
+    reverse.map(b -> b ? -CLIMBTAKE_SPEED_RIGHT : 0.0)
+        .map(Events::power)
         .subscribe(climbtakeControllerRight);
   }
 }
