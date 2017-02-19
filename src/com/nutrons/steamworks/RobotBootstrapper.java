@@ -81,13 +81,13 @@ public class RobotBootstrapper extends Robot {
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
     // Drivetrain Motors
-    this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
+    this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-    this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
+    this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
 
-    this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
+    this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-    this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
+    this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
 
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);

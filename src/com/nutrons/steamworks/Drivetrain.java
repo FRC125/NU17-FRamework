@@ -2,6 +2,8 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.commands.Terminator;
+import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import io.reactivex.Flowable;
@@ -13,6 +15,10 @@ import static com.nutrons.framework.util.FlowOperators.*;
 import static io.reactivex.Flowable.combineLatest;
 
 public class Drivetrain implements Subsystem {
+  private static final double FEET_PER_WHEEL_ROTATION = 0.851;
+  private static final double WHEEL_ROTATION_PER_ENCODER_ROTATION = 52 / 42;
+  private static final double FEET_PER_ENCODER_ROTATION =
+      FEET_PER_WHEEL_ROTATION * WHEEL_ROTATION_PER_ENCODER_ROTATION;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
@@ -25,7 +31,9 @@ public class Drivetrain implements Subsystem {
   private final double ANGLE_I = 0.0;
   private final double ANGLE_D = 0.0065;
   private final int ANGLE_BUFFER_LENGTH = 10;
-  private double flip;
+  private final double DRIVE_P = 0.0;
+  private final double DRIVE_I = 0.0;
+  private final double DRIVE_D = 0.0;
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -58,6 +66,30 @@ public class Drivetrain implements Subsystem {
       leftDrive.runAtPower(0);
       rightDrive.runAtPower(0);
     }));
+  }
+
+  /**
+   * @param distance the distance to drive forward in feet
+   */
+  public Command driveDistanceAction(double distance) {
+    return Command.just(() -> {
+      leftDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
+      rightDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
+      ControllerEvent reset = Events.resetPosition(0);
+      leftDrive.accept(reset);
+      rightDrive.accept(reset);
+      double setpoint = distance / FEET_PER_ENCODER_ROTATION;
+      leftDrive.setSetpoint(setpoint);
+      rightDrive.setSetpoint(setpoint);
+      return Flowable.just(() -> {
+        leftDrive.accept(reset);
+        rightDrive.accept(reset);
+        leftDrive.setSetpoint(0);
+        rightDrive.setSetpoint(0);
+        leftDrive.runAtPower(0);
+        rightDrive.runAtPower(0);
+      });
+    });
   }
 
   @Override
