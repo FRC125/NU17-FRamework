@@ -67,7 +67,7 @@
     </javac>
   </target>
 
-  <target name="test" depends="compile,checkstyle">
+  <target name="test" depends="compile">
     <path id="classpath.path">
       <fileset dir="${userLibs}" erroronmissingdir="false"/>
       <fileset dir="lib/"
