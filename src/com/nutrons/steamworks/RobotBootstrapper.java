@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -39,6 +40,7 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+  private Drivetrain drivetrain;
 
 
 
@@ -81,11 +83,13 @@ public class RobotBootstrapper extends Robot {
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-    this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
+    this.leftFollower = new Talon(RobotMap.BACK_LEFT,
+        this.leftLeader);
 
     this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-    this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
+    this.rightFollower = new Talon(RobotMap.BACK_RIGHT,
+        this.rightLeader);
 
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
@@ -101,18 +105,37 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(),
+    sm.registerSubsystem(new Shooter(shooterMotor2,
+        this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Feeder(spinFeederMotor,
+        topFeederMotor,
+        this.operatorPad.buttonB()));
+    sm.registerSubsystem(new Climbtake(climberController,
+        climberMotor2, this.operatorPad.buttonY(),
+
         this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonA(),
-        gyro.getGyroReadings(), Flowable.just(0.0)
-        .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY(),
-        leftLeader, rightLeader));
+    this.drivetrain = new Drivetrain(
+            leftLeader,
+            rightLeader,
+            gyro,
+            driverPad.buttonA(),
+            driverPad.rightBumper(),
+            gyro.getGyroReadings(),
+            Flowable.just(0.0)
+            .concatWith(driverPad.buttonB().filter(x -> x).map(x -> this.gyro.getAngle())),
+            driverPad.rightStickX(),
+            driverPad.leftStickY(),
+            leftLeader,
+            rightLeader);
+    sm.registerSubsystem(this.drivetrain);
     return sm;
+  }
+
+  @Override
+  public Command registerAuto() {
+    return this.drivetrain.driveTimeAction(100);
   }
 }

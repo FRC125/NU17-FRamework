@@ -48,4 +48,3 @@ public class Climbtake implements Subsystem {
         .subscribe(climbtakeControllerRight);
   }
 }
-
