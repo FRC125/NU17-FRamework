@@ -11,10 +11,13 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
 
@@ -54,9 +57,13 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.drivetrain.driveTimeAction(1000);
+    return this.drivetrain.driveDistanceAction(1);
   }
 
+  @Override
+  public Command registerTele() {
+    return this.drivetrain.driveTeleop();
+  }
   @Override
   protected void constructStreams() {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
@@ -83,10 +90,12 @@ public class RobotBootstrapper extends Robot {
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
+    this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
 
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
+    this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
 
     // Gamepads
@@ -111,8 +120,10 @@ public class RobotBootstrapper extends Robot {
     this.drivetrain = new Drivetrain(driverPad.buttonA(),
         gyro.getGyroReadings(), Flowable.just(0.0)
         .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY(),
+        driverPad.rightStickX(), driverPad.leftStickY().map(x -> -x),
         leftLeader, rightLeader);
+    toFlow(() -> leftLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
+    toFlow(() -> rightLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
     return sm;
   }

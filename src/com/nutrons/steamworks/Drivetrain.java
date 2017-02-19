@@ -2,6 +2,8 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.commands.Terminator;
+import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -72,6 +74,8 @@ public class Drivetrain implements Subsystem {
    */
   public Command driveDistanceAction(double distance) {
     return Command.just(() -> {
+      leftDrive.setControlMode(ControlMode.LOOP_POSITION);
+      rightDrive.setControlMode(ControlMode.LOOP_POSITION);
       leftDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
       rightDrive.setPID(DRIVE_P, DRIVE_I, DRIVE_D, 0.0);
       ControllerEvent reset = Events.resetPosition(0);
@@ -109,14 +113,13 @@ public class Drivetrain implements Subsystem {
   }
 
   public Command driveTeleop() {
-    return driveHoldHeading(combineLatest(throttle, yaw, (x, y) -> x + y),
+    return driveHoldHeading(
+        combineLatest(throttle, yaw, (x, y) -> x + y),
         combineLatest(throttle, yaw, (x, y) -> x - y), this.teleHoldHeading);
   }
 
   @Override
   public void registerSubscriptions() {
-    driveHoldHeading(combineLatest(throttle, yaw, (x, y) -> x + y),
-        combineLatest(throttle, yaw, (x, y) -> x - y),
-        this.teleHoldHeading).startExecution();
+
   }
 }
