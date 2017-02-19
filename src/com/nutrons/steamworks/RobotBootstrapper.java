@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
+  public static final int PACKET_LENGTH = 17;
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
@@ -59,16 +59,21 @@ public class RobotBootstrapper extends Robot {
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
     Events.resetPosition(0.0).actOn(this.hoodMaster);
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
-    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
+    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR,
+        this.topFeederMotor);
     this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
-    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
-    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
+    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2,
+        (Talon) this.intakeController);
+    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1,
+        (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
 
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
@@ -77,11 +82,13 @@ public class RobotBootstrapper extends Robot {
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-    this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
+    this.leftFollower = new Talon(RobotMap.BACK_LEFT,
+        this.leftLeader);
 
     this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-    this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
+    this.rightFollower = new Talon(RobotMap.BACK_RIGHT,
+        this.rightLeader);
 
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
@@ -97,13 +104,18 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(), this.operatorPad.buttonA()));
+    sm.registerSubsystem(new Shooter(shooterMotor2,
+        this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Feeder(spinFeederMotor,
+        topFeederMotor,
+        this.operatorPad.buttonB()));
+    sm.registerSubsystem(new Climbtake(climberController,
+        climberMotor2, this.operatorPad.buttonY(),
+        this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    this.drivetrain = new Drivetrain (
+    this.drivetrain = new Drivetrain(
             leftLeader,
             rightLeader,
             gyro,
@@ -111,7 +123,7 @@ public class RobotBootstrapper extends Robot {
             driverPad.rightBumper(),
             gyro.getGyroReadings(),
             Flowable.just(0.0)
-            .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
+            .concatWith(driverPad.buttonB().filter(x -> x).map(x -> this.gyro.getAngle())),
             driverPad.rightStickX(),
             driverPad.leftStickY(),
             leftLeader,
