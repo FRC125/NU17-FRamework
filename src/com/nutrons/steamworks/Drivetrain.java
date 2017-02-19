@@ -7,6 +7,7 @@ import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -89,15 +90,13 @@ public class Drivetrain implements Subsystem {
     });
     Flowable<Double> drive = toFlow(() -> speed);
     return Command.parallel(resetRight,
-        driveHoldHeading(drive, drive, Flowable.just(true)))
+        driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
         .killAfter(4000, TimeUnit.MILLISECONDS);
   }
 
-  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading) {
+  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
-      Flowable<Double> targetAngle = Flowable.just(0.0).mergeWith(
-          holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y));
-      Flowable<Double> output = combineLatest(targetAngle, currentHeading, (x, y) -> x - y).onBackpressureDrop()
+      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop()
           .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
@@ -117,6 +116,11 @@ public class Drivetrain implements Subsystem {
           leftDrive.runAtPower(0);
           leftDrive.runAtPower(0);
         });
+  }
+
+  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading) {
+    return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
+        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y)));
   }
 
   public Command driveTeleop() {
