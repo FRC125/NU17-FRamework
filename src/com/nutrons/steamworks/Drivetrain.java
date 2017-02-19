@@ -38,9 +38,12 @@ public class Drivetrain implements Subsystem {
    * @param rightDrive all controllers on the right of the drivetrain
    */
   public Drivetrain(Flowable<Boolean> holdHeading,
-      Flowable<Double> currentHeading, Flowable<Double> targetHeading,
-      Flowable<Double> throttle, Flowable<Double> yaw,
-      Consumer<ControllerEvent> leftDrive, Consumer<ControllerEvent> rightDrive) {
+      Flowable<Double> currentHeading,
+      Flowable<Double> targetHeading,
+      Flowable<Double> throttle,
+      Flowable<Double> yaw,
+      Consumer<ControllerEvent> leftDrive,
+      Consumer<ControllerEvent> rightDrive) {
 
     this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0));
     this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0));
