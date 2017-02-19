@@ -2,7 +2,6 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
-import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -26,7 +25,7 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Double> error;
   private final Flowable<Double> output;
   private final double deadband = 0.3;
-  private final Flowable<Boolean> holdHeading;
+  private final Flowable<Boolean> teleHoldHeading;
   private final double ANGLE_P = 0.045;
   private final double ANGLE_I = 0.0;
   private final double ANGLE_D = 0.0065;
@@ -38,13 +37,13 @@ public class Drivetrain implements Subsystem {
   /**
    * A drivetrain which uses Arcade Drive.
    *
-   * @param holdHeading    whether or not the drivetrain should maintain the target heading
+   * @param teleHoldHeading    whether or not the drivetrain should maintain the target heading during teleop
    * @param currentHeading the current heading of the drivetrain
    * @param targetHeading  the target heading for the drivetrain to aquire
    * @param leftDrive      all controllers on the left of the drivetrain
    * @param rightDrive     all controllers on the right of the drivetrain
    */
-  public Drivetrain(Flowable<Boolean> holdHeading,
+  public Drivetrain(Flowable<Boolean> teleHoldHeading,
                     Flowable<Double> currentHeading, Flowable<Double> targetHeading,
                     Flowable<Double> throttle, Flowable<Double> yaw,
                     LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
@@ -56,7 +55,7 @@ public class Drivetrain implements Subsystem {
     this.error = combineLatest(targetHeading, currentHeading, (x, y) -> x - y);
     this.output = error
         .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
-    this.holdHeading = holdHeading;
+    this.teleHoldHeading = teleHoldHeading;
   }
 
   public Command driveTimeAction(long time) {
@@ -92,20 +91,32 @@ public class Drivetrain implements Subsystem {
     });
   }
 
+  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading) {
+    return Command.fromSubscription(() ->
+        combineDisposable(
+            combineLatest(left, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
+                .subscribeOn(Schedulers.io())
+                .onBackpressureDrop()
+                .compose(limitWithin(-1.0, 1.0))
+                .map(Events::power)
+                .subscribe(leftDrive),
+            combineLatest(right, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
+                .subscribeOn(Schedulers.io())
+                .onBackpressureDrop()
+                .compose(limitWithin(-1.0, 1.0))
+                .map(Events::power)
+                .subscribe(rightDrive)));
+  }
+
+  public Command driveTeleop() {
+    return driveHoldHeading(combineLatest(throttle, yaw, (x, y) -> x + y),
+        combineLatest(throttle, yaw, (x, y) -> x - y), this.teleHoldHeading);
+  }
+
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
-        .subscribeOn(Schedulers.io())
-        .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
-        .map(Events::power)
-        .subscribe(leftDrive);
-
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y - (h ? z : 0.0))
-        .subscribeOn(Schedulers.io())
-        .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
-        .map(Events::power)
-        .subscribe(rightDrive);
+    driveHoldHeading(combineLatest(throttle, yaw, (x, y) -> x + y),
+        combineLatest(throttle, yaw, (x, y) -> x - y),
+        this.teleHoldHeading).startExecution();
   }
 }
