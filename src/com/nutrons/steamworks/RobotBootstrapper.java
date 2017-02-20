@@ -60,8 +60,8 @@ public class RobotBootstrapper extends Robot {
         this.vision = Vision.getInstance(serial.getDataStream());
 
         this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-        Events.setOutputVoltage(-12f, +12f).actOn(this.hoodMaster);
-        Events.resetPosition(0.0).actOn(this.hoodMaster);
+        Events.setOutputVoltage(-6f, +6f).actOn(this.hoodMaster); //Move slow enough to set off limit switches
+        //Events.resetPosition(0.0).actOn(this.hoodMaster);
         this.hoodMaster.setOutputFlipped(false);
         this.hoodMaster.setReversedSensor(false);
 

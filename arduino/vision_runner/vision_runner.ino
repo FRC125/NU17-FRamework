@@ -24,6 +24,9 @@ double angleToTarget_x; //horizontal angle in degrees
 double angleToTarget_y; //vertical angle in degrees
 double distanceToTarget; //inches
 
+double latestDistance;
+double latestAngle;
+
 enum state {
   NONE,
   BOIL,
@@ -39,14 +42,17 @@ void setup() {
 }
 
 void loop() { 
-  blocks = pixy.getBlocks(2);
+  blocks = pixy.getBlocks();
   
   //make sure we see two blocks
-  if (blocks == 2) { 
+  if (blocks) { 
      if(abs(pixy.blocks[0].y - pixy.blocks[1].y) > abs(pixy.blocks[0].x - pixy.blocks[1].x)){ //checks that vertical distance between blocks is greater than horizontal distance between blocks, meaning that we are seeing the boiler target
        angleToTarget_x = getHorizontalAngleOffset(pixy.blocks[0].x);
        angleToTarget_y = getVerticalAngleOffset(pixy.blocks[0].y, VERTICAL_ZERO_OFFSET_BOILER);
        distanceToTarget = getDistance(angleToTarget_y, TARGET_HEIGHT_BOILER);
+       if(angleToTarget_x != 0){
+        latestAngle = angleToTarget_x;
+       }
 
        currentState = BOIL;
        writeBytes(distanceToTarget, angleToTarget_x);
@@ -54,15 +60,19 @@ void loop() {
        angleToTarget_x = getHorizontalAngleOffset(pixy.blocks[0].x);
        angleToTarget_y = getVerticalAngleOffset(pixy.blocks[0].y, VERTICAL_ZERO_OFFSET_GEAR);
        distanceToTarget = getDistance(angleToTarget_y, TARGET_HEIGHT_GEAR);
+       if(angleToTarget_x != 0.0){
+        latestAngle = angleToTarget_x;
+       }
        
        currentState = GEAR;
        writeBytes(distanceToTarget, angleToTarget_x);
      }
-  }
-
-  //If we don't see anything, just send 0.0 for both values!
+  }else{
+    //If we don't see anything, just send 0.0 for both values!
   currentState = NONE;
-  writeBytes(0.0, 0.0);
+  writeBytes(latestAngle, latestAngle);
+  }
+ 
 }
 
 //******THE IMPORTANT STUFF******

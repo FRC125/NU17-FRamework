@@ -2,14 +2,17 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
+import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
 
 public class Turret implements Subsystem {
-  private static final double PVAL = 0.03;
+  private static final double PVAL = 125.0;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.0;
   private static final double FVAL = 0.0;
@@ -20,6 +23,7 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
+  private Flowable<Double> position;
 
   public Turret(Flowable<Double> angle, Flowable<String> state, Talon master, Flowable<Double> joyControl) { //TODO: remove joycontrol
     this.angle = angle;
@@ -29,6 +33,7 @@ public class Turret implements Subsystem {
     this.revLim = FlowOperators.toFlow(() -> this.hoodMaster.revLimitSwitchClosed());
     this.fwdLim = FlowOperators.toFlow(() -> this.hoodMaster.fwdLimitSwitchClosed());
     this.joyControl = joyControl;
+    this.position = FlowOperators.toFlow(() -> this.hoodMaster.position());
   }
 
   @Override
@@ -36,26 +41,23 @@ public class Turret implements Subsystem {
     FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
 
-    /**this.fwdLim.map(b -> b ?
-        Events.combine(Events.mode(ControlMode.MANUAL), Events.power(-0.5))  //TODO: edit these signs
-        : Events.combine(Events.power(0.0), Events.mode(ControlMode.LOOP_POSITION)))
-        .subscribe(hoodMaster);
-    this.revLim.map(b -> b ?
-        Events.combine(Events.mode(ControlMode.MANUAL), Events.power(0.5)) //TODO: edit these signs
-        : Events.combine(Events.power(0.0), Events.mode(ControlMode.LOOP_POSITION)))
-        .subscribe(hoodMaster);**/
+    Flowable<Double> angles = this.angle.map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
+    Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
+    setpoint = Flowable.combineLatest(setpoint, state.filter(st -> st.equals("NONE")), (sp, st) -> sp).subscribeOn(Schedulers.io());
+    this.hoodMaster.setReversedSensor(true);
+    this.hoodMaster.reverseOutput(false);
+
+    this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+    setpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
 
     /**Flowable<ControllerEvent> source = this.angle
         .map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
         .map(x -> Events.pid(hoodMaster.position() + x, PVAL, IVAL, DVAL, FVAL));**/
 
-    Flowable<Double> setpoint = this.angle.map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
-                                          .map(x -> x + hoodMaster.position());
 
-    this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-    setpoint.subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
+    //joyControl.map(b -> b ? Events.power(-.5) : Events.power(0.0)).subscribe(hoodMaster);
 
-
+    FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
     this.state.subscribe(new WpiSmartDashboard().getTextFieldString("state"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
