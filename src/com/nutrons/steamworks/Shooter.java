@@ -7,6 +7,7 @@ import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Tuneable;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
@@ -25,7 +26,6 @@ public class Shooter implements Subsystem {
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
 
-
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton) {
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
@@ -36,6 +36,11 @@ public class Shooter implements Subsystem {
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
+    new Tuneable("Setpoint", SETPOINT);
+    new Tuneable("P", PVAL);
+    new Tuneable("I", IVAL);
+    new Tuneable("D", DVAL);
+    new Tuneable("F", FVAL);
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(() -> this.shooterController.speed()).subscribe(speed);
 
