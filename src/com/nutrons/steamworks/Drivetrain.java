@@ -81,7 +81,7 @@ public class Drivetrain implements Subsystem {
   public Command driveDistanceAction(double distance, double tolerance, double speed) {
     ControllerEvent reset = Events.resetPosition(0);
     double setpoint = distance / FEET_PER_ENCODER_ROTATION;
-    Command resetRight = Command.just(() -> {
+    Command resetRight = Command.just(x -> {
       rightDrive.accept(reset);
       return Flowable.just(() -> {
         rightDrive.accept(reset);
