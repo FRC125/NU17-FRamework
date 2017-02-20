@@ -2,15 +2,10 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
-import com.nutrons.framework.commands.Terminator;
-import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -18,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.nutrons.framework.util.FlowOperators.*;
 import static io.reactivex.Flowable.combineLatest;
-import static io.reactivex.Flowable.zip;
+import static java.lang.Math.abs;
 
 public class Drivetrain implements Subsystem {
   private static final double FEET_PER_WHEEL_ROTATION = 0.851;
@@ -55,6 +50,12 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
+  }
+
+  public Command turn(double angle, double tolerance) {
+    return driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true),
+        currentHeading.take(1).map(x -> x + angle))
+        .terminable(currentHeading.filter(x -> abs(x) < tolerance));
   }
 
   public Command driveTimeAction(long time) {
