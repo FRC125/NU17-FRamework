@@ -4,6 +4,7 @@ import io.reactivex.Flowable;
 
 public class Vision {
 
+
   /* Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
   robot sending an exception "no serial port found" */
   private static final String DUMMY_VALUE = "NONE:-1000:-1000";
@@ -31,6 +32,7 @@ public class Vision {
 
   /**
    * The dataStream is passed through to the method from the vision object returning the instance.
+   *
    * @param dataStream The data passed through to the method for instance retrieval
    * @return returns the instance of the vision object.
    */

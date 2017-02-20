@@ -20,7 +20,7 @@ public class Drivetrain implements Subsystem {
   private final Consumer<ControllerEvent> rightDrive;
   private final Flowable<Double> error;
   private final Flowable<Double> output;
-  private final double deadband = 0.2;
+  private final double deadband = 0.3;
   private final Flowable<Boolean> holdHeading;
   private static final double ANGLE_P = 0.045;
   private static final double ANGLE_I = 0.0;
@@ -57,17 +57,17 @@ public class Drivetrain implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y - (h ? z : 0.0))
+    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x + y + (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
+        .map(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(leftDrive);
 
-    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y - (h ? z : 0.0))
+    combineLatest(throttle, yaw, output, holdHeading, (x, y, z, h) -> x - y + (h ? z : 0.0))
         .subscribeOn(Schedulers.io())
         .onBackpressureDrop()
-        .compose(limitWithin(-1.0, 1.0))
+        .map(limitWithin(-1.0, 1.0))
         .map(Events::power)
         .subscribe(rightDrive);
   }
