@@ -114,6 +114,7 @@ public class Drivetrain implements Subsystem {
               .subscribe(rightDrive));
     })
         .addFinalTerminator(() -> {
+      System.out.println("terminating");
           leftDrive.runAtPower(0);
           leftDrive.runAtPower(0);
         });
