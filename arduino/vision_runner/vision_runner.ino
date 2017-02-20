@@ -70,7 +70,7 @@ void loop() {
   }else{
     //If we don't see anything, just send 0.0 for both values!
   currentState = NONE;
-  writeBytes(latestAngle, latestAngle);
+  writeBytes(0.0, 0.0);
   }
  
 }

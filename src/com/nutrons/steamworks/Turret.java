@@ -14,7 +14,7 @@ import io.reactivex.schedulers.Schedulers;
 public class Turret implements Subsystem {
   private static final double PVAL = 125.0;
   private static final double IVAL = 0.0;
-  private static final double DVAL = 0.0;
+  private static final double DVAL = 12.5;
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private final Flowable<Double> angle;
@@ -43,7 +43,8 @@ public class Turret implements Subsystem {
 
     Flowable<Double> angles = this.angle.map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
     Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
-    setpoint = Flowable.combineLatest(setpoint, state.filter(st -> st.equals("NONE")), (sp, st) -> sp).subscribeOn(Schedulers.io());
+    //setpoint = Flowable.combineLatest(setpoint, state.filter(st -> st.equals("NONE")), (sp, st) -> sp).subscribeOn(Schedulers.io());
+    setpoint = Flowable.combineLatest(setpoint, state, (sp, st) -> sp).subscribeOn(Schedulers.io());
     this.hoodMaster.setReversedSensor(true);
     this.hoodMaster.reverseOutput(false);
 
