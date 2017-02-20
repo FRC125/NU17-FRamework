@@ -10,10 +10,8 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +24,7 @@ public class RobotBootstrapper extends Robot {
     private LoopSpeedController shooterMotor2;
     private Talon topFeederMotor;
     private Talon spinFeederMotor;
-    private LoopSpeedController climberController;
+    private LoopSpeedController climberMotor1;
     private LoopSpeedController climberMotor2;
     private Talon hoodMaster;
     private Serial serial;
@@ -67,15 +65,22 @@ public class RobotBootstrapper extends Robot {
 
         this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
         this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
-        this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-        this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (Talon) this.intakeController);
+        this.intakeController = new Talon(RobotMap.SPIN_FEEDER_MOTOR);
+        this.intakeController2 = new Talon(RobotMap.TOP_HOPPER_MOTOR, (Talon) this.intakeController);
         this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
         this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
         Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
         Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
-        this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
+        this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
         this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
+
+        this.climberMotor2.noSticky();
+        this.climberMotor2.setControlMode(ControlMode.MANUAL);
+        this.climberMotor1.noSticky();
+        this.climberMotor1.setControlMode(ControlMode.MANUAL);
+        this.climberMotor1.enableControl();
+        this.climberMotor2.enableControl();
 
         // Drivetrain Motors
         this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
@@ -94,13 +99,17 @@ public class RobotBootstrapper extends Robot {
 
     @Override
     protected StreamManager provideStreamManager() {
+        this.climberMotor1.setControlMode(ControlMode.MANUAL);
+        this.climberMotor2.setControlMode(ControlMode.MANUAL);
+        this.climberMotor1.enableControl();
+        this.climberMotor2.enableControl();
         StreamManager sm = new StreamManager(this);
         sm.registerSubsystem(this.driverPad);
         sm.registerSubsystem(this.operatorPad);
 
         sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
         sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-        sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
+        sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2, this.driverPad.buttonY(), this.driverPad.buttonA()));
         sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickY())); //TODO: remove
 
         leftLeader.setControlMode(ControlMode.MANUAL);

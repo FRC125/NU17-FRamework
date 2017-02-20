@@ -9,7 +9,7 @@ import io.reactivex.functions.Consumer;
 
 public class Feeder implements Subsystem {
   // TODO: tune as needed
-  private static final double SPIN_POWER = 0.95;
+  private static final double SPIN_POWER = 0.60;
   private static final double ROLLER_POWER = 1;
   private final LoopSpeedController feederController;
   private final LoopSpeedController rollerController;
