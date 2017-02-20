@@ -6,6 +6,7 @@ import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
@@ -36,12 +37,12 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
+  private RevServo gearPlacerLeft;
+  private RevServo gearPlacerRight;
+
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
-
-
-
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -87,6 +88,10 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader.setControlMode(ControlMode.MANUAL);
     this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
 
+    //Gear Placer Servos
+    this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
@@ -96,14 +101,21 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Turret(vision.getAngle(), hoodMaster));
+    sm.registerSubsystem(new Turret(vision.getAngle(),
+        hoodMaster));
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.operatorPad.buttonY(),
+    sm.registerSubsystem(new Shooter(shooterMotor2,
+        this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Feeder(spinFeederMotor,
+        topFeederMotor,
+        this.operatorPad.buttonB()));
+    sm.registerSubsystem(new Climbtake(climberController,
+        climberMotor2,
+        this.operatorPad.buttonY(),
         this.operatorPad.buttonA()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
@@ -113,6 +125,10 @@ public class RobotBootstrapper extends Robot {
         .concatWith(driverPad.buttonA().filter(x -> x).map(x -> this.gyro.getAngle())),
         driverPad.rightStickX(), driverPad.leftStickY(),
         leftLeader, rightLeader));
+
+    sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
+        this.gearPlacerRight,
+        this.operatorPad.buttonA()));
     return sm;
   }
 }
