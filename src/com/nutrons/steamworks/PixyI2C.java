@@ -1,3 +1,4 @@
+class PixyI2C {
 #include <SPI.h>
 #include <Pixy.h>
 
@@ -104,4 +105,4 @@ void writeBytes(double distance, double angle){
   Serial.write(sendBytes, toSend.length() + 1);
   Serial.flush();
 }
-
+}
