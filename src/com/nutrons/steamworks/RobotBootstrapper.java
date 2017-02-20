@@ -61,8 +61,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.drivetrain.driveDistanceAction(5.0, 0.2);
-    //return this.drivetrain.turn(20, 2);
+    //return this.drivetrain.driveDistanceAction(5.0, 0.2);
+    return this.drivetrain.turn(20, 2);
   }
 
   @Override

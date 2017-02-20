@@ -56,12 +56,10 @@ public class Drivetrain implements Subsystem {
 
   public Command turn(double angle, double tolerance) {
     return Command.just(x -> {
-      System.out.println("waiting for reading");
-      currentHeading.subscribeOn(Schedulers.io()).subscribe(System.out::println);
-      Double targetHeading = currentHeading.onBackpressureBuffer().map(FlowOperators::printId).take(1).map(y -> y + angle).blockingLatest().iterator().next();
-      System.out.println("target Heading: " + targetHeading);
-      Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true), Flowable.just(targetHeading))
-          .terminable(currentHeading.filter(y -> abs(y - targetHeading) < tolerance)).execute(x);
+      Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
+      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z);
+      Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true), targetHeading)
+          .terminable(error.filter(y -> abs(y) < tolerance)).execute(x);
       return terms;
     });
   }
@@ -83,7 +81,6 @@ public class Drivetrain implements Subsystem {
    * Drive the robot a distance, using the gyro to hold the current heading.
    *
    * @param distance  the distance to drive forward in feet
-   * @param tolerance the command will stop once the distance is within the tolerance distance range
    * @param speed     the controller's output speed
    */
   public Command driveDistanceAction(double distance, double speed) {
@@ -106,7 +103,7 @@ public class Drivetrain implements Subsystem {
 
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
-      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop()
+      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop().map(FlowOperators::printId)
           .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
