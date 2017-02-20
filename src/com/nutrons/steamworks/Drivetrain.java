@@ -2,9 +2,11 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
@@ -17,7 +19,7 @@ import static java.lang.Math.abs;
 
 public class Drivetrain implements Subsystem {
   private static final double FEET_PER_WHEEL_ROTATION = 0.851;
-  private static final double WHEEL_ROTATION_PER_ENCODER_ROTATION = 52 / 42;
+  private static final double WHEEL_ROTATION_PER_ENCODER_ROTATION = 42.0 / 54.0;
   private static final double FEET_PER_ENCODER_ROTATION =
       FEET_PER_WHEEL_ROTATION * WHEEL_ROTATION_PER_ENCODER_ROTATION;
   private final Flowable<Double> throttle;
@@ -53,9 +55,15 @@ public class Drivetrain implements Subsystem {
   }
 
   public Command turn(double angle, double tolerance) {
-    return driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true),
-        currentHeading.take(1).map(x -> x + angle))
-        .terminable(currentHeading.filter(x -> abs(x) < tolerance));
+    return Command.just(x -> {
+      System.out.println("waiting for reading");
+      currentHeading.subscribeOn(Schedulers.io()).subscribe(System.out::println);
+      Double targetHeading = currentHeading.onBackpressureBuffer().map(FlowOperators::printId).take(1).map(y -> y + angle).blockingLatest().iterator().next();
+      System.out.println("target Heading: " + targetHeading);
+      Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true), Flowable.just(targetHeading))
+          .terminable(currentHeading.filter(y -> abs(y - targetHeading) < tolerance)).execute(x);
+      return terms;
+    });
   }
 
   public Command driveTimeAction(long time) {
@@ -78,21 +86,22 @@ public class Drivetrain implements Subsystem {
    * @param tolerance the command will stop once the distance is within the tolerance distance range
    * @param speed     the controller's output speed
    */
-  public Command driveDistanceAction(double distance, double tolerance, double speed) {
+  public Command driveDistanceAction(double distance, double speed) {
+    System.out.println(FEET_PER_ENCODER_ROTATION);
     ControllerEvent reset = Events.resetPosition(0);
     double setpoint = distance / FEET_PER_ENCODER_ROTATION;
+    System.out.println(setpoint);
     Command resetRight = Command.just(x -> {
       rightDrive.accept(reset);
       return Flowable.just(() -> {
-        rightDrive.accept(reset);
-        rightDrive.setSetpoint(0);
         rightDrive.runAtPower(0);
+        leftDrive.runAtPower(0);
       });
     });
-    Flowable<Double> drive = toFlow(() -> speed);
+    Flowable<Double> drive = toFlow(() -> speed * Math.signum(distance));
     return Command.parallel(resetRight,
         driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
-        .killAfter(4000, TimeUnit.MILLISECONDS);
+        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0 );
   }
 
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
@@ -100,13 +109,13 @@ public class Drivetrain implements Subsystem {
       Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop()
           .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
       return combineDisposable(
-          combineLatest(left, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
+          combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .subscribeOn(Schedulers.io())
               .onBackpressureDrop()
               .compose(limitWithin(-1.0, 1.0))
               .map(Events::power)
               .subscribe(leftDrive),
-          combineLatest(right, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
+          combineLatest(right, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
               .subscribeOn(Schedulers.io())
               .onBackpressureDrop()
               .compose(limitWithin(-1.0, 1.0))
@@ -114,7 +123,6 @@ public class Drivetrain implements Subsystem {
               .subscribe(rightDrive));
     })
         .addFinalTerminator(() -> {
-      System.out.println("terminating");
           leftDrive.runAtPower(0);
           leftDrive.runAtPower(0);
         });

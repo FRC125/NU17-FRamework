@@ -20,6 +20,7 @@ import io.reactivex.functions.Function;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.nutrons.framework.util.FlowOperators.printId;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
@@ -60,7 +61,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.drivetrain.driveDistanceAction(1, 3.0, 0.2);
+    return this.drivetrain.driveDistanceAction(5.0, 0.2);
+    //return this.drivetrain.turn(20, 2);
   }
 
   @Override
@@ -95,6 +97,7 @@ public class RobotBootstrapper extends Robot {
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.leftLeader.setReversedSensor(true);
     this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
 
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
@@ -120,6 +123,8 @@ public class RobotBootstrapper extends Robot {
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
+    this.leftLeader.accept(Events.resetPosition(0.0));
+    this.rightLeader.accept(Events.resetPosition(0.0));
     this.drivetrain = new Drivetrain(driverPad.buttonA(),
         gyro.getGyroReadings(),
         driverPad.leftStickY().map(x -> -x),
