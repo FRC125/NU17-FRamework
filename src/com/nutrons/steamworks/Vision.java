@@ -31,6 +31,7 @@ public class Vision {
 
   /**
    * The dataStream is passed through to the method from the vision object returning the instance.
+   *
    * @param dataStream The data passed through to the method for instance retrieval
    * @return returns the instance of the vision object.
    */
