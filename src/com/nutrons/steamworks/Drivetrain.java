@@ -28,10 +28,10 @@ public class Drivetrain implements Subsystem {
   private final LoopSpeedController rightDrive;
   private final double deadband = 0.3;
   private final Flowable<Boolean> teleHoldHeading;
-  private final double ANGLE_P = 0.045;
-  private final double ANGLE_I = 0.0;
-  private final double ANGLE_D = 0.0065;
-  private final int ANGLE_BUFFER_LENGTH = 10;
+  private final double ANGLE_P = 0.07;
+  private final double ANGLE_I = 0.001;
+  private final double ANGLE_D = -0.0005;
+  private final int ANGLE_BUFFER_LENGTH = 5;
   private final ConnectableFlowable<Double> currentHeading;
 
   /**
@@ -59,7 +59,12 @@ public class Drivetrain implements Subsystem {
       Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
       Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z);
       Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true), targetHeading)
-          .terminable(error.filter(y -> abs(y) < tolerance)).execute(x);
+          .addFinalTerminator(() -> {
+            leftDrive.runAtPower(0);
+            rightDrive.runAtPower(0);
+          }).terminable(error.map(y -> abs(y) < tolerance)
+              .distinctUntilChanged().debounce(500, TimeUnit.MILLISECONDS)
+              .filter(y -> y)).execute(x);
       return terms;
     });
   }
