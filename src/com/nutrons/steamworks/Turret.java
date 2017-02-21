@@ -26,7 +26,7 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> aimButton;
 
   public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
-    this.angle = angle;
+    this.angle = angle.map(x -> Math.toDegrees(x));
     this.hoodMaster = master;
     Events.resetPosition(0.0).actOn(this.hoodMaster);
     this.revLim = FlowOperators.toFlow(() -> this.hoodMaster.revLimitSwitchClosed());
@@ -40,10 +40,10 @@ public class Turret implements Subsystem {
   public void registerSubscriptions() {
     FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
-    Flowable<Double> angles = this.angle.map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
+    Flowable<Double> angles = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
     Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
 
-    this.hoodMaster.setReversedSensor(true);
+    this.hoodMaster.setReversedSensor(false); //used to be true
     this.hoodMaster.reverseOutput(false);
 
     /**Flowable<Double> finalSetpoint = setpoint;

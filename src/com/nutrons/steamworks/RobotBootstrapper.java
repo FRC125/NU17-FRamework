@@ -106,11 +106,10 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new TransferVision());
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2, this.driverPad.rightBumper(), this.driverPad.leftBumper()));
-    sm.registerSubsystem(new Turret(toFlow(() -> 0.0), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
+    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
