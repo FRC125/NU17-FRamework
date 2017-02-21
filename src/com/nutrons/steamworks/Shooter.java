@@ -15,7 +15,7 @@ import io.reactivex.functions.Consumer;
 public class Shooter implements Subsystem {
 
   private static final double SHOOTER_POWER = 1.0;
-  double SETPOINT = 3250.0;
+  private static final double SETPOINT = 3250.0;
   private static final double PVAL = 0.05;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.33;
@@ -29,7 +29,6 @@ public class Shooter implements Subsystem {
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton) {
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
-
   }
 
   @Override

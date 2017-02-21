@@ -81,9 +81,6 @@ public class RobotBootstrapper extends Robot {
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
-    this.climberMotor2.setControlMode(ControlMode.MANUAL);
-    this.climberMotor1.setControlMode(ControlMode.MANUAL);
-
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
@@ -108,8 +105,6 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected StreamManager provideStreamManager() {
-    this.climberMotor1.setControlMode(ControlMode.MANUAL);
-    this.climberMotor2.setControlMode(ControlMode.MANUAL);
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
