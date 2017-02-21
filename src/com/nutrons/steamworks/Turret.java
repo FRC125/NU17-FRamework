@@ -25,12 +25,18 @@ public class Turret implements Subsystem {
   private Flowable<Double> position;
   private final Flowable<Boolean> aimButton;
 
+  /**
+   * The Turret System that is used for aiming our shooter.
+   *
+   * @param angle  The flowable of doubles that is represent the angle the turret should be facing.
+   * @param master The talon controlling the movement of the turret.
+   */
   public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle.map(x -> Math.toDegrees(x));
     this.hoodMaster = master;
     Events.resetPosition(0.0).actOn(this.hoodMaster);
-    this.revLim = FlowOperators.toFlow(() -> this.hoodMaster.revLimitSwitchClosed());
-    this.fwdLim = FlowOperators.toFlow(() -> this.hoodMaster.fwdLimitSwitchClosed());
+    this.revLim = FlowOperators.toFlow(this.hoodMaster::revLimitSwitchClosed);
+    this.fwdLim = FlowOperators.toFlow(this.hoodMaster::fwdLimitSwitchClosed);
     this.joyControl = joyControl;
     this.position = FlowOperators.toFlow(() -> this.hoodMaster.position());
     this.aimButton = aimButton;
@@ -43,7 +49,6 @@ public class Turret implements Subsystem {
     Flowable<Double> setpoint = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
-    this.hoodMaster.reverseOutput(false);
 
     /**Flowable<Double> finalSetpoint = setpoint;
     aimButton.map((Boolean b) -> {

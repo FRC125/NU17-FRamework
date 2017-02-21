@@ -1,26 +1,27 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.Serial;
-import com.nutrons.framework.util.FlowOperators;
 import com.nutrons.libKudos254.vision.VisionServer;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.nutrons.framework.util.FlowOperators.toFlow;
-
 public class RobotBootstrapper extends Robot {
 
+  private Drivetrain drivetrain;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -28,12 +29,10 @@ public class RobotBootstrapper extends Robot {
   private LoopSpeedController climberMotor1;
   private LoopSpeedController climberMotor2;
   private Talon hoodMaster;
-
   private Talon leftLeader;
   private Talon leftFollower;
   private Talon rightLeader;
   private Talon rightFollower;
-
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
@@ -52,6 +51,17 @@ public class RobotBootstrapper extends Robot {
   }
 
   @Override
+  public Command registerAuto() {
+    Command drive = this.drivetrain.driveDistanceAction(4.0, 0.3);
+    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+  }
+
+  @Override
+  public Command registerTele() {
+    return this.drivetrain.driveTeleop().terminable(Flowable.never());
+  }
+
+  @Override
   protected void constructStreams() {
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
@@ -62,7 +72,8 @@ public class RobotBootstrapper extends Robot {
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
-    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
@@ -70,21 +81,20 @@ public class RobotBootstrapper extends Robot {
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
-    this.climberMotor2.noSticky();
     this.climberMotor2.setControlMode(ControlMode.MANUAL);
-    this.climberMotor1.noSticky();
     this.climberMotor1.setControlMode(ControlMode.MANUAL);
-    this.climberMotor1.enableControl();
-    this.climberMotor2.enableControl();
 
     // Drivetrain Motors
-    this.leftLeader = new Talon(RobotMap.FRONT_LEFT);
+    this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-    this.leftFollower = new Talon(RobotMap.BACK_LEFT, this.leftLeader);
+    this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.leftLeader.setReversedSensor(true);
+    this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
 
-    this.rightLeader = new Talon(RobotMap.FRONT_RIGHT);
+    this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-    this.rightFollower = new Talon(RobotMap.BACK_RIGHT, this.rightLeader);
+    this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
 
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
@@ -100,24 +110,30 @@ public class RobotBootstrapper extends Robot {
   protected StreamManager provideStreamManager() {
     this.climberMotor1.setControlMode(ControlMode.MANUAL);
     this.climberMotor2.setControlMode(ControlMode.MANUAL);
-    this.climberMotor1.enableControl();
-    this.climberMotor2.enableControl();
     StreamManager sm = new StreamManager(this);
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2, this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
-
+    this.driverPad.rightBumper().subscribe(System.out::println);
+    sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonB(),
-        gyro.getGyroReadings(), Flowable.just(0.0)
-        .concatWith(driverPad.buttonB().filter(x -> x).map(x -> this.gyro.getAngle())),
-        driverPad.rightStickX(), driverPad.leftStickY().map(x -> -x),
-        leftLeader, rightLeader));
+    this.leftLeader.accept(Events.resetPosition(0.0));
+    this.rightLeader.accept(Events.resetPosition(0.0));
+    this.drivetrain = new Drivetrain(driverPad.buttonB(),
+        gyro.getGyroReadings(),
+        driverPad.leftStickY().map(x -> -x),
+        driverPad.rightStickX(),
+        leftLeader, rightLeader);
+    toFlow(() -> leftLeader.position())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
+    toFlow(() -> rightLeader.position())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
+    sm.registerSubsystem(this.drivetrain);
     return sm;
   }
 }

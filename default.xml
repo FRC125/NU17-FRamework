@@ -29,7 +29,8 @@
     <!-- See http://checkstyle.sourceforge.net/anttask.html for full options of using checkstyle with ant-->
     <checkstyle config="docs/google_checks.xml"
       failureProperty="checkstyle.failure"
-      failOnViolation="true">
+      failOnViolation="true"
+	  maxWarnings="0">
       <formatter type="plain"/>
       <fileset dir="src" includes="**/*.java"/>
       <fileset dir="test" includes="**/*.java"/>
@@ -66,11 +67,12 @@
     </javac>
   </target>
 
-  <target name="test" depends="checkstyle,compile">
+  <target name="test" depends="compile,checkstyle">
     <path id="classpath.path">
       <fileset dir="${userLibs}" erroronmissingdir="false"/>
       <fileset dir="lib/"
-        includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+			   includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+	  <pathelement path="FRamework/build"/>
     </path>
     <javac srcdir="${test.dir}"
       destdir="${build.dir}"
