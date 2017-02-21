@@ -1,5 +1,13 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.combineDisposable;
+import static com.nutrons.framework.util.FlowOperators.deadbandMap;
+import static com.nutrons.framework.util.FlowOperators.limitWithin;
+import static com.nutrons.framework.util.FlowOperators.pidLoop;
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+import static io.reactivex.Flowable.combineLatest;
+import static java.lang.Math.abs;
+
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.commands.Terminator;
@@ -10,14 +18,10 @@ import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
-
 import java.util.concurrent.TimeUnit;
 
-import static com.nutrons.framework.util.FlowOperators.*;
-import static io.reactivex.Flowable.combineLatest;
-import static java.lang.Math.abs;
-
 public class Drivetrain implements Subsystem {
+
   private static final double FEET_PER_WHEEL_ROTATION = 0.851;
   private static final double WHEEL_ROTATION_PER_ENCODER_ROTATION = 42.0 / 54.0;
   private static final double FEET_PER_ENCODER_ROTATION =
@@ -28,16 +32,17 @@ public class Drivetrain implements Subsystem {
   private final LoopSpeedController rightDrive;
   private final double deadband = 0.3;
   private final Flowable<Boolean> teleHoldHeading;
-  private final double ANGLE_P = 0.09;
-  private final double ANGLE_I = 0.0;
-  private final double ANGLE_D = 0.035;
-  private final int ANGLE_BUFFER_LENGTH = 5;
+  private final double angleP = 0.09;
+  private final double angleI = 0.0;
+  private final double angleD = 0.035;
+  private final int angleBufferLength = 5;
   private final ConnectableFlowable<Double> currentHeading;
 
   /**
    * A drivetrain which uses Arcade Drive.
    *
-   * @param teleHoldHeading whether or not the drivetrain should maintain the target heading during teleop
+   * @param teleHoldHeading whether or not the drivetrain should maintain the target heading during
+   *                        teleop
    * @param currentHeading  the current heading of the drivetrain
    * @param leftDrive       all controllers on the left of the drivetrain
    * @param rightDrive      all controllers on the right of the drivetrain
@@ -54,11 +59,21 @@ public class Drivetrain implements Subsystem {
     this.teleHoldHeading = teleHoldHeading;
   }
 
+  /**
+   * A command that turns the Drivetrain by a given angle, stopping after the angle remains
+   * within the specified tolerance for a certain period of time.
+   * The command will abort after a certain period of time, to avoid
+   * remaining stuck due to an imperfect turn.
+   *
+   * @param angle     angle the robot should turn, positive is CW, negative is CCW
+   * @param tolerance the robot should attempt to remain within this error of the target
+   */
   public Command turn(double angle, double tolerance) {
     return Command.just(x -> {
       Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
       Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z);
-      Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0), Flowable.just(true), targetHeading)
+      Flowable<Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
+          Flowable.just(true), targetHeading)
           .addFinalTerminator(() -> {
             leftDrive.runAtPower(0);
             rightDrive.runAtPower(0);
@@ -69,6 +84,11 @@ public class Drivetrain implements Subsystem {
     }).endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
   }
 
+  /**
+   * A command that will drive the robot forward for a given time.
+   *
+   * @param time the time to drive forwards for, in milliseconds
+   */
   public Command driveTimeAction(long time) {
     Flowable<Double> move = toFlow(() -> 0.4);
     return Command.fromSubscription(() ->
@@ -83,9 +103,10 @@ public class Drivetrain implements Subsystem {
   }
 
   /**
-   * Drive the robot a distance, using the gyro to hold the current heading.
+   * Drive the robot until a certain distance is reached,
+   * while using the gyro to hold the current heading.
    *
-   * @param distance the distance to drive forward in feet
+   * @param distance the distance to drive forward in feet, (negative values drive backwards)
    * @param speed    the controller's output speed
    */
   public Command driveDistanceAction(double distance, double speed) {
@@ -106,10 +127,21 @@ public class Drivetrain implements Subsystem {
         .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0);
   }
 
-  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
+  /**
+   * Drive the robot, and attempt to retain the desired heading with the gyro.
+   *
+   * @param left          the ideal power of the left motors
+   * @param right         the ideal power of the right motors
+   * @param holdHeading   a flowable that represents whether or not the 'hold-heading' mode
+   *                      should be active.
+   * @param targetHeading the desired heading the drivetrain should obtain
+   */
+  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
+                                  Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
-      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop().map(FlowOperators::printId)
-          .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
+      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
+          .onBackpressureDrop().map(FlowOperators::printId)
+          .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .subscribeOn(Schedulers.io())
@@ -130,19 +162,34 @@ public class Drivetrain implements Subsystem {
         });
   }
 
-  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading) {
+  /**
+   * Drive the robot, and attempt to retain the current heading with the gyro.
+   * When hold-heading mode is activated, the target heading will become its current heading.
+   *
+   * @param left        the ideal power of the left motors
+   * @param right       the ideal power of the right motors
+   * @param holdHeading a flowable that represents whether or not the 'hold-heading' mode should be
+   *                    active.
+   */
+  public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
+                                  Flowable<Boolean> holdHeading) {
     return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
         holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y)));
   }
 
+  /**
+   * Drive the robot using the arcade-style joystick streams that were passed to the Drivetrain.
+   * This is usually run during teleop.
+   */
   public Command driveTeleop() {
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).onBackpressureDrop(),
-        combineLatest(throttle, yaw, (x, y) -> x - y).onBackpressureDrop(), Flowable.just(false).concatWith(this.teleHoldHeading));
+        combineLatest(throttle, yaw, (x, y) -> x - y).onBackpressureDrop(),
+        Flowable.just(false).concatWith(this.teleHoldHeading));
   }
 
   @Override
   public void registerSubscriptions() {
-
+    // intentionally empty
   }
 }

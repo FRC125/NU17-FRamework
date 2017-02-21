@@ -1,5 +1,7 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
@@ -9,8 +11,6 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
-
-import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class Shooter implements Subsystem {
 

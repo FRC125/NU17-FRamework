@@ -1,5 +1,7 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
@@ -14,14 +16,11 @@ import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.concurrent.TimeUnit;
-
-import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
+  public static final int PACKET_LENGTH = 17;
   private Drivetrain drivetrain;
   private LoopSpeedController intakeController;
   private LoopSpeedController intakeController2;
@@ -130,8 +129,10 @@ public class RobotBootstrapper extends Robot {
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
         leftLeader, rightLeader);
-    toFlow(() -> leftLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
-    toFlow(() -> rightLeader.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
+    toFlow(() -> leftLeader.position())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
+    toFlow(() -> rightLeader.position())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
     return sm;
   }
