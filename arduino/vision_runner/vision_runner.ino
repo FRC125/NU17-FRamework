@@ -14,11 +14,11 @@ const double CAMERA_ANGLE = 0.0; //in degrees -- see wiki
 const double CAMERA_HEIGHT = 0.0; //in inches
 
 //TODO: Edit these values
-const double VERTICAL_ZERO_OFFSET_BOILER = 0.0; //in degrees -- see wiki
-const double TARGET_HEIGHT_BOILER = 0.0; //in inches
+const double VERTICAL_ZERO_OFFSET_BOILER = 23.5; //in degrees -- see wiki
+const double TARGET_HEIGHT_BOILER = 84.0; //in inches
 
-const double VERTICAL_ZERO_OFFSET_GEAR = 0.0; //in degrees -- see wiki
-const double TARGET_HEIGHT_GEAR = 0.0; //in inches
+const double VERTICAL_ZERO_OFFSET_GEAR = 23.5; //in degrees -- see wiki
+const double TARGET_HEIGHT_GEAR = 10.75; //in inches
 
 double angleToTarget_x; //horizontal angle in degrees
 double angleToTarget_y; //vertical angle in degrees
@@ -60,9 +60,9 @@ void loop() {
      }
   }
 
-  //If we don't see anything, just send -1000 for both values!
+  //If we don't see anything, just send 0.0 for both values!
   currentState = NONE;
-  writeBytes(-1000.0, -1000.0);
+  writeBytes(0.0, 0.0);
 }
 
 //******THE IMPORTANT STUFF******
