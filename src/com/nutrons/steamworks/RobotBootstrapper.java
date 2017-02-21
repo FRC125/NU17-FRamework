@@ -22,8 +22,6 @@ public class RobotBootstrapper extends Robot {
 
   public static final int PACKET_LENGTH = 17;
   private Drivetrain drivetrain;
-  private LoopSpeedController intakeController;
-  private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -79,9 +77,6 @@ public class RobotBootstrapper extends Robot {
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
-    this.intakeController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
-    this.intakeController2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2, (
-        Talon) this.intakeController);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
         CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
@@ -124,7 +119,7 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
-    this.drivetrain = new Drivetrain(driverPad.buttonA(),
+    this.drivetrain = new Drivetrain(driverPad.buttonB(),
         gyro.getGyroReadings(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
