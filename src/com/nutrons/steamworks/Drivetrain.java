@@ -11,6 +11,7 @@ import static java.lang.Math.abs;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.commands.Terminator;
+import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -107,24 +108,25 @@ public class Drivetrain implements Subsystem {
    * while using the gyro to hold the current heading.
    *
    * @param distance the distance to drive forward in feet, (negative values drive backwards)
-   * @param speed    the controller's output speed
    */
-  public Command driveDistanceAction(double distance, double speed) {
-    System.out.println(FEET_PER_ENCODER_ROTATION);
+  public Command driveDistanceAction(double distance) {
     ControllerEvent reset = Events.resetPosition(0);
     double setpoint = distance / FEET_PER_ENCODER_ROTATION;
-    System.out.println(setpoint);
-    Command resetRight = Command.just(x -> {
+    Command encoderLoop = Command.just(x -> {
       rightDrive.accept(reset);
+      rightDrive.setControlMode(ControlMode.LOOP_POSITION);
+      rightDrive.setPID(0.01, 0.0, 0.0, 0.0);
+      rightDrive.setSetpoint(setpoint);
       return Flowable.just(() -> {
-        rightDrive.runAtPower(0);
-        leftDrive.runAtPower(0);
       });
     });
-    Flowable<Double> drive = toFlow(() -> speed * Math.signum(distance));
-    return Command.parallel(resetRight,
-        driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
-        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0);
+    Command gyroLoop = Command.fromSubscription(() ->
+        pidAngle(currentHeading.take(1)).map(x -> x + rightDrive.speed())
+            .map(Events::power).subscribe(leftDrive));
+    return Command.parallel(encoderLoop, gyroLoop).addFinalTerminator(() -> {
+      rightDrive.runAtPower(0);
+      leftDrive.runAtPower(0);
+    }).delayFinish(10, TimeUnit.SECONDS);
   }
 
   /**
@@ -139,9 +141,7 @@ public class Drivetrain implements Subsystem {
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
-      Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
-          .onBackpressureDrop().map(FlowOperators::printId)
-          .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
+      Flowable<Double> output = pidAngle(targetHeading);
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .subscribeOn(Schedulers.io())
@@ -160,6 +160,12 @@ public class Drivetrain implements Subsystem {
           leftDrive.runAtPower(0);
           leftDrive.runAtPower(0);
         });
+  }
+
+  private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
+    return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
+        .onBackpressureDrop().map(FlowOperators::printId)
+        .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
   }
 
   /**
