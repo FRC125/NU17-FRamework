@@ -100,6 +100,10 @@ public class Drivetrain implements Subsystem {
    * while using the gyro to hold the current heading.
    *
    * @param distance the distance to drive forward in feet, (negative values drive backwards)
+   * @param distanceTolerance the tolerance for distance error, which is based on encoder values;
+   *                          this error is based on encoder readings.
+   * @param angleTolerance the tolerance for angle error in a sucessful PID loop;
+   *                       this error is based on gyro readings.
    */
   public Command driveDistance(double distance,
                                double distanceTolerance, double angleTolerance) {
@@ -213,31 +217,6 @@ public class Drivetrain implements Subsystem {
       leftDrive.runAtPower(0);
       rightDrive.runAtPower(0);
     }));
-  }
-
-  /**
-   * Drive the robot until a certain distance is reached,
-   * while using the gyro to hold the current heading.
-   *
-   * @param distance the distance to drive forward in feet, (negative values drive backwards)
-   * @param speed    the controller's output speed
-   */
-  public Command driveDistanceAction(double distance, double speed) {
-    System.out.println(FEET_PER_ENCODER_ROTATION);
-    ControllerEvent reset = Events.resetPosition(0);
-    double setpoint = distance / FEET_PER_ENCODER_ROTATION;
-    System.out.println(setpoint);
-    Command resetRight = Command.just(x -> {
-      rightDrive.accept(reset);
-      return Flowable.just(() -> {
-        rightDrive.runAtPower(0);
-        leftDrive.runAtPower(0);
-      });
-    });
-    Flowable<Double> drive = toFlow(() -> speed * Math.signum(distance));
-    return Command.parallel(resetRight,
-        driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
-        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0);
   }
 
   /**
