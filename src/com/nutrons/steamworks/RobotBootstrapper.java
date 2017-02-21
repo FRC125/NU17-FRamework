@@ -37,13 +37,10 @@ public class RobotBootstrapper extends Robot {
   private Talon leftFollower;
   private Talon rightLeader;
   private Talon rightFollower;
-<<<<<<< HEAD
 
   private RevServo gearPlacerLeft;
   private RevServo gearPlacerRight;
 
-=======
->>>>>>> master
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
