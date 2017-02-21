@@ -4,7 +4,6 @@ import io.reactivex.Flowable;
 
 public class Vision {
 
-
   /* Arduino sends -1000.0 over serial when it doesn't see anything, to prevent
   robot sending an exception "no serial port found" */
   private static final String DUMMY_VALUE = "NONE:-1000:-1000";

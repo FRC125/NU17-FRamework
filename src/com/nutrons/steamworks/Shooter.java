@@ -37,7 +37,7 @@ public class Shooter implements Subsystem {
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
-    toFlow(() -> this.shooterController.speed()).subscribe(speed);
+    toFlow(this.shooterController::speed).subscribe(speed);
 
     //shooterButton.subscribe(System.out::println);
     //toFlow( () -> this.shooterController.speed()).subscribe(System.out::println);
