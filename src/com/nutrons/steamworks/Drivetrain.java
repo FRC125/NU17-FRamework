@@ -11,16 +11,13 @@ import static java.lang.Math.abs;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.commands.Terminator;
-import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
-
 import java.util.concurrent.TimeUnit;
 
 public class Drivetrain implements Subsystem {
@@ -46,12 +43,6 @@ public class Drivetrain implements Subsystem {
   private final double distanceI = 0.0;
   private final double distanceD = 0.0;
 
-  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance) {
-    return error.map(x -> abs(x) < tolerance)
-        .distinctUntilChanged().debounce(pidTerminateTime, pidTerminateUnit)
-        .filter(x -> x);
-  }
-
   /**
    * A drivetrain which uses Arcade Drive.
    *
@@ -71,6 +62,12 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
+  }
+
+  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance) {
+    return error.map(x -> abs(x) < tolerance)
+        .distinctUntilChanged().debounce(pidTerminateTime, pidTerminateUnit)
+        .filter(x -> x);
   }
 
   /**
@@ -96,24 +93,6 @@ public class Drivetrain implements Subsystem {
               .filter(y -> y)).execute(x);
       return terms;
     }).endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
-  }
-
-  /**
-   * A command that will drive the robot forward for a given time.
-   *
-   * @param time the time to drive forwards for, in milliseconds
-   */
-  public Command driveTimeAction(long time) {
-    Flowable<Double> move = toFlow(() -> 0.4);
-    return Command.fromSubscription(() ->
-        combineDisposable(
-            move.map(x -> Events.power(x)).subscribe(leftDrive),
-            move.map(x -> Events.power(-x)).subscribe(rightDrive)
-        )
-    ).killAfter(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
-      leftDrive.runAtPower(0);
-      rightDrive.runAtPower(0);
-    }));
   }
 
   /**
@@ -153,13 +132,13 @@ public class Drivetrain implements Subsystem {
     }), right, left)
         .terminable(pidTerminator(distanceError,
             distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION))
-       .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
+        .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
             .terminable(pidTerminator(angleError, angleTolerance))
             .killAfter(2000, TimeUnit.MILLISECONDS))
-       .then(Command.fromAction(() -> {
-         leftDrive.runAtPower(0);
-         rightDrive.runAtPower(0);
-       }));
+        .then(Command.fromAction(() -> {
+          leftDrive.runAtPower(0);
+          rightDrive.runAtPower(0);
+        }));
   }
 
   /**
@@ -216,6 +195,49 @@ public class Drivetrain implements Subsystem {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
         .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
+  }
+
+  /**
+   * A command that will drive the robot forward for a given time.
+   *
+   * @param time the time to drive forwards for, in milliseconds
+   */
+  public Command driveTimeAction(long time) {
+    Flowable<Double> move = toFlow(() -> 0.4);
+    return Command.fromSubscription(() ->
+        combineDisposable(
+            move.map(x -> Events.power(x)).subscribe(leftDrive),
+            move.map(x -> Events.power(-x)).subscribe(rightDrive)
+        )
+    ).killAfter(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
+      leftDrive.runAtPower(0);
+      rightDrive.runAtPower(0);
+    }));
+  }
+
+  /**
+   * Drive the robot until a certain distance is reached,
+   * while using the gyro to hold the current heading.
+   *
+   * @param distance the distance to drive forward in feet, (negative values drive backwards)
+   * @param speed    the controller's output speed
+   */
+  public Command driveDistanceAction(double distance, double speed) {
+    System.out.println(FEET_PER_ENCODER_ROTATION);
+    ControllerEvent reset = Events.resetPosition(0);
+    double setpoint = distance / FEET_PER_ENCODER_ROTATION;
+    System.out.println(setpoint);
+    Command resetRight = Command.just(x -> {
+      rightDrive.accept(reset);
+      return Flowable.just(() -> {
+        rightDrive.runAtPower(0);
+        leftDrive.runAtPower(0);
+      });
+    });
+    Flowable<Double> drive = toFlow(() -> speed * Math.signum(distance));
+    return Command.parallel(resetRight,
+        driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
+        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0);
   }
 
   /**
