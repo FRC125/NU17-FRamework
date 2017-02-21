@@ -40,8 +40,7 @@ public class Turret implements Subsystem {
   public void registerSubscriptions() {
     FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
-    Flowable<Double> angles = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
-    Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
+    Flowable<Double> setpoint = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
     this.hoodMaster.reverseOutput(false);
@@ -61,7 +60,6 @@ public class Turret implements Subsystem {
 
     FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
-    angles.subscribe(new WpiSmartDashboard().getTextFieldDouble("angles (setpoints)"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));

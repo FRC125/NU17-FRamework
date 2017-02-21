@@ -31,20 +31,14 @@ public class VisionProcessor implements VisionUpdateReceiver {
   };
 
   public double getYawHorizAngle() {
-    if (update_ == null) {
-      System.out.println("vision: error: got null update");
-      return 0.0;
-    } else if (update_.getTargets() == null) {
-      System.out.println("vision: error: got null targets");
-      return 0.0;
-    } else if (update_.getTargets().isEmpty()) {
-      System.out.println("vision: error: got empty targets");
-      return 0.0;
-    } else {
-      TargetInfo target = update_.getTargets().get(0);
-      System.out.println("vision: got target with Y: " + target.getY());
-      return target.getY();
+
+    if (!(update_.getTargets() == null || update_.getTargets().isEmpty())) {
+      for (TargetInfo target : update_.getTargets()) {
+        double yaw_angle_radians = Math.atan2(target.getY() , target.getX());
+        return yaw_angle_radians;
+      }
     }
+    return 0.0;
   }
 
   public double getPitchVertAngle() {
@@ -68,7 +62,6 @@ public class VisionProcessor implements VisionUpdateReceiver {
   @Override
   public synchronized void gotUpdate(VisionUpdate update) {
     update_ = update;
-    //System.out.println("update is valid: " + update.isValid());
   }
 
 }
