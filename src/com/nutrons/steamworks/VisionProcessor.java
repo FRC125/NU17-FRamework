@@ -9,7 +9,7 @@ import io.reactivex.Flowable;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 /**
- * Kudos 254! =(^_^)=
+ * Kudos 254 for letting us use your code and app, and thanks so much to Tombot for helping us so much! =(^_^)=
  *
  * This function adds vision updates (from the Nexus smartphone) to a list in
  * RobotState. This helps keep track of goals detected by the vision system. The
@@ -20,14 +20,14 @@ import static com.nutrons.framework.util.FlowOperators.toFlow;
  */
 public class VisionProcessor implements VisionUpdateReceiver {
   // Pose of the camera frame w.r.t. the turret frame
-  public static double kCameraZOffset = 19.75;
-  public static double kCameraPitchAngleDegrees = 35.75; // calibrated 4/22
+  public static double CAMERA_INCHES_FROM_FLOOR = 19.75;
+  public static double kCameraPitchAngleDegrees = 35.75;
   public static double kCameraYawAngleDegrees = -1.0;
 
   static VisionProcessor instance_ = new VisionProcessor();
   VisionUpdate update_ = null;
   public static final double CENTER_OF_TARGET_HEIGHT = 89.0;
-  double differential_height_ = CENTER_OF_TARGET_HEIGHT - kCameraZOffset;
+  double differential_height_ = CENTER_OF_TARGET_HEIGHT - CAMERA_INCHES_FROM_FLOOR;
   Rotation2d camera_pitch_correction_ = Rotation2d.fromDegrees(kCameraPitchAngleDegrees);;
   Rotation2d camera_yaw_correction_ = Rotation2d.fromDegrees(kCameraYawAngleDegrees);
 
