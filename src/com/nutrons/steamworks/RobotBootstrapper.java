@@ -56,8 +56,7 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    Command drive = this.drivetrain.driveDistanceAction(4.0);
-    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+    return this.drivetrain.driveDistance(6, 0.25,5);
   }
 
   @Override
@@ -124,7 +123,7 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
-    this.drivetrain = new Drivetrain(driverPad.buttonA(),
+    this.drivetrain = new Drivetrain(driverPad.buttonB(),
         gyro.getGyroReadings(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
