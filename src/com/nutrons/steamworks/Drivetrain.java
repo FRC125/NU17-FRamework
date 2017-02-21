@@ -28,9 +28,9 @@ public class Drivetrain implements Subsystem {
   private final LoopSpeedController rightDrive;
   private final double deadband = 0.3;
   private final Flowable<Boolean> teleHoldHeading;
-  private final double ANGLE_P = 0.07;
-  private final double ANGLE_I = 0.001;
-  private final double ANGLE_D = -0.0005;
+  private final double ANGLE_P = 0.09;
+  private final double ANGLE_I = 0.0;
+  private final double ANGLE_D = 0.035;
   private final int ANGLE_BUFFER_LENGTH = 5;
   private final ConnectableFlowable<Double> currentHeading;
 
@@ -66,7 +66,7 @@ public class Drivetrain implements Subsystem {
               .distinctUntilChanged().debounce(500, TimeUnit.MILLISECONDS)
               .filter(y -> y)).execute(x);
       return terms;
-    });
+    }).endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
   }
 
   public Command driveTimeAction(long time) {
