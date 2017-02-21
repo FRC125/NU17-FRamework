@@ -128,9 +128,14 @@ public class RobotBootstrapper extends Robot {
     return sm;
   }
 
-  protected final void registerAuto(String name, Command command) {
+  protected final void registerAutos(String name, Command command) {
     autos.put(name, command);
     sc.addObject(name, command);
+    sc.addDefault("default", null);
   }
 
+  @Override
+  protected Command registerAuto() {
+    return (Command)sc.getSelected();
+  }
 }
