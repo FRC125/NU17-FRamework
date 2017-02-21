@@ -5,10 +5,8 @@ public class RobotMap {
   // Intake or Shooter
   public static final int SHOOTER_MOTOR_1 = 2;
   public static final int SHOOTER_MOTOR_2 = 3;
-  //TODO: Change climber ports to match robot.
   public static final int CLIMBTAKE_MOTOR_1 = 12;
   public static final int CLIMBTAKE_MOTOR_2 = 13;
-  // TODO: Change hopper ports to match robot
   public static final int TOP_HOPPER_MOTOR = 6;
   public static final int SPIN_FEEDER_MOTOR = 4;
   public static final int HOOD_MOTOR_A = 5;
