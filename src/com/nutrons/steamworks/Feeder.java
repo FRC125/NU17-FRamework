@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Tuneable;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
@@ -36,7 +37,7 @@ public class Feeder implements Subsystem {
   public void registerSubscriptions() {
     feederButton.map(b -> b ? SPIN_POWER : 0.0).map(Events::power).subscribe(feederController);
     feederButton.map(b -> b ? ROLLER_POWER : 0.0).map(Events::power).subscribe(rollerController);
-    this.feederButtonLog = sd.getTextFieldBoolean("feeder-button-value");
+    new Tuneable("Hook power", SPIN_POWER);
     feederButton.subscribe(feederButtonLog);
   }
 }

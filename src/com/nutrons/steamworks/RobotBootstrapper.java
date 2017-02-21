@@ -104,17 +104,17 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(),
         this.driverPad.buttonA()));
-    sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
-        this.operatorPad.leftStickY()));
+    //sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
+        //this.operatorPad.leftStickY()));
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
-    sm.registerSubsystem(new Drivetrain(driverPad.buttonB(),
+    /*sm.registerSubsystem(new Drivetrain(driverPad.buttonB(),
         gyro.getGyroReadings(),
         Flowable.just(0.0)
             .concatWith(driverPad.buttonB().filter(x -> x).map(x -> this.gyro.getAngle())),
         driverPad.rightStickX(), driverPad.leftStickY().map(x -> -x),
-        leftLeader, rightLeader));
+        leftLeader, rightLeader));*/
     return sm;
   }
 }
