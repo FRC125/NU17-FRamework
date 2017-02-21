@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.ctre.CANTalon;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
@@ -10,9 +11,12 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -39,6 +43,9 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+
+  private SendableChooser sc;
+  private HashMap autos;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -92,6 +99,9 @@ public class RobotBootstrapper extends Robot {
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
     this.gyro = new HeadingGyro();
+
+    this.sc = new SendableChooser();
+    this.autos = new HashMap();
   }
 
   @Override
@@ -117,4 +127,10 @@ public class RobotBootstrapper extends Robot {
         leftLeader, rightLeader));
     return sm;
   }
+
+  protected final void registerAuto(String name, Command command) {
+    autos.put(name, command);
+    sc.addObject(name, command);
+  }
+
 }
