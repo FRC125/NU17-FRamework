@@ -10,6 +10,7 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
+import com.nutrons.framework.util.FlowOperators;
 import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
@@ -18,9 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
-  public final static int PACKET_LENGTH = 17;
-  private LoopSpeedController intakeController;
-  private LoopSpeedController intakeController2;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -28,8 +26,6 @@ public class RobotBootstrapper extends Robot {
   private LoopSpeedController climberMotor1;
   private LoopSpeedController climberMotor2;
   private Talon hoodMaster;
-  private Serial serial;
-  private Vision vision;
 
   private Talon leftLeader;
   private Talon leftFollower;
@@ -55,8 +51,6 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
-    this.vision = Vision.getInstance(serial.getDataStream());
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-6f, +6f).actOn(this.hoodMaster); //Move slow enough to set off limit switches
@@ -66,8 +60,6 @@ public class RobotBootstrapper extends Robot {
 
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
-    this.intakeController = new Talon(RobotMap.SPIN_FEEDER_MOTOR);
-    this.intakeController2 = new Talon(RobotMap.TOP_HOPPER_MOTOR, (Talon) this.intakeController);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2, CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
@@ -115,7 +107,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2, this.driverPad.rightBumper(), this.driverPad.leftBumper()));
-    sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
+    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow().map(FlowOperators::printId), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
 
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);

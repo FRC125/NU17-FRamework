@@ -18,18 +18,15 @@ public class Turret implements Subsystem {
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private final Flowable<Double> angle;
-  private final Flowable<String> state;
   private final Talon hoodMaster;
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
   private Flowable<Double> position;
   private final Flowable<Boolean> aimButton;
-  //Flowable<Double> setpoint;
 
-  public Turret(Flowable<Double> angle, Flowable<String> state, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
+  public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle;
-    this.state = state;
     this.hoodMaster = master;
     Events.resetPosition(0.0).actOn(this.hoodMaster);
     this.revLim = FlowOperators.toFlow(() -> this.hoodMaster.revLimitSwitchClosed());
@@ -41,16 +38,15 @@ public class Turret implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-
+    FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
     Flowable<Double> angles = this.angle.map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
     Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
-    setpoint = Flowable.combineLatest(setpoint, state, (sp, st) -> sp).subscribeOn(Schedulers.io());
 
     this.hoodMaster.setReversedSensor(true);
     this.hoodMaster.reverseOutput(false);
 
-    Flowable<Double> finalSetpoint = setpoint;
+    /**Flowable<Double> finalSetpoint = setpoint;
     aimButton.map((Boolean b) -> {
       if(b) {
         this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
@@ -61,11 +57,11 @@ public class Turret implements Subsystem {
         FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
       }
       return b;
-    });
+    });**/
 
     FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
-    this.state.subscribe(new WpiSmartDashboard().getTextFieldString("state"));
+    angles.subscribe(new WpiSmartDashboard().getTextFieldDouble("angles (setpoints)"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));
