@@ -85,8 +85,8 @@ public class Drivetrain implements Subsystem {
   /**
    * Drive the robot a distance, using the gyro to hold the current heading.
    *
-   * @param distance  the distance to drive forward in feet
-   * @param speed     the controller's output speed
+   * @param distance the distance to drive forward in feet
+   * @param speed    the controller's output speed
    */
   public Command driveDistanceAction(double distance, double speed) {
     System.out.println(FEET_PER_ENCODER_ROTATION);
@@ -103,7 +103,7 @@ public class Drivetrain implements Subsystem {
     Flowable<Double> drive = toFlow(() -> speed * Math.signum(distance));
     return Command.parallel(resetRight,
         driveHoldHeading(drive, drive, Flowable.just(true), currentHeading.take(1)))
-        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0 );
+        .until(() -> (rightDrive.position() - setpoint) * Math.signum(distance) > 0.0);
   }
 
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right, Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
