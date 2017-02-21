@@ -10,6 +10,7 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.Serial;
+import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 
@@ -95,6 +96,10 @@ public class RobotBootstrapper extends Robot {
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
     this.gyro = new HeadingGyro();
+
+    VisionServer mVisionServer = VisionServer.getInstance();
+    mVisionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
+
   }
 
   @Override
