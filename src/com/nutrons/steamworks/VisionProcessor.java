@@ -26,25 +26,15 @@ public class VisionProcessor implements VisionUpdateReceiver {
   }
 
   public static VisionProcessor getInstance() {
+    System.out.println("VisionProcessor gotInstance");
     return instance_;
-  }
-
-  /**
-   * public void onLoop() {
-   * VisionUpdate update;
-   * synchronized (this) {
-   * if (update_ == null) {
-   * return;
-   * }
-   * update = update_;
-   * update_ = null;
-   * }
-   * }
-   **/ //TODO: What does this do? Do I need it?
+  };
 
   public double getYawHorizAngle() {
     if (!(update_.getTargets() == null || update_.getTargets().isEmpty())) {
+      System.out.printf("update after check: %s\n", update_);
       for (TargetInfo target : update_.getTargets()) {
+        System.out.println("At some point update was not null");
         return target.getY();
       }
     }
@@ -65,8 +55,8 @@ public class VisionProcessor implements VisionUpdateReceiver {
   }
 
   public Flowable<Double> getHorizAngleFlow(){
-    System.out.println(this.getYawHorizAngle());
-    return toFlow(() -> this.getYawHorizAngle()).distinctUntilChanged().publish();
+    //System.out.println(this.getYawHorizAngle());
+    return toFlow(() -> this.getYawHorizAngle());
   }
 
   @Override
