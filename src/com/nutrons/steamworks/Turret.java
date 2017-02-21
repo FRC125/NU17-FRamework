@@ -24,8 +24,10 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
   private Flowable<Double> position;
+  private final Flowable<Boolean> aimButton;
+  //Flowable<Double> setpoint;
 
-  public Turret(Flowable<Double> angle, Flowable<String> state, Talon master, Flowable<Double> joyControl) { //TODO: remove joycontrol
+  public Turret(Flowable<Double> angle, Flowable<String> state, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle;
     this.state = state;
     this.hoodMaster = master;
@@ -34,29 +36,32 @@ public class Turret implements Subsystem {
     this.fwdLim = FlowOperators.toFlow(() -> this.hoodMaster.fwdLimitSwitchClosed());
     this.joyControl = joyControl;
     this.position = FlowOperators.toFlow(() -> this.hoodMaster.position());
+    this.aimButton = aimButton;
   }
 
   @Override
   public void registerSubscriptions() {
-    FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
 
     Flowable<Double> angles = this.angle.map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
     Flowable<Double> setpoint = Flowable.combineLatest(angles, position, (s, p) -> s).subscribeOn(Schedulers.io());
-    //setpoint = Flowable.combineLatest(setpoint, state.filter(st -> st.equals("NONE")), (sp, st) -> sp).subscribeOn(Schedulers.io());
     setpoint = Flowable.combineLatest(setpoint, state, (sp, st) -> sp).subscribeOn(Schedulers.io());
+
     this.hoodMaster.setReversedSensor(true);
     this.hoodMaster.reverseOutput(false);
 
-    this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-    setpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
-
-    /**Flowable<ControllerEvent> source = this.angle
-        .map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
-        .map(x -> Events.pid(hoodMaster.position() + x, PVAL, IVAL, DVAL, FVAL));**/
-
-
-    //joyControl.map(b -> b ? Events.power(-.5) : Events.power(0.0)).subscribe(hoodMaster);
+    Flowable<Double> finalSetpoint = setpoint;
+    aimButton.map((Boolean b) -> {
+      if(b) {
+        this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
+        this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+        finalSetpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
+      }else{
+        this.hoodMaster.setControlMode(ControlMode.MANUAL);
+        FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
+      }
+      return b;
+    });
 
     FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
@@ -64,7 +69,5 @@ public class Turret implements Subsystem {
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));
-
-    //source.subscribe(hoodMaster);
   }
 }
