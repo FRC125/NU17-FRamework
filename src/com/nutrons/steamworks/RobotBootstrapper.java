@@ -16,6 +16,7 @@ import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -111,8 +112,9 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.operatorPad);
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2, this.driverPad.buttonY(),
-        this.driverPad.buttonA()));
+    this.driverPad.rightBumper().subscribe(System.out::println);
+    sm.registerSubsystem(new Climbtake(climberController, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
         this.operatorPad.leftStickY()));
     leftLeader.setControlMode(ControlMode.MANUAL);
