@@ -123,7 +123,7 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
         this.gearPlacerRight,
-        this.operatorPad.buttonA()));
+        this.driverPad.buttonX()));
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
 
