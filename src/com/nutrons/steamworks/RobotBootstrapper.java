@@ -24,6 +24,7 @@ public class RobotBootstrapper extends Robot {
 
   public static final int PACKET_LENGTH = 17;
   private Drivetrain drivetrain;
+  private Climbtake climbtake;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -55,13 +56,12 @@ public class RobotBootstrapper extends Robot {
    * is held down past the time specified by the delay.
    */
   static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
-    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+    return x -> x ? Flowable.just(false).delay(delay, unit) : Flowable.just(false);
   }
 
   @Override
   public Command registerAuto() {
-    Command drive = this.drivetrain.driveDistanceAction(4.0, 0.3);
-    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+    return this.climbtake.pulse(true).delayFinish(3, TimeUnit.SECONDS);
   }
 
   @Override
@@ -71,6 +71,11 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
+    // Gamepads
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
+    this.gyro = new HeadingGyro();
+
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
@@ -92,6 +97,9 @@ public class RobotBootstrapper extends Robot {
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
+    this.climbtake = new Climbtake(climberController, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper());
+
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
@@ -107,11 +115,6 @@ public class RobotBootstrapper extends Robot {
     //Gear Placer Servos
     this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
     this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-
-    // Gamepads
-    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
-    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
-    this.gyro = new HeadingGyro();
   }
 
   @Override
@@ -129,13 +132,9 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     this.driverPad.rightBumper().subscribe(System.out::println);
-
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
-
+    sm.registerSubsystem(this.climbtake);
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
-        this.operatorPad.leftStickY()));
-
+        this.operatorPad.leftStickX()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
