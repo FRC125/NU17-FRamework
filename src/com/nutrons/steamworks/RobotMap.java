@@ -19,6 +19,10 @@ public class RobotMap {
   public static final int FRONT_RIGHT = 14;
   public static final int BACK_RIGHT = 15;
 
+  // Ports of Servos TODO: Fix Port to match robot servos
+  public static final int GEAR_SERVO_LEFT = 7;
+  public static final int GEAR_SERVO_RIGHT = 8;
+
   // Controllers
   public static final int OP_PAD = 0;
   public static final int DRIVER_PAD = 1;
