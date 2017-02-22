@@ -44,24 +44,22 @@ public class Turret implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
+    //FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
 
     Flowable<Double> setpoint = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
 
-    /**Flowable<Double> finalSetpoint = setpoint;
-    aimButton.map((Boolean b) -> {
+    aimButton.subscribe((Boolean b) -> {
       if(b) {
         this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
         this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-        finalSetpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
+        setpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
       }else{
         this.hoodMaster.setControlMode(ControlMode.MANUAL);
         FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
       }
-      return b;
-    });**/
+    });
 
     FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
