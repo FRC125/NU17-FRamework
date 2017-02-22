@@ -67,11 +67,12 @@
     </javac>
   </target>
 
-  <target name="test" depends="compile,checkstyle">
+  <target name="test" depends="compile">
     <path id="classpath.path">
       <fileset dir="${userLibs}" erroronmissingdir="false"/>
       <fileset dir="lib/"
-        includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+			   includes="*.jar"/> <!-- include everything, I did not remove wpi's specific includes-->
+	  <pathelement path="FRamework/build"/>
     </path>
     <javac srcdir="${test.dir}"
       destdir="${build.dir}"

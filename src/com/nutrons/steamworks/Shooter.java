@@ -22,7 +22,7 @@ public class Shooter implements Subsystem {
   private static final double STARTING_DVAL = 0.33;
   private static final double STARTING_FVAL = 0.035;
   private Tuneable setpoint = new Tuneable("Setpoint", STARTING_SETPOINT);
-  private TuneablePID pid = new TuneablePID("PID");
+  private TuneablePID pid = new TuneablePID("Shooter");
   private static final ControllerEvent stopEvent = Events
       .combine(Events.setpoint(0), Events.power(0));
   private final LoopSpeedController shooterController;
@@ -40,9 +40,6 @@ public class Shooter implements Subsystem {
     this.shooterController.setPID(STARTING_PVAL, STARTING_IVAL, STARTING_DVAL, STARTING_FVAL);
     this.pid.getPID();
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
-
-    //toFlow(() -> this.shooterController.speed()).subscribe(speed);
-
     //shooterButton.subscribe(System.out::println);
     //toFlow( () -> this.shooterController.speed()).subscribe(System.out::println);
     //Consumer<Double> cle = new WpiSmartDashboard().getTextFieldDouble("error");
