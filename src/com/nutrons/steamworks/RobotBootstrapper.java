@@ -50,7 +50,7 @@ public class RobotBootstrapper extends Robot {
    * is held down past the time specified by the delay.
    */
   static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
-    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+    return x -> x ? Flowable.just(false).delay(delay, unit) : Flowable.just(false);
   }
 
   @Override
@@ -65,6 +65,11 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
+    // Gamepads
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
+    this.gyro = new HeadingGyro();
+
     this.serial = new Serial(PACKET_LENGTH * 2, PACKET_LENGTH);
     this.vision = Vision.getInstance(serial.getDataStream());
 
@@ -100,11 +105,6 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader.setControlMode(ControlMode.MANUAL);
     this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
-
-    // Gamepads
-    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
-    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
-    this.gyro = new HeadingGyro();
   }
 
   @Override
@@ -117,7 +117,7 @@ public class RobotBootstrapper extends Robot {
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(this.climbtake);
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
-        this.operatorPad.leftStickY()));
+        this.operatorPad.leftStickX()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));

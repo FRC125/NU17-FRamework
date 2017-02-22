@@ -40,7 +40,7 @@ public class Turret implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4))
+    FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4))
         .subscribe(hoodMaster); //TODO: remove this joystick
 
     /*this.fwdLim.map(b -> b ?
