@@ -16,7 +16,6 @@ import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -55,8 +54,10 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    Command drive = this.drivetrain.driveDistanceAction(4.0, 0.3);
-    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+    return Command.serial(
+        this.drivetrain.driveDistance(8.25, 0.25, 5),
+        this.drivetrain.turn(-85, 5),
+        this.drivetrain.driveDistance(2.5, 0.25, 5));
   }
 
   @Override
