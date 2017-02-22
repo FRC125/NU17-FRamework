@@ -8,7 +8,7 @@ Drivetrain
 
 - [ ] Teleop w/ joysticks
 - [ ] Hold heading
-- [X] ~Turn to angle~
+- [ ] Turn to angle
 
 Shooter
 --
@@ -34,4 +34,4 @@ Climbtake
 Auto
 --
 
-- [X] ~At least one auto mode has been run~
+- [ ] At least one auto mode has been run
