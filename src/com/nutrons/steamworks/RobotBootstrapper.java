@@ -13,14 +13,15 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.concurrent.TimeUnit;
+import com.nutrons.libKudos254.vision.VisionServer;
 
 public class RobotBootstrapper extends Robot {
 
   private Drivetrain drivetrain;
+  private Climbtake climbtake;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -46,13 +47,12 @@ public class RobotBootstrapper extends Robot {
    * is held down past the time specified by the delay.
    */
   static Function<Boolean, Flowable<Boolean>> delayTrue(long delay, TimeUnit unit) {
-    return x -> x ? Flowable.just(true).delay(delay, unit) : Flowable.just(false);
+    return x -> x ? Flowable.just(false).delay(delay, unit) : Flowable.just(false);
   }
 
   @Override
   public Command registerAuto() {
-    Command drive = this.drivetrain.driveDistanceAction(4.0, 0.3);
-    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+    return this.climbtake.pulse(true).delayFinish(3, TimeUnit.SECONDS);
   }
 
   @Override
@@ -62,6 +62,10 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
+    // Gamepads
+    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
+    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
+    this.gyro = new HeadingGyro();
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
@@ -81,6 +85,9 @@ public class RobotBootstrapper extends Robot {
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
+    this.climbtake = new Climbtake(climberMotor1, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper());
+
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
@@ -93,14 +100,8 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
 
-    // Gamepads
-    this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
-    this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
-    this.gyro = new HeadingGyro();
-
     VisionServer visionServer = VisionServer.getInstance();
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
-
   }
 
   @Override
