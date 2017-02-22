@@ -4,6 +4,7 @@ import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopPropertiesEvent;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Tuneable;
 import com.nutrons.framework.controllers.TuneablePID;
@@ -20,8 +21,8 @@ public class Shooter implements Subsystem {
   private static final double STARTING_IVAL = 0.0;
   private static final double STARTING_DVAL = 0.33;
   private static final double STARTING_FVAL = 0.035;
-  private Tuneable Setpoint = new Tuneable("Setpoint", STARTING_SETPOINT);
-  private TuneablePID PID = new TuneablePID("PID");
+  private Tuneable setpoint = new Tuneable("Setpoint", STARTING_SETPOINT);
+  private TuneablePID pid = new TuneablePID("PID");
   private static final ControllerEvent stopEvent = Events
       .combine(Events.setpoint(0), Events.power(0));
   private final LoopSpeedController shooterController;
@@ -37,7 +38,7 @@ public class Shooter implements Subsystem {
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(STARTING_PVAL, STARTING_IVAL, STARTING_DVAL, STARTING_FVAL);
-    this.PID.getPID();
+    this.pid.getPID();
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
 
     //toFlow(() -> this.shooterController.speed()).subscribe(speed);
@@ -50,5 +51,7 @@ public class Shooter implements Subsystem {
         .map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
             Events.setpoint(STARTING_SETPOINT)) : stopEvent)
         .subscribe(shooterController);
+    FlowOperators.toFlow(setpoint::get).subscribe(System.out::println);
+    FlowOperators.toFlow(pid::getPID).subscribe(System.out::println);
   }
 }
