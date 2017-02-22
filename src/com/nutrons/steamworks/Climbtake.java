@@ -1,6 +1,7 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import io.reactivex.Flowable;
@@ -15,20 +16,38 @@ public class Climbtake implements Subsystem {
   private final Flowable<Boolean> reverse;
 
   /**
-   * Cliber and Intake subsystem, used for boarding the airship and intaking fuel.
-   * @param climbtakeControllerLeft Talon on left side of the climbtake.
+   * Climber and Intake subsystem, used for boarding the airship and intaking fuel.
+   *
+   * @param climbtakeControllerLeft  Talon on left side of the climbtake.
    * @param climbtakeControllerRight Talon on the right side of the climbtake.
-   * @param forward Button used for setting direction to forward.
-   * @param reverse Button used for setting direction to backward..
+   * @param forward                  Button used for setting direction to forward.
+   * @param reverse                  Button used for setting direction to backward..
    */
   public Climbtake(LoopSpeedController climbtakeControllerLeft,
-      LoopSpeedController climbtakeControllerRight,
-      Flowable<Boolean> forward,
-      Flowable<Boolean> reverse) {
+                   LoopSpeedController climbtakeControllerRight,
+                   Flowable<Boolean> forward,
+                   Flowable<Boolean> reverse) {
     this.climbtakeControllerLeft = climbtakeControllerLeft;
     this.climbtakeControllerRight = climbtakeControllerRight;
     this.forward = forward;
     this.reverse = reverse;
+  }
+
+  /**
+   * When started, climbtake is engaged. When terminated, it is disengaged.
+   *
+   * @param direction true for ball-intake, false for climb-intake
+   */
+  public Command pulse(boolean direction) {
+    return Command.just(x -> {
+      double sign = direction ? 1.0 : -1.0;
+      climbtakeControllerLeft.runAtPower(sign * CLIMBTAKE_SPEED_LEFT);
+      climbtakeControllerRight.runAtPower(sign * CLIMBTAKE_SPEED_RIGHT);
+      return Flowable.just(() -> {
+        climbtakeControllerLeft.runAtPower(0);
+        climbtakeControllerRight.runAtPower(0);
+      });
+    });
   }
 
   @Override

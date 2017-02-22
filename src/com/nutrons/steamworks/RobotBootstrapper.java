@@ -16,13 +16,13 @@ import com.nutrons.framework.inputs.Serial;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
   public static final int PACKET_LENGTH = 17;
   private Drivetrain drivetrain;
+  private Climbtake climbtake;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon topFeederMotor;
@@ -55,8 +55,7 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    Command drive = this.drivetrain.driveDistanceAction(4.0, 0.3);
-    return drive.then(this.drivetrain.turn(-85, 1)).then(drive);
+    return this.climbtake.pulse(true).delayFinish(3, TimeUnit.SECONDS);
   }
 
   @Override
@@ -87,6 +86,9 @@ public class RobotBootstrapper extends Robot {
     this.climberController = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
+    this.climbtake = new Climbtake(climberController, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper());
+
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
@@ -113,8 +115,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     this.driverPad.rightBumper().subscribe(System.out::println);
-    sm.registerSubsystem(new Climbtake(climberController, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+    sm.registerSubsystem(this.climbtake);
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
         this.operatorPad.leftStickY()));
     leftLeader.setControlMode(ControlMode.MANUAL);
