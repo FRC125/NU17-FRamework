@@ -28,7 +28,6 @@ public class Gearplacer implements Subsystem {
 
   }
 
-
   @Override
   public void registerSubscriptions() {
     openButton.map(x -> x ? Events.set(0.0) : Events.set(0.5))
