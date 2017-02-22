@@ -12,11 +12,10 @@ import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.libKudos254.vision.VisionServer;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -64,8 +63,9 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected void constructStreams() {
 
-    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A, CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    Events.setOutputVoltage(-6f, +6f).actOn(this.hoodMaster); //Move slow enough to set off limit switches
+    this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
+        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    Events.setOutputVoltage(-6f, +6f).actOn(this.hoodMaster); //Move slow to set off limit switches
     //Events.resetPosition(0.0).actOn(this.hoodMaster);
     this.hoodMaster.setOutputFlipped(false);
     this.hoodMaster.setReversedSensor(false);
@@ -98,8 +98,8 @@ public class RobotBootstrapper extends Robot {
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
     this.gyro = new HeadingGyro();
 
-    VisionServer mVisionServer = VisionServer.getInstance();
-    mVisionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
+    VisionServer visionServer = VisionServer.getInstance();
+    visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
   }
 
@@ -111,7 +111,8 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster, this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
+    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster,
+        this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
         this.driverPad.rightBumper(), this.driverPad.leftBumper()));

@@ -2,16 +2,14 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.ControlMode;
-import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
 
 public class Turret implements Subsystem {
+
   private static final double PVAL = 125.0;
   private static final double IVAL = 0.0;
   private static final double DVAL = 12.5;
@@ -22,8 +20,8 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
-  private Flowable<Double> position;
   private final Flowable<Boolean> aimButton;
+  private Flowable<Double> position;
 
   /**
    * The Turret System that is used for aiming our shooter.
@@ -31,7 +29,8 @@ public class Turret implements Subsystem {
    * @param angle  The flowable of doubles that is represent the angle the turret should be facing.
    * @param master The talon controlling the movement of the turret.
    */
-  public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl, Flowable<Boolean> aimButton) { //TODO: remove joycontrol
+  public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl,
+                Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle.map(x -> Math.toDegrees(x));
     this.hoodMaster = master;
     Events.resetPosition(0.0).actOn(this.hoodMaster);
@@ -44,24 +43,25 @@ public class Turret implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    //FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
-
-    Flowable<Double> setpoint = this.angle.map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
+    Flowable<Double> setpoint = this.angle
+        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
 
     aimButton.subscribe((Boolean b) -> {
-      if(b) {
+      if (b) {
         this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
         this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
         setpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
-      }else{
+      } else {
         this.hoodMaster.setControlMode(ControlMode.MANUAL);
-        FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4)).subscribe(hoodMaster); //TODO: remove this joystick
+        FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4))
+            .subscribe(hoodMaster); //TODO: remove this joystick
       }
     });
 
-    FlowOperators.toFlow(() -> hoodMaster.position()).subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
+    FlowOperators.toFlow(() -> hoodMaster.position())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));

@@ -1,35 +1,29 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.nutrons.libKudos254.Rotation2d;
 import com.nutrons.libKudos254.vision.TargetInfo;
 import com.nutrons.libKudos254.vision.VisionUpdate;
 import com.nutrons.libKudos254.vision.VisionUpdateReceiver;
 import io.reactivex.Flowable;
 
-import static com.nutrons.framework.util.FlowOperators.toFlow;
-
 /**
- * Kudos 254 for letting us use your code and app, and thanks so much to Tombot for helping us so much! =(^_^)=
- *
- * This function adds vision updates (from the Nexus smartphone) to a list in
- * RobotState. This helps keep track of goals detected by the vision system. The
- * code to determine the best goal to shoot at and prune old Goal tracks is in
- * GoalTracker.java
- *
- * @see
+ * Kudos 254 for letting us use your code and app.
+ * Thanks so much to Tombot for helping us so much! =(^_^)=
  */
 public class VisionProcessor implements VisionUpdateReceiver {
+
+  public static final double CENTER_OF_TARGET_HEIGHT = 89.0;
   // Pose of the camera frame w.r.t. the turret frame
   public static double CAMERA_INCHES_FROM_FLOOR = 19.75;
   public static double kCameraPitchAngleDegrees = 35.75;
   public static double kCameraYawAngleDegrees = -1.0;
-
   static VisionProcessor instance_ = new VisionProcessor();
-  VisionUpdate update_ = null;
-  public static final double CENTER_OF_TARGET_HEIGHT = 89.0;
-  double differential_height_ = CENTER_OF_TARGET_HEIGHT - CAMERA_INCHES_FROM_FLOOR;
-  Rotation2d camera_pitch_correction_ = Rotation2d.fromDegrees(kCameraPitchAngleDegrees);;
-  Rotation2d camera_yaw_correction_ = Rotation2d.fromDegrees(kCameraYawAngleDegrees);
+  VisionUpdate update = null;
+  double differentialHeight = CENTER_OF_TARGET_HEIGHT - CAMERA_INCHES_FROM_FLOOR;
+  Rotation2d cameraPitchCorrection = Rotation2d.fromDegrees(kCameraPitchAngleDegrees);
+  Rotation2d cameraYawRotation = Rotation2d.fromDegrees(kCameraYawAngleDegrees);
 
   VisionProcessor() {
   }
@@ -37,43 +31,50 @@ public class VisionProcessor implements VisionUpdateReceiver {
   public static VisionProcessor getInstance() {
     System.out.println("VisionProcessor gotInstance");
     return instance_;
-  };
+  }
 
+  /**
+   * Gets the horizontal angle offset from the target.
+   * @return horizontal angle offset from the target
+   */
   public double getYawHorizAngle() {
-
-    if (!(update_.getTargets() == null || update_.getTargets().isEmpty())) {
-      for (TargetInfo target : update_.getTargets()) {
-        double yaw_angle_radians = Math.atan2(target.getY() , target.getX());
-        return yaw_angle_radians;
+    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+      for (TargetInfo target : update.getTargets()) {
+        double yawAngleRadians = Math.atan2(target.getY(), target.getX());
+        return yawAngleRadians;
       }
     }
     return 0.0;
   }
 
+  /**
+   * TODO: get the vertical angle offset from the target.
+   * @return vertical angle offset from the target
+   */
   public double getPitchVertAngle() {
-    if (!(update_.getTargets() == null || update_.getTargets().isEmpty())) {
-      for (TargetInfo target : update_.getTargets()) {
+    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+      for (TargetInfo target : update.getTargets()) {
         return target.getZ();
       }
     }
     return 0.0;
   }
 
-  double getDistance(){
-    if (!(update_.getTargets() == null || update_.getTargets().isEmpty())) {
-      for (TargetInfo target : update_.getTargets()) {
-        double xyaw = target.getX() * camera_yaw_correction_.cos() + camera_yaw_correction_.sin();
-        double yyaw = camera_yaw_correction_.cos() - target.getX() * camera_yaw_correction_.sin();
+  double getDistance() {
+    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+      for (TargetInfo target : update.getTargets()) {
+        double xyaw = target.getX() * cameraYawRotation.cos() + cameraYawRotation.sin();
+        double yyaw = cameraYawRotation.cos() - target.getX() * cameraYawRotation.sin();
         double zyaw = target.getZ();
 
         // Compensate for camera pitch
-        double xr = zyaw * camera_pitch_correction_.sin() + xyaw * camera_pitch_correction_.cos();
+        double xr = zyaw * cameraPitchCorrection.sin() + xyaw * cameraPitchCorrection.cos();
         double yr = yyaw;
-        double zr = zyaw * camera_pitch_correction_.cos() - xyaw * camera_pitch_correction_.sin();
+        double zr = zyaw * cameraPitchCorrection.cos() - xyaw * cameraPitchCorrection.sin();
 
         // find intersection with the goal
         if (zr > 0) {
-          double scaling = differential_height_ / zr;
+          double scaling = differentialHeight / zr;
           double distance = Math.hypot(xr, yr) * scaling;
           Rotation2d angle = new Rotation2d(xr, yr, true);
         }
@@ -82,13 +83,13 @@ public class VisionProcessor implements VisionUpdateReceiver {
     return 0.0;
   }
 
-  public Flowable<Double> getHorizAngleFlow(){
+  public Flowable<Double> getHorizAngleFlow() {
     return toFlow(() -> this.getYawHorizAngle());
   }
 
   @Override
   public synchronized void gotUpdate(VisionUpdate update) {
-    update_ = update;
+    this.update = update;
   }
 
 }

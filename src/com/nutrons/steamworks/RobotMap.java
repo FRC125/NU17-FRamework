@@ -18,7 +18,7 @@ public class RobotMap {
   public static final int BACK_LEFT = 20;
   public static final int FRONT_RIGHT = 14;
   public static final int BACK_RIGHT = 15;
-  
+
   // Controllers
   public static final int OP_PAD = 0;
   public static final int DRIVER_PAD = 1;
