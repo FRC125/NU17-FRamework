@@ -26,23 +26,23 @@ public class Drivetrain implements Subsystem {
   private static final double FEET_PER_ENCODER_ROTATION =
       FEET_PER_WHEEL_ROTATION * WHEEL_ROTATION_PER_ENCODER_ROTATION;
   // PID for turning to an angle based on the gyro
-  private static final double angleP = 0.09;
-  private static final double angleI = 0.0;
-  private static final double angleD = 0.035;
-  private static final int angleBufferLength = 5;
+  private static final double ANGLE_P = 0.09;
+  private static final double ANGLE_I = 0.0;
+  private static final double ANGLE_D = 0.035;
+  private static final int ANGLE_BUFFER_LENGTH = 5;
   // PID for distance driving based on encoders
-  private static final double distanceP = 0.2;
-  private static final double distanceI = 0.0;
-  private static final double distanceD = 0.0;
-  private static final int distanceBufferLength = 5;
+  private static final double DISTANCE_P = 0.2;
+  private static final double DISTANCE_I = 0.0;
+  private static final double DISTANCE_D = 0.0;
+  private static final int DISTANCE_BUFFER_LENGTH = 5;
   // Time required to spend within the PID tolerance for the PID loop to terminate
-  private static final TimeUnit pidTerminateUnit = TimeUnit.MILLISECONDS;
-  private static final long pidTerminateTime = 1000;
+  private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
+  private static final long PID_TERMINATE_TIME = 1000;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
   private final LoopSpeedController rightDrive;
-  private final double deadband = 0.3;
+  private static final double DEADBAND = 0.3;
   private final Flowable<Boolean> teleHoldHeading;
   private final ConnectableFlowable<Double> currentHeading;
 
@@ -60,8 +60,8 @@ public class Drivetrain implements Subsystem {
                     LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
-    this.throttle = throttle.map(deadbandMap(-deadband, deadband, 0.0)).onBackpressureDrop();
-    this.yaw = yaw.map(deadbandMap(-deadband, deadband, 0.0)).onBackpressureDrop();
+    this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
+    this.yaw = yaw.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
@@ -74,7 +74,7 @@ public class Drivetrain implements Subsystem {
    */
   private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance) {
     return error.map(x -> abs(x) < tolerance)
-        .distinctUntilChanged().debounce(pidTerminateTime, pidTerminateUnit)
+        .distinctUntilChanged().debounce(PID_TERMINATE_TIME, PID_TERMINATE_UNIT)
         .filter(x -> x);
   }
 
@@ -131,7 +131,7 @@ public class Drivetrain implements Subsystem {
     Flowable<Double> distanceError = toFlow(() ->
         (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint);
     Flowable<Double> distanceOutput = distanceError
-        .compose(pidLoop(distanceP, distanceBufferLength, distanceI, distanceD))
+        .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D))
         .onBackpressureDrop();
 
     // Construct closed-loop streams for angle / gyro based PID
@@ -230,7 +230,7 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
   }
 
   /**
