@@ -3,16 +3,19 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Tuneable;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
 public class Feeder implements Subsystem {
 
-  // TODO: tune as needed
   private static final double SPIN_POWER = 0.60;
   private static final double ROLLER_POWER = 0.85;
   private final LoopSpeedController feederController;
   private final LoopSpeedController rollerController;
   private final Flowable<Boolean> feederButton;
+  private Tuneable hook = new Tuneable("Hook power", SPIN_POWER);
+  private Tuneable roller = new Tuneable("Roller_Power", ROLLER_POWER);
 
   /**
    * The feeder hopper used for primarily feeding balls to the shooter.
@@ -33,5 +36,7 @@ public class Feeder implements Subsystem {
   public void registerSubscriptions() {
     feederButton.map(b -> b ? SPIN_POWER : 0.0).map(Events::power).subscribe(feederController);
     feederButton.map(b -> b ? ROLLER_POWER : 0.0).map(Events::power).subscribe(rollerController);
+    FlowOperators.toFlow(hook::get).subscribe(System.out::println);
+    FlowOperators.toFlow(roller::get).subscribe(System.out::println);
   }
 }
