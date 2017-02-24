@@ -13,15 +13,19 @@ import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
+import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
 
   public static final int PACKET_LENGTH = 17;
+  private final Map<String, Command> autos;
   private Drivetrain drivetrain;
   private Climbtake climbtake;
   private LoopSpeedController shooterMotor1;
@@ -42,7 +46,16 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+  private RadioBox<Command> autoSelector;
 
+  public RobotBootstrapper() {
+    this.autos = new HashMap<>();
+    this.autos.put("default", Command.serial(
+        this.drivetrain.driveDistance(8.25, 0.25, 5),
+        this.drivetrain.turn(-85, 5),
+        this.drivetrain.driveDistance(2.5, 0.25, 5),
+        this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
+  }
   /**
    * Converts booleans into streams, and if the boolean is true,
    * delay the emission of the item by the specified amount.
@@ -58,11 +71,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return Command.serial(
-        this.drivetrain.driveDistance(8.25, 0.25, 5),
-        this.drivetrain.turn(-85, 5),
-        this.drivetrain.driveDistance(2.5, 0.25, 5),
-    this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
+    this.autoSelector = new RadioBox<>("Auto", autos, "default");
+    return Command.fromSwitch(this.autoSelector.selected());
   }
 
   @Override
