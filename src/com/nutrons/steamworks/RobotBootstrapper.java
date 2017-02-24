@@ -55,7 +55,11 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.climbtake.pulse(true).delayFinish(3, TimeUnit.SECONDS);
+    return Command.serial(
+        this.drivetrain.driveDistance(8.25, 0.25, 5),
+        this.drivetrain.turn(-85, 5),
+        this.drivetrain.driveDistance(2.5, 0.25, 5),
+    this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
   }
 
   @Override
