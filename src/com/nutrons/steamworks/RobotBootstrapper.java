@@ -9,14 +9,15 @@ import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.concurrent.TimeUnit;
-import com.nutrons.libKudos254.vision.VisionServer;
 
 public class RobotBootstrapper extends Robot {
 
@@ -34,6 +35,10 @@ public class RobotBootstrapper extends Robot {
   private Talon leftFollower;
   private Talon rightLeader;
   private Talon rightFollower;
+
+  private RevServo gearPlacerLeft;
+  private RevServo gearPlacerRight;
+
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
@@ -107,15 +112,25 @@ public class RobotBootstrapper extends Robot {
 
     VisionServer visionServer = VisionServer.getInstance();
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
+
+    //Gear Placer Servos
+    this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
   }
 
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
+    sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
+        this.gearPlacerRight,
+        this.driverPad.buttonX()));
+
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
+
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
@@ -136,6 +151,7 @@ public class RobotBootstrapper extends Robot {
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
+
     return sm;
   }
 }
