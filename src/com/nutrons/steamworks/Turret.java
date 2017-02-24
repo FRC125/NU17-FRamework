@@ -16,6 +16,7 @@ public class Turret implements Subsystem {
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private final Flowable<Double> angle;
+  private final Flowable<Double> distance;
   private final Talon hoodMaster;
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
@@ -29,9 +30,10 @@ public class Turret implements Subsystem {
    * @param angle  The flowable of doubles that is represent the angle the turret should be facing.
    * @param master The talon controlling the movement of the turret.
    */
-  public Turret(Flowable<Double> angle, Talon master, Flowable<Double> joyControl,
+  public Turret(Flowable<Double> angle, Flowable<Double> distance, Talon master, Flowable<Double> joyControl,
                 Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle.map(x -> Math.toDegrees(x));
+    this.distance = distance;
     this.hoodMaster = master;
     Events.resetPosition(0.0).actOn(this.hoodMaster);
     this.revLim = FlowOperators.toFlow(this.hoodMaster::revLimitSwitchClosed);
@@ -63,6 +65,7 @@ public class Turret implements Subsystem {
     FlowOperators.toFlow(() -> hoodMaster.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
+    this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));

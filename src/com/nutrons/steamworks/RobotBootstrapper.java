@@ -17,6 +17,7 @@ import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.concurrent.TimeUnit;
 import com.nutrons.libKudos254.vision.VisionServer;
+import com.nutrons.framework.util.FlowOperators;
 
 public class RobotBootstrapper extends Robot {
 
@@ -112,7 +113,8 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(), hoodMaster,
+    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
+        toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
