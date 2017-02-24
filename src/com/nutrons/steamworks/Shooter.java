@@ -39,10 +39,6 @@ public class Shooter implements Subsystem {
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
 
-    //shooterButton.subscribe(System.out::println);
-    //toFlow( () -> this.shooterController.speed()).subscribe(System.out::println);
-    //Consumer<Double> cle = new WpiSmartDashboard().getTextFieldDouble("error");
-    //toFlow(() -> ((Talon)this.shooterController).getClosedLoopError()).subscribe((cle));
     shooterButton.map(FlowOperators::printId)
         .map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
             Events.setpoint(SETPOINT)) : stopEvent)
