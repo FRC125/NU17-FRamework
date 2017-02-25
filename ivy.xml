@@ -12,5 +12,6 @@
     <dependency org="junit" name="junit" rev="4.12"/>
     <dependency org="org.apache.ant" name="ant-junit" rev="1.9.7"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="7.4"/>
+    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1"/>
   </dependencies>
 </ivy-module>
