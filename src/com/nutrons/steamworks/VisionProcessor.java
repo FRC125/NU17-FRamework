@@ -1,7 +1,6 @@
 package com.nutrons.steamworks;
 
-import static com.nutrons.framework.util.FlowOperators.toFlow;
-
+import com.nutrons.framework.util.FlowOperators;
 import com.nutrons.libKudos254.Rotation2d;
 import com.nutrons.libKudos254.vision.TargetInfo;
 import com.nutrons.libKudos254.vision.VisionUpdate;
@@ -16,9 +15,9 @@ public class VisionProcessor implements VisionUpdateReceiver {
 
   public static final double CENTER_OF_TARGET_HEIGHT = 89.0;
   // Pose of the camera frame w.r.t. the turret frame
-  public static double CAMERA_INCHES_FROM_FLOOR = 19.75;
-  public static double kCameraPitchAngleDegrees = 35.75;
-  public static double kCameraYawAngleDegrees = -1.0;
+  public static double CAMERA_INCHES_FROM_FLOOR = 20.0;
+  public static double kCameraPitchAngleDegrees = 25.5;
+  public static double kCameraYawAngleDegrees = 0.0;
   static VisionProcessor instance_ = new VisionProcessor();
   VisionUpdate update = null;
   double differentialHeight = CENTER_OF_TARGET_HEIGHT - CAMERA_INCHES_FROM_FLOOR;
@@ -84,7 +83,7 @@ public class VisionProcessor implements VisionUpdateReceiver {
   }
 
   public Flowable<Double> getHorizAngleFlow() {
-    return toFlow(() -> this.getYawHorizAngle());
+    return FlowOperators.toFlowFast(() -> this.getYawHorizAngle());
   }
 
   @Override
