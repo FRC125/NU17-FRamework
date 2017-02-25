@@ -30,7 +30,10 @@ public class Turret implements Subsystem {
    * @param angle  The flowable of doubles that is represent the angle the turret should be facing.
    * @param master The talon controlling the movement of the turret.
    */
-  public Turret(Flowable<Double> angle, Flowable<Double> distance, Talon master, Flowable<Double> joyControl,
+  public Turret(Flowable<Double> angle,
+                Flowable<Double> distance,
+                Talon master,
+                Flowable<Double> joyControl,
                 Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle.map(x -> Math.toDegrees(x));
     this.distance = distance;

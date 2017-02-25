@@ -13,11 +13,10 @@ import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.libKudos254.vision.VisionServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.concurrent.TimeUnit;
-import com.nutrons.libKudos254.vision.VisionServer;
-import com.nutrons.framework.util.FlowOperators;
 
 public class RobotBootstrapper extends Robot {
 

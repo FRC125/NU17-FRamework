@@ -1,11 +1,11 @@
 package com.nutrons.steamworks;
 
+import com.nutrons.framework.util.FlowOperators;
 import com.nutrons.libKudos254.Rotation2d;
 import com.nutrons.libKudos254.vision.TargetInfo;
 import com.nutrons.libKudos254.vision.VisionUpdate;
 import com.nutrons.libKudos254.vision.VisionUpdateReceiver;
 import io.reactivex.Flowable;
-import com.nutrons.framework.util.FlowOperators;
 
 /**
  * Kudos 254 for letting us use your code and app.
