@@ -19,8 +19,8 @@ public class Rotation2d {
 
   /**
    * Makes a Rotation2d.
-   * @param xparam x
-   * @param yparam y
+   * @param xparam posX
+   * @param yparam posY
    * @param normalize normalize
    */
   public Rotation2d(double xparam, double yparam, boolean normalize) {
@@ -60,17 +60,26 @@ public class Rotation2d {
     }
   }
 
+  /**
+   * Returns the cos angle of the object.
+   * @return the cos angle.
+   */
   public double cos() {
     return cosAngle;
   }
 
   /**
+   * Returns the sin angle of the object.
    * @return the sin angle.
    */
   public double sin() {
     return sinAngle;
   }
 
+  /**
+   * Returns the tan angle of the object.
+   * @return the tan angle.
+   */
   public double tan() {
     if (cosAngle < kEpsilon) {
       if (sinAngle >= 0.0) {

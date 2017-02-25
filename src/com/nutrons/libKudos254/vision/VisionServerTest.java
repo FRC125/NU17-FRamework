@@ -1,7 +1,7 @@
 package com.nutrons.libKudos254.vision;
 
 /**
- * Tests the vision system by getting targets
+ * Tests the vision system by getting targets.
  */
 public class VisionServerTest {
   public static class TestReceiver implements VisionUpdateReceiver {
@@ -10,19 +10,23 @@ public class VisionServerTest {
       System.out.println("num targets: " + update.getTargets().size());
       for (int i = 0; i < update.getTargets().size(); i++) {
         TargetInfo target = update.getTargets().get(i);
-        System.out.println("Target: " + target.getY() + ", " + target.getZ());
+        System.out.println("Target: " + target.getPosY() + ", " + target.getPosZ());
       }
     }
   }
 
+  /**
+   * The main method.
+   * @param args the given set of arguments.
+   */
   public static void main(String[] args) {
     VisionServer visionServer = VisionServer.getInstance();
     visionServer.addVisionUpdateReceiver(new TestReceiver());
     while (true) {
       try {
         Thread.sleep(100);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+      } catch (InterruptedException exception) {
+        exception.printStackTrace();
       }
     }
   }

@@ -14,7 +14,7 @@ public class AdbBridge {
   public static final Path DEFAULT_LOCATION = Paths.get("/usr/bin/adb");
 
   /**
-   * Makes an ADBBridge
+   * Makes an ADBBridge.
    */
   public AdbBridge() {
     Path adbLocation;
@@ -38,9 +38,9 @@ public class AdbBridge {
     try {
       Process process = runtime.exec(cmd);
       process.waitFor();
-    } catch (IOException e) {
+    } catch (IOException exception) {
       System.err.println("AdbBridge: Could not run command " + cmd);
-      e.printStackTrace();
+      exception.printStackTrace();
       return false;
     } catch (InterruptedException exception) {
       System.err.println("AdbBridge: Could not run command " + cmd);
@@ -60,6 +60,9 @@ public class AdbBridge {
     runCommand("kill-server");
   }
 
+  /**
+   * Restarts the adbBridge.
+   */
   public void restartAdb() {
     System.out.println("Restarting adb");
     stop();
@@ -74,6 +77,9 @@ public class AdbBridge {
     runCommand("reverse tcp:" + remotePort + " tcp:" + localPort);
   }
 
+  /**
+   * Restarts the adb app.
+   */
   public void restartApp() {
     System.out.println("Restarting app");
     runCommand("shell am force-stop com.team254.cheezdroid \\; "

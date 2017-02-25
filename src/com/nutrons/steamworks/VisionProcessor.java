@@ -39,7 +39,7 @@ public class VisionProcessor implements VisionUpdateReceiver {
   public double getYawHorizAngle() {
     if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
       for (TargetInfo target : update.getTargets()) {
-        double yawAngleRadians = Math.atan2(target.getY(), target.getX());
+        double yawAngleRadians = Math.atan2(target.getPosY(), target.getPosX());
         return yawAngleRadians;
       }
     }
@@ -53,7 +53,7 @@ public class VisionProcessor implements VisionUpdateReceiver {
   public double getPitchVertAngle() {
     if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
       for (TargetInfo target : update.getTargets()) {
-        return target.getZ();
+        return target.getPosZ();
       }
     }
     return 0.0;
@@ -62,9 +62,9 @@ public class VisionProcessor implements VisionUpdateReceiver {
   double getDistance() {
     if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
       for (TargetInfo target : update.getTargets()) {
-        double xyaw = target.getX() * cameraYawRotation.cos() + cameraYawRotation.sin();
-        double yyaw = cameraYawRotation.cos() - target.getX() * cameraYawRotation.sin();
-        double zyaw = target.getZ();
+        double xyaw = target.getPosX() * cameraYawRotation.cos() + cameraYawRotation.sin();
+        double yyaw = cameraYawRotation.cos() - target.getPosX() * cameraYawRotation.sin();
+        double zyaw = target.getPosZ();
 
         // Compensate for camera pitch
         double xr = zyaw * cameraPitchCorrection.sin() + xyaw * cameraPitchCorrection.cos();

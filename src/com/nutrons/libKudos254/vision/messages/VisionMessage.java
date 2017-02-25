@@ -11,11 +11,15 @@ public abstract class VisionMessage {
 
   public abstract String getMessage();
 
+  /**
+   * Turns the VisionMessage into a String type.
+   * @return VisionMessage String.
+   */
   public String toJson() {
-    JSONObject j = new JSONObject();
-    j.put("type", getType());
-    j.put("message", getMessage());
-    return j.toString();
+    JSONObject objJ = new JSONObject();
+    objJ.put("type", getType());
+    objJ.put("message", getMessage());
+    return objJ.toString();
   }
 
 }

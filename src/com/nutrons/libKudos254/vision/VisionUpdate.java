@@ -9,10 +9,10 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /**
- * VisionUpdate contains the various attributes outputted by the vision system,
- * namely a list of targets and the timestamp at which it was captured.
+ * VisionUpdate contains the various attributes outputted by the vision system.
  */
 public class VisionUpdate {
+
   protected boolean valid = false;
   protected long capturedAgoMs;
   protected List<TargetInfo> targets;
@@ -28,53 +28,52 @@ public class VisionUpdate {
   private static JSONParser parser = new JSONParser();
 
   private static Optional<Double> parseDouble(JSONObject j, String key) throws ClassCastException {
-    Object d = j.get(key);
-    if (d == null) {
+    Object given = j.get(key);
+    if (given == null) {
       return Optional.empty();
     } else {
-      return Optional.of((double) d);
+      return Optional.of((double) given);
     }
   }
 
   /**
    * Generates a VisionUpdate object given a JSON blob and a timestamp.
    *
-   * @param Capture timestamp
-   * @param JSON    blob with update string, example: { "capturedAgoMs" : 100,
-   *                "targets": [{"yPos": 5.4, "zPos": 5.5}] }
+   * @param currentTime timestamp
+   * @param updateString blob with update string.
    * @return VisionUpdate object
    */
   //
-  public static VisionUpdate generateFromJsonString(double current_time, String updateString) {
+  public static VisionUpdate generateFromJsonString(double currentTime, String updateString) {
     VisionUpdate update = new VisionUpdate();
     try {
-      JSONObject j = (JSONObject) parser.parse(updateString);
-      long capturedAgoMs = getOptLong(j.get("capturedAgoMs"), 0);
+      JSONObject objJ = (JSONObject) parser.parse(updateString);
+      long capturedAgoMs = getOptLong(objJ.get("capturedAgoMs"), 0);
       if (capturedAgoMs == 0) {
         update.valid = false;
         return update;
       }
       update.capturedAgoMs = capturedAgoMs;
-      update.capturedAtTimestamp = current_time - capturedAgoMs / 1000.0;
-      JSONArray targets = (JSONArray) j.get("targets");
+      update.capturedAtTimestamp = currentTime - capturedAgoMs / 1000.0;
+      JSONArray targets = (JSONArray) objJ.get("targets");
       ArrayList<TargetInfo> targetInfos = new ArrayList<>(targets.size());
       for (Object targetObj : targets) {
         JSONObject target = (JSONObject) targetObj;
-        Optional<Double> y = parseDouble(target, "yPos");
-        Optional<Double> z = parseDouble(target, "zPos");
-        if (!(y.isPresent() && z.isPresent())) {
+        Optional<Double> doublesY = parseDouble(target, "posY");
+        Optional<Double> doublesZ = parseDouble(target, "posZ");
+        if (!(doublesY.isPresent() && doublesZ.isPresent())) {
           update.valid = false;
           return update;
         }
-        targetInfos.add(new TargetInfo(y.get(), z.get()));
+        targetInfos.add(new TargetInfo(doublesY.get(), doublesZ.get()));
       }
       update.targets = targetInfos;
       update.valid = true;
-    } catch (ParseException e) {
-      System.err.println("Parse error: " + e);
+    } catch (ParseException exception) {
+      System.err.println("Parse error: " + exception);
       System.err.println(updateString);
-    } catch (ClassCastException e) {
-      System.err.println("Data type error: " + e);
+    } catch (ClassCastException exception) {
+      System.err.println("Data type error: " + exception);
       System.err.println(updateString);
     }
     return update;

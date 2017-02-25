@@ -28,19 +28,19 @@ public class VisionServer extends CrashTrackingRunnable {
   public static int kAndroidAppTcpPort = 8254; //TODO: MIGHT NEED TO CHANGE THIS
 
   private static VisionServer s_instance = null;
-  private ServerSocket mServerSocket;
-  private boolean mRunning = true;
-  private int mPort;
+  private ServerSocket serverSocketM;
+  private boolean runningM = true;
+  private int portM;
   private ArrayList<VisionUpdateReceiver> receivers = new ArrayList<>();
   AdbBridge adb = new AdbBridge();
   double lastMessageReceivedTime = 0;
-  private boolean mUseJavaTime = false;
+  private boolean useJavaTimeM = false;
 
   private ArrayList<ServerThread> serverThreads = new ArrayList<>();
   private volatile boolean wantsAppRestart = false;
 
   /**
-   * Gets instance of vision server
+   * Gets instance of vision server.
    */
   public static VisionServer getInstance() {
     System.out.println("VisionServer instance created");
@@ -121,14 +121,14 @@ public class VisionServer extends CrashTrackingRunnable {
           }
         }
         System.out.println("Socket disconnected");
-      } catch (IOException e) {
+      } catch (IOException exception) {
         System.err.println("Could not talk to socket");
       }
       if (socket != null) {
         try {
           socket.close();
-        } catch (IOException e) {
-          e.printStackTrace();
+        } catch (IOException exception) {
+          exception.printStackTrace();
         }
       }
     }
@@ -138,23 +138,23 @@ public class VisionServer extends CrashTrackingRunnable {
    * Instantializes the VisionServer and connects to ADB via the specified
    * port.
    *
-   * @param
+   * @param port the given port where vision server is held.
    */
   private VisionServer(int port) {
     try {
       adb = new AdbBridge();
-      mPort = port;
-      mServerSocket = new ServerSocket(port);
+      portM = port;
+      serverSocketM = new ServerSocket(port);
       adb.start();
       adb.reversePortForward(port, port);
       try {
         String useJavaTime = System.getenv("USE_JAVA_TIME");
-        mUseJavaTime = "true".equals(useJavaTime);
-      } catch (NullPointerException e) {
-        mUseJavaTime = false;
+        useJavaTimeM = "true".equals(useJavaTime);
+      } catch (NullPointerException exception) {
+        useJavaTimeM = false;
       }
-    } catch (IOException e) {
-      e.printStackTrace();
+    } catch (IOException exception) {
+      exception.printStackTrace();
     }
     new Thread(this).start();
     new Thread(new AppMaintainanceThread()).start();
@@ -162,7 +162,7 @@ public class VisionServer extends CrashTrackingRunnable {
 
   public void restartAdb() {
     adb.restartAdb();
-    adb.reversePortForward(mPort, mPort);
+    adb.reversePortForward(portM, portM);
   }
 
   /**
@@ -177,6 +177,10 @@ public class VisionServer extends CrashTrackingRunnable {
     }
   }
 
+  /**
+   * Removes given VisionUpdateReceiver.
+   * @param receiver receiver you wish to get rid of.
+   */
   public void removeVisionUpdateReceiver(VisionUpdateReceiver receiver) {
     if (receivers.contains(receiver)) {
       receivers.remove(receiver);
@@ -185,19 +189,19 @@ public class VisionServer extends CrashTrackingRunnable {
 
   @Override
   public void runCrashTracked() {
-    while (mRunning) {
+    while (runningM) {
       try {
-        Socket p = mServerSocket.accept();
-        ServerThread s = new ServerThread(p);
-        new Thread(s).start();
-        serverThreads.add(s);
-      } catch (IOException e) {
+        Socket port = serverSocketM.accept();
+        ServerThread thread = new ServerThread(port);
+        new Thread(thread).start();
+        serverThreads.add(thread);
+      } catch (IOException excption) {
         System.err.println("Issue accepting socket connection!");
       } finally {
         try {
           Thread.sleep(100);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+        } catch (InterruptedException exception) {
+          exception.printStackTrace();
         }
       }
     }
@@ -209,7 +213,7 @@ public class VisionServer extends CrashTrackingRunnable {
       while (true) {
         if (getTimestamp() - lastMessageReceivedTime > .1) {
           // camera disconnected
-          adb.reversePortForward(mPort, mPort);
+          adb.reversePortForward(portM, portM);
           isConnect = false;
         } else {
           isConnect = true;
@@ -220,15 +224,15 @@ public class VisionServer extends CrashTrackingRunnable {
         }
         try {
           Thread.sleep(200);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+        } catch (InterruptedException exception) {
+          exception.printStackTrace();
         }
       }
     }
   }
 
   private double getTimestamp() {
-    if (mUseJavaTime) {
+    if (useJavaTimeM) {
       return System.currentTimeMillis();
     } else {
       return Timer.getFPGATimestamp();

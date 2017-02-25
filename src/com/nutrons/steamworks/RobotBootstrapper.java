@@ -48,6 +48,9 @@ public class RobotBootstrapper extends Robot {
   private HeadingGyro gyro;
   private RadioBox<Command> autoSelector;
 
+  /**
+   * What runs the robot, initializing all subsystems and everything needs to run Event Horizon.
+   */
   public RobotBootstrapper() {
     this.autos = new HashMap<>();
     this.autos.put("default", Command.serial(
@@ -56,6 +59,7 @@ public class RobotBootstrapper extends Robot {
         this.drivetrain.driveDistance(2.5, 0.25, 5),
         this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
   }
+
   /**
    * Converts booleans into streams, and if the boolean is true,
    * delay the emission of the item by the specified amount.

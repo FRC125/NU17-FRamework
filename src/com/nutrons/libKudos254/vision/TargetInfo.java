@@ -5,24 +5,24 @@ package com.nutrons.libKudos254.vision;
  * location in three-dimensional space.
  */
 public class TargetInfo {
-  protected double xPos = 1.0;
-  protected double yPos;
-  protected double zPos;
+  protected double posX = 1.0;
+  protected double posY;
+  protected double posZ;
 
-  public TargetInfo(double yPos, double zPos) {
-    this.yPos = yPos;
-    this.zPos = zPos;
+  public TargetInfo(double posY, double posZ) {
+    this.posY = posY;
+    this.posZ = posZ;
   }
 
-  public double getX() {
-    return xPos;
+  public double getPosX() {
+    return posX;
   }
 
-  public double getY() {
-    return yPos;
+  public double getPosY() {
+    return posY;
   }
 
-  public double getZ() {
-    return zPos;
+  public double getPosZ() {
+    return posZ;
   }
 }
