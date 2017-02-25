@@ -132,8 +132,8 @@ public class Drivetrain implements Subsystem {
    *
    * @param left          the ideal power of the left motors
    * @param right         the ideal power of the right motors
-   * @param holdHeading   a flowable that represents whether or not the 'hold-heading' mode
-   *                      should be active.
+   * @param holdHeading   a flowable that represents whether or not the 'hold-heading' mode should
+   *                      be active.
    * @param targetHeading the desired heading the drivetrain should obtain
    */
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
