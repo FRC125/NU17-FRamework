@@ -57,10 +57,10 @@ public class Turret implements Subsystem {
       if (b) {
         this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
         this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-        setpoint.map(FlowOperators::printId).subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
+        setpoint.subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
       } else {
         this.hoodMaster.setControlMode(ControlMode.MANUAL);
-        FlowOperators.deadband(joyControl).map(FlowOperators::printId).map(x -> Events.power(x / 4))
+        FlowOperators.deadband(joyControl).map(x -> Events.power(x / 4))
             .subscribe(hoodMaster); //TODO: remove this joystick
       }
     });

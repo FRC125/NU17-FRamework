@@ -53,11 +53,11 @@ public class RobotBootstrapper extends Robot {
    */
   public RobotBootstrapper() {
     this.autos = new HashMap<>();
-    this.autos.put("default", Command.serial(
+    /**this.autos.put("default", Command.serial(
         this.drivetrain.driveDistance(8.25, 0.25, 5),
         this.drivetrain.turn(-85, 5),
         this.drivetrain.driveDistance(2.5, 0.25, 5),
-        this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
+        this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));**/
   }
 
   /**
@@ -81,7 +81,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerTele() {
-    return this.drivetrain.driveTeleop().terminable(Flowable.never());
+    //return this.drivetrain.driveTeleop().terminable(Flowable.never());
+    return null;
   }
 
   @Override
@@ -98,15 +99,15 @@ public class RobotBootstrapper extends Robot {
     this.hoodMaster.setOutputFlipped(false);
     this.hoodMaster.setReversedSensor(false);
 
-    this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
-    this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
+    //this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
+    //this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
         CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
-    this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
+    /**this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
     this.climbtake = new Climbtake(climberMotor1, climberMotor2,
@@ -122,14 +123,14 @@ public class RobotBootstrapper extends Robot {
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
     this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
+    this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);**/
 
     VisionServer visionServer = VisionServer.getInstance();
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
-    this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    //this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    //this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
   }
 
   @Override
@@ -139,18 +140,18 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
+    /**sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
         this.gearPlacerRight,
-        this.driverPad.buttonX()));
+        this.driverPad.buttonX()));**/
 
     sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
 
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    //sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
-    sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
+    /**sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
         this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
@@ -165,7 +166,7 @@ public class RobotBootstrapper extends Robot {
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
-    sm.registerSubsystem(this.drivetrain);
+    sm.registerSubsystem(this.drivetrain);**/
 
     return sm;
   }
