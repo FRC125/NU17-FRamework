@@ -24,9 +24,11 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
+  edu.wpi.first.wpilibj.Preferences prefs;
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton) {
+    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
   }
@@ -35,7 +37,7 @@ public class Shooter implements Subsystem {
   public void registerSubscriptions() {
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
-    this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
+    this.shooterController.setPID(prefs.getDouble("shooter_p", 0.05), prefs.getDouble("shooter_i", 0.0), prefs.getDouble("shooter_d", 0.33), prefs.getDouble("shooter_f", 0.035));
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
     shooterButton.map(FlowOperators::printId)
