@@ -13,9 +13,9 @@ import io.reactivex.Flowable;
  */
 public class VisionProcessor implements VisionUpdateReceiver {
 
-  public static final double CENTER_OF_TARGET_HEIGHT = 40.5;
+  public static final double CENTER_OF_TARGET_HEIGHT = 86.0;
   // Pose of the camera frame w.r.t. the turret frame
-  public static double CAMERA_INCHES_FROM_FLOOR = 24.75;
+  public static double CAMERA_INCHES_FROM_FLOOR = 20.75;
   public static double kCameraPitchAngleDegrees = 25.5;
   public static double kCameraYawAngleDegrees = 0.2;
   static VisionProcessor instance_ = new VisionProcessor();
@@ -37,10 +37,12 @@ public class VisionProcessor implements VisionUpdateReceiver {
    * @return horizontal angle offset from the target
    */
   public double getYawHorizAngle() {
-    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
-      for (TargetInfo target : update.getTargets()) {
-        double yawAngleRadians = Math.atan2(target.getY(), target.getX());
-        return yawAngleRadians;
+    if(update != null) {
+      if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+        for (TargetInfo target : update.getTargets()) {
+          double yawAngleRadians = Math.atan2(target.getY(), target.getX());
+          return yawAngleRadians;
+        }
       }
     }
     return 0.0;
@@ -51,37 +53,41 @@ public class VisionProcessor implements VisionUpdateReceiver {
    * @return vertical angle offset from the target
    */
   public double getPitchVertAngle() {
-    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
-      for (TargetInfo target : update.getTargets()) {
-        double pitchAngleRadians = Math.atan2(target.getZ(), target.getX());
-        return pitchAngleRadians;
+    if(update != null) {
+      if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+        for (TargetInfo target : update.getTargets()) {
+          double pitchAngleRadians = Math.atan2(target.getZ(), target.getX());
+          return pitchAngleRadians;
+        }
       }
     }
     return 0.0;
   }
 
   double getDistance() {
-    if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
-      for (TargetInfo target : update.getTargets()) {
+    if(update != null) {
+      if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
+        for (TargetInfo target : update.getTargets()) {
 
-        distance = differentialHeight / Math.tan(Math.atan(target.getZ() / target.getX()) + Math.toRadians(kCameraPitchAngleDegrees));
-        return distance;
-        /**double xyaw = target.getX() * cameraYawRotation.cos() + cameraYawRotation.sin();
-        double yyaw = cameraYawRotation.cos() - target.getX() * cameraYawRotation.sin();
-        double zyaw = target.getZ();
-
-        double xr = zyaw * cameraPitchCorrection.sin() + xyaw * cameraPitchCorrection.cos();
-        double yr = yyaw;
-        double zr = zyaw * cameraPitchCorrection.cos() - xyaw * cameraPitchCorrection.sin();
-
-        if (zr > 0) {
-          double scaling = differentialHeight / zr;
-          System.out.println(distance + "DISTANCE");
-          distance = Math.hypot(xr, yr) * scaling;
+          distance = differentialHeight / Math.tan(Math.atan(target.getZ() / target.getX()) + Math.toRadians(kCameraPitchAngleDegrees));
           return distance;
-        }**/
+          /**double xyaw = target.getX() * cameraYawRotation.cos() + cameraYawRotation.sin();
+           double yyaw = cameraYawRotation.cos() - target.getX() * cameraYawRotation.sin();
+           double zyaw = target.getZ();
+
+           double xr = zyaw * cameraPitchCorrection.sin() + xyaw * cameraPitchCorrection.cos();
+           double yr = yyaw;
+           double zr = zyaw * cameraPitchCorrection.cos() - xyaw * cameraPitchCorrection.sin();
+
+           if (zr > 0) {
+           double scaling = differentialHeight / zr;
+           System.out.println(distance + "DISTANCE");
+           distance = Math.hypot(xr, yr) * scaling;
+           return distance;
+           }**/
 
 
+        }
       }
     }
     return 0.0;

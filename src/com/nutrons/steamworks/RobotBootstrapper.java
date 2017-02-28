@@ -110,7 +110,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper()));
+    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance())));
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
     sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
