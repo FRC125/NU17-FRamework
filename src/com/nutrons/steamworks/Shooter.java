@@ -9,6 +9,7 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 
@@ -25,7 +26,7 @@ public class Shooter implements Subsystem {
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   edu.wpi.first.wpilibj.Preferences prefs;
-  private double variableSetpoint;
+  private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
 
 
@@ -40,6 +41,8 @@ public class Shooter implements Subsystem {
   @Override
   public void registerSubscriptions() {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    this.prefs = Preferences.getInstance();
+    this.variableSetpoint = this.distance.map(x -> (111.1*x/12) + 1950.0);
 
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
@@ -48,7 +51,8 @@ public class Shooter implements Subsystem {
     toFlow(this.shooterController::speed).subscribe(speed);
     shooterButton.map(FlowOperators::printId)
         .map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
-            Events.setpoint(prefs.getDouble("shooter_setpt", 3250.0))) : stopEvent)
+            Events.setpoint(FlowOperators.getLastValue(this.variableSetpoint))) : stopEvent)
         .subscribe(shooterController);
+    this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("variable-setpoint"));
   }
 }
