@@ -1,6 +1,7 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import io.reactivex.Flowable;
@@ -27,6 +28,20 @@ public class Feeder implements Subsystem {
     this.feederController = feederController;
     this.rollerController = rollerController;
     this.feederButton = feederButton;
+  }
+
+  /**
+   * When started, feeder is engaged. When terminated, it is disengaged.
+   **/
+  public Command pulse() {
+    return Command.just(x -> {
+      feederController.runAtPower(SPIN_POWER);
+      rollerController.runAtPower(ROLLER_POWER);
+      return Flowable.just(() -> {
+        feederController.runAtPower(0);
+        rollerController.runAtPower(0);
+      });
+    });
   }
 
   @Override
