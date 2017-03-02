@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
@@ -15,13 +16,13 @@ import io.reactivex.functions.Consumer;
 public class Shooter implements Subsystem {
 
   private static final double SHOOTER_POWER = 1.0;
-  private static double SETPOINT = 3250.0;
   private static final double PVAL = 0.05;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.33;
   private static final double FVAL = 0.035;
   private static final ControllerEvent stopEvent = Events
       .combine(Events.setpoint(0), Events.power(0));
+  private static double SETPOINT = 3250.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   edu.wpi.first.wpilibj.Preferences prefs;
@@ -36,11 +37,26 @@ public class Shooter implements Subsystem {
     this.distance = distance;
   }
 
+  /**
+   * When started, shooter starts at predicted setpoint.
+   * When terminated, shooter disables.
+   */
+  public Command pulse() {
+    return Command.just(x -> {
+      shooterController.accept(Events.combine(
+          Events.mode(ControlMode.LOOP_SPEED),
+          Events.setpoint(FlowOperators.getLastValue(variableSetpoint))));
+      return Flowable.just(() -> {
+        shooterController.accept(stopEvent);
+      });
+    });
+  }
+
   @Override
   public void registerSubscriptions() {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
 
-    this.variableSetpoint = this.distance.map(x -> 111.0*x/12.0 + 1950.0);
+    this.variableSetpoint = this.distance.map(x -> 111.0 * x / 12.0 + 1950.0);
 
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);

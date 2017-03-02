@@ -32,7 +32,7 @@ public class Feeder implements Subsystem {
 
   /**
    * When started, feeder is engaged. When terminated, it is disengaged.
-   **/
+   */
   public Command pulse() {
     return Command.just(x -> {
       feederController.runAtPower(SPIN_POWER);
