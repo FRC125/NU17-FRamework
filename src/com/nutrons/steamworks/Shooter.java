@@ -25,7 +25,7 @@ public class Shooter implements Subsystem {
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   edu.wpi.first.wpilibj.Preferences prefs;
-  private double variableSetpoint;
+  private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
 
 
@@ -34,12 +34,13 @@ public class Shooter implements Subsystem {
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
-    this.variableSetpoint = FlowOperators.getLastValue(this.distance.map(x -> x));
   }
 
   @Override
   public void registerSubscriptions() {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+
+    this.variableSetpoint = this.distance.map(x -> 111.0*x/12.0 + 1950.0);
 
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
@@ -47,8 +48,9 @@ public class Shooter implements Subsystem {
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
     shooterButton.map(FlowOperators::printId)
-        .map(x -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
-            Events.setpoint(prefs.getDouble("shooter_setpt", 3250.0))) : stopEvent)
+        .withLatestFrom(this.variableSetpoint, (x, y) -> x ? Events.combine(Events.mode(ControlMode.LOOP_SPEED),
+            Events.setpoint(y)) : stopEvent)
         .subscribe(shooterController);
+    this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("variableasdetj"));
   }
 }
