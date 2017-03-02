@@ -1,6 +1,7 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
@@ -45,6 +46,16 @@ public class Turret implements Subsystem {
     this.joyControl = joyControl;
     this.position = FlowOperators.toFlow(() -> this.hoodMaster.position());
     this.aimButton = aimButton;
+  }
+
+  public Command pulse() {
+    return Command.just(x -> {
+      this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
+      this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+      return Flowable.just(() -> {
+        this.hoodMaster.setControlMode(ControlMode.MANUAL);
+      });
+    });
   }
 
   @Override
