@@ -31,7 +31,7 @@ public class Drivetrain implements Subsystem {
   private static final double ANGLE_D = 0.035;
   private static final int ANGLE_BUFFER_LENGTH = 5;
   // PID for distance driving based on encoders
-  private static final double DISTANCE_P = 0.2;
+  private static final double DISTANCE_P = 0.08;
   private static final double DISTANCE_I = 0.0;
   private static final double DISTANCE_D = 0.0;
   private static final int DISTANCE_BUFFER_LENGTH = 5;

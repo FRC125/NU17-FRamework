@@ -36,6 +36,8 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+  private Turret turret;
+  private Shooter shooter;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -52,10 +54,13 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return Command.serial(
+    /*return Command.serial(
         this.drivetrain.driveDistance(8.25, 0.25, 5),
         this.drivetrain.turn(-85, 5),
-        this.drivetrain.driveDistance(2.5, 0.25, 5));
+        this.drivetrain.driveDistance(2.5, 0.25, 5),
+        this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));*/
+    return Command.parallel(this.turret.pulse().delayFinish(1000, TimeUnit.SECONDS),
+    this.shooter.pulse().delayFinish(1000, TimeUnit.SECONDS));
   }
 
   @Override
@@ -113,11 +118,13 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share()));
+    this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share());
+    sm.registerSubsystem(shooter);
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
+    this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
-        this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
+        this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
+    sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
         this.driverPad.rightBumper(), this.driverPad.leftBumper()));
