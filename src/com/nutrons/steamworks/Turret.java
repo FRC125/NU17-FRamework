@@ -50,7 +50,7 @@ public class Turret implements Subsystem {
   @Override
   public void registerSubscriptions() {
     Flowable<Double> setpoint = this.angle
-        .map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
+        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
 
