@@ -140,7 +140,7 @@ public class Drivetrain implements Subsystem {
                                   Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
       Flowable<Double> output = combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
-          .onBackpressureDrop().map(FlowOperators::printId)
+          .onBackpressureDrop()
           .compose(pidLoop(angleP, angleBufferLength, angleI, angleD));
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
