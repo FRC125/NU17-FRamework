@@ -1,6 +1,7 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
+import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
@@ -47,10 +48,20 @@ public class Turret implements Subsystem {
     this.aimButton = aimButton;
   }
 
+  public Command pulse() {
+    return Command.just(x -> {
+      this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
+      this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+      return Flowable.just(() -> {
+        this.hoodMaster.setControlMode(ControlMode.MANUAL);
+      });
+    });
+  }
+
   @Override
   public void registerSubscriptions() {
     Flowable<Double> setpoint = this.angle
-        .map(x -> (-x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
+        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
 
     this.hoodMaster.setReversedSensor(false); //used to be true
 

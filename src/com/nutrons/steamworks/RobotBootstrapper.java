@@ -42,6 +42,9 @@ public class RobotBootstrapper extends Robot {
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
+  private Turret turret;
+  private Shooter shooter;
+  private RadioBox<Command> box;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -58,15 +61,13 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    Map<String, Command> autos = new HashMap<String, Command>(){{
-      put("intake", RobotBootstrapper.this
-          .climbtake.pulse(true).delayFinish(500, TimeUnit. MILLISECONDS));
-    }};
-
-    RadioBox<Command> box = new RadioBox<>("auto", autos, "intake");
-    ConnectableFlowable<Command> boxStream = box.selected().publish();
-    boxStream.connect();
-    return Command.defer(() -> FlowOperators.getLastValue(boxStream));
+    Flowable<Command> boxStream = box.selected().cache().map(FlowOperators::printId);
+    boxStream.subscribe();
+    return Command.defer(() -> {
+      Command c = FlowOperators.getLastValue(boxStream);
+      System.out.println(c);
+      return c;
+    });
   }
 
   @Override
@@ -124,11 +125,13 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    sm.registerSubsystem(new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share()));
+    this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share());
+    sm.registerSubsystem(shooter);
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
-    sm.registerSubsystem(new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
+    this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
-        this.operatorPad.leftStickX(), this.operatorPad.leftBumper())); //TODO: remove
+        this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
+    sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
         this.driverPad.rightBumper(), this.driverPad.leftBumper()));
@@ -146,6 +149,23 @@ public class RobotBootstrapper extends Robot {
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
+
+    Map<String, Command> autos = new HashMap<String, Command>() {{
+      put("intake", RobotBootstrapper.this
+          .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
+      put("drive turn drive", Command.serial(
+          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5),
+          RobotBootstrapper.this.drivetrain.turn(-85, 5),
+          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5),
+          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
+      put("aim & shoot", Command.parallel(RobotBootstrapper.this.turret.pulse()
+              .delayFinish(1000, TimeUnit.SECONDS),
+          RobotBootstrapper.this.shooter.pulse().delayFinish(1000, TimeUnit.SECONDS)));
+    }};
+
+    box = new RadioBox<>("auto2", autos, "intake");
+    sm.registerSubsystem(box);
+
     return sm;
   }
 }
