@@ -66,8 +66,8 @@ public class Shooter implements Subsystem {
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
-    shooterButton.map(FlowOperators::printId)
-        .withLatestFrom(this.variableSetpoint.map(FlowOperators::printId), (x, y) -> {
+    shooterButton
+        .withLatestFrom(this.variableSetpoint, (x, y) -> {
           if(x) {
             System.out.println("setting setpoint");
             return Events.combine(Events.mode(ControlMode.LOOP_SPEED),
