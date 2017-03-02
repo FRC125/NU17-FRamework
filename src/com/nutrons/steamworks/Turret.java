@@ -23,6 +23,7 @@ public class Turret implements Subsystem {
   private final Flowable<Double> joyControl; //TODO: Remoove
   private final Flowable<Boolean> aimButton;
   private Flowable<Double> position;
+  private static final double TOLERANCE_DEGREES = 1.0;
 
   /**
    * The Turret System that is used for aiming our shooter.
@@ -68,7 +69,9 @@ public class Turret implements Subsystem {
     FlowOperators.toFlow(() -> hoodMaster.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
+    this.angle.map(x -> x < TOLERANCE_DEGREES ? true : false).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
     this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance"));
+    this.distance.map(x -> x > 108 && x < 168 ? true : false).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within distance range, GO!"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));

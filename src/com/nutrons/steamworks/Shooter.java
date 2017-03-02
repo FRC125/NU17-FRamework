@@ -52,5 +52,8 @@ public class Shooter implements Subsystem {
             Events.setpoint(y)) : stopEvent)
         .subscribe(shooterController);
     this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("variableasdetj"));
+
+    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 50 > y && x - 50 < y ? true : false)
+        .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
   }
 }
