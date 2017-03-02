@@ -12,10 +12,16 @@ import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
+import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.libKudos254.vision.VisionServer;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
+import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.functions.Function;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -52,7 +58,15 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    return this.climbtake.pulse(true).delayFinish(3, TimeUnit.SECONDS);
+    Map<String, Command> autos = new HashMap<String, Command>(){{
+      put("intake", RobotBootstrapper.this
+          .climbtake.pulse(true).delayFinish(500, TimeUnit. MILLISECONDS));
+    }};
+
+    RadioBox<Command> box = new RadioBox<>("auto", autos, "intake");
+    ConnectableFlowable<Command> boxStream = box.selected().publish();
+    boxStream.connect();
+    return Command.defer(() -> FlowOperators.getLastValue(boxStream));
   }
 
   @Override
