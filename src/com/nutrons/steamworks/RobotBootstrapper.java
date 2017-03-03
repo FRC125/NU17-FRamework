@@ -154,18 +154,16 @@ public class RobotBootstrapper extends Robot {
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
       put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5),
+          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
           RobotBootstrapper.this.drivetrain.turn(-85, 5),
-          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5),
+          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
           RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
       put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5),
+          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
           RobotBootstrapper.this.drivetrain.turn(85, 5),
-          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5),
+          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
           RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
-      put("aim & shoot", Command.parallel(RobotBootstrapper.this.turret.pulse()
-              .delayFinish(1000, TimeUnit.SECONDS),
-          RobotBootstrapper.this.shooter.pulse().delayFinish(1000, TimeUnit.SECONDS)));
+      put("aim & shoot", RobotBootstrapper.this.shooter.pulse().terminable(Flowable.never()));
     }};
 
     box = new RadioBox<>("auto3", autos, "intake");

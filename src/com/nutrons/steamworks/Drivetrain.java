@@ -123,7 +123,7 @@ public class Drivetrain implements Subsystem {
                                double distanceTolerance,
                                double angleTolerance) {
     // Get the current heading at the beginning
-    Flowable<Double> targetHeading = currentHeading.take(1).cache();
+    ConnectableFlowable<Double> targetHeading = currentHeading.take(1).cache().publish();
     ControllerEvent reset = Events.resetPosition(0);
     double setpoint = distance / FEET_PER_ENCODER_ROTATION;
 
@@ -135,7 +135,7 @@ public class Drivetrain implements Subsystem {
         .onBackpressureDrop();
 
     // Construct closed-loop streams for angle / gyro based PID
-    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
+    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
         .onBackpressureDrop();
     Flowable<Double> angleOutput = pidAngle(targetHeading);
     angleOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
@@ -155,6 +155,7 @@ public class Drivetrain implements Subsystem {
 
     // Chaining all the commands together
     return Command.parallel(Command.fromAction(() -> {
+      targetHeading.connect();
       rightDrive.accept(reset);
       leftDrive.accept(reset);
     }), right, left)
@@ -230,7 +231,7 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
   }
 
   /**

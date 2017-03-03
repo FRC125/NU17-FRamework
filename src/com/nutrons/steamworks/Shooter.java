@@ -45,6 +45,7 @@ public class Shooter implements Subsystem {
    */
   public Command pulse() {
     return Command.just(x -> {
+      System.out.println(FlowOperators.getLastValue(variableSetpoint));
       shooterController.accept(Events.combine(
           Events.mode(ControlMode.LOOP_SPEED),
           Events.setpoint(FlowOperators.getLastValue(variableSetpoint))));
@@ -58,8 +59,8 @@ public class Shooter implements Subsystem {
   public void registerSubscriptions() {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
 
-    this.variableSetpoint = this.distance.map(x -> 111.0*x/12.0 + 1950.0).share()
-        .withLatestFrom(this.shooterButton, Pair::new).filter(x -> !x.right()).map(Pair::left);
+    this.variableSetpoint = this.distance.map(x -> 111.0*x/12.0 + 1950.0)
+        .withLatestFrom(this.shooterButton, Pair::new).filter(x -> !x.right()).map(Pair::left).share();
 
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
