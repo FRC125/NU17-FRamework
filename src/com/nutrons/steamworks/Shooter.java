@@ -59,7 +59,8 @@ public class Shooter implements Subsystem {
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
     this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
-    this.shooterButton.map(x -> pulse().terminable(shooterButton.filter(y -> !y))).subscribe(x -> x.execute(true));
+    this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
+        .subscribe(x -> x.execute(true));
 
     toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
         .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
