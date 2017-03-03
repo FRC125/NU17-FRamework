@@ -25,6 +25,8 @@ public class Turret implements Subsystem {
   private final Flowable<Double> joyControl; //TODO: Remoove
   private final Flowable<Boolean> aimButton;
   private final Flowable<Double> setpoint;
+  private final Flowable<Double> aimingHint;
+  private static final double HINT_SCALING = 10;
   private Flowable<Double> position;
 
   /**
@@ -48,26 +50,34 @@ public class Turret implements Subsystem {
     this.position = FlowOperators.toFlow(this.hoodMaster::position);
     this.aimButton = aimButton;
     this.setpoint = this.angle
-        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
+        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
+    this.aimingHint = joyControl.map(x -> (-HINT_SCALING * x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0);
   }
 
   public Command automagicMode() {
     return Command.fromAction(() -> {
       this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
       this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-    }).then(Command.fromSubscription(() -> setpoint.map(Events::setpoint).subscribe(hoodMaster))
+    }).then(Command.fromSubscription(() -> setpoint.withLatestFrom(aimingHint, (x, y) -> x + y)
+        .map(Events::power).subscribe(hoodMaster))
         .addFinalTerminator(() -> hoodMaster.runAtPower(0)));
+  }
+
+  public Command manualMode() {
+    return Command.fromSubscription(() ->
+        FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power)
+            .subscribe(hoodMaster));
+  }
+
+  public Command teleop() {
+    return Command.fromSwitch(this.aimButton.map(x -> x ? automagicMode().terminable(aimButton.filter(y -> !y)) :
+        manualMode().terminable(aimButton.filter(y -> y))), false);
   }
 
   @Override
   public void registerSubscriptions() {
 
     this.hoodMaster.setReversedSensor(false); //used to be true
-
-    FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power)
-        .subscribe(hoodMaster);
-    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).
-        subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));

@@ -75,7 +75,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerTele() {
-    return this.drivetrain.driveTeleop().terminable(Flowable.never());
+    return Command.parallel(this.drivetrain.driveTeleop().terminable(Flowable.never()),
+        this.turret.teleop());
   }
 
   @Override
