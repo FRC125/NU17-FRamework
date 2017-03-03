@@ -1,9 +1,7 @@
 package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
-import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.RevServo;
-
 import com.nutrons.framework.controllers.ServoInstr;
 import io.reactivex.Flowable;
 
@@ -26,14 +24,13 @@ public class Gearplacer implements Subsystem {
     this.gearPlacerLeft = gearPlacerLeft;
     this.gearPlacerRight = gearPlacerRight;
     this.openButton = openButton;
-
   }
 
   @Override
   public void registerSubscriptions() {
-    openButton.map(x -> x ? ServoInstr.set(0.0) : ServoInstr.set(0.5))
+    openButton.map(x -> x ? ServoInstr.set(0.0) : ServoInstr.set(1.0))
         .subscribe(gearPlacerLeft);
-    openButton.map(x -> x ? ServoInstr.set(1.0) : ServoInstr.set(0.5))
+    openButton.map(x -> x ? ServoInstr.set(1.0) : ServoInstr.set(0.0))
         .subscribe(gearPlacerRight);
 
   }

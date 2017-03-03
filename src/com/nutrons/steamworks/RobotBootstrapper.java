@@ -39,8 +39,8 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private RevServo gearPlacerLeft;
-  private RevServo gearPlacerRight;
+  private RevServo servoLeft;
+  private RevServo servoRight;
 
   private CommonController driverPad;
   private CommonController operatorPad;
@@ -122,8 +122,8 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.gearPlacerLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
-    this.gearPlacerRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
   }
 
   @Override
@@ -136,8 +136,8 @@ public class RobotBootstrapper extends Robot {
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share());
     sm.registerSubsystem(shooter);
 
-    sm.registerSubsystem(new Gearplacer(this.gearPlacerLeft,
-        this.gearPlacerRight,
+    sm.registerSubsystem(new Gearplacer(this.servoLeft,
+        this.servoRight,
         this.driverPad.buttonX()));
 
     sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
