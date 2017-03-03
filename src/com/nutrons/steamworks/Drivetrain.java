@@ -38,6 +38,7 @@ public class Drivetrain implements Subsystem {
   // Time required to spend within the PID tolerance for the PID loop to terminate
   private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
   private static final long PID_TERMINATE_TIME = 1000;
+  private static final double BOILER_ANGLE = 30;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
@@ -88,13 +89,16 @@ public class Drivetrain implements Subsystem {
    * @param tolerance the robot should attempt to remain within this error of the target
    */
   public Command turn(double angle, double tolerance) {
+    return turnAbsolute(currentHeading.take(1).map(y -> y + angle), tolerance);
+  }
+
+  public Command turnAbsolute(Flowable<Double> targetAngle, double tolerance) {
     return Command.just(x -> {
       // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-      Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
-      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z);
+      Flowable<Double> error = currentHeading.withLatestFrom(targetAngle, (y, z) -> y - z);
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
       Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
-          Flowable.just(true), targetHeading)
+          Flowable.just(true), targetAngle)
           // Makes sure the final terminator will stop the motors
           .addFinalTerminator(() -> {
             leftDrive.runAtPower(0);
@@ -261,6 +265,16 @@ public class Drivetrain implements Subsystem {
         combineLatest(throttle, yaw, (x, y) -> x + y).onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).onBackpressureDrop(),
         Flowable.just(false).concatWith(this.teleHoldHeading));
+  }
+
+  /**
+   * Turn the drivetrain to face the boiler
+   * @param team the robot's team: true for red, false for blue
+   */
+  public Command faceBoiler(boolean team) {
+    // Currently rough approximation to get turret in range
+    double multiplier = team ? 1.0 : -1.0;
+    return turnAbsolute(Flowable.just(BOILER_ANGLE * multiplier), 5);
   }
 
   @Override
