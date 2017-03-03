@@ -222,7 +222,7 @@ public class Drivetrain implements Subsystem {
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading) {
     return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
-        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y)));
+        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).share()));
   }
 
   /**
