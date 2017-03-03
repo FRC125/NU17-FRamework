@@ -1,11 +1,13 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 import com.ctre.CANTalon;
 import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
+import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
@@ -19,6 +21,7 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +51,8 @@ public class RobotBootstrapper extends Robot {
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
+  private Feeder feeder;
+  private Gearplacer gearplacer;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -135,14 +140,16 @@ public class RobotBootstrapper extends Robot {
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
-        this.operatorPad.rightStickY().map(x -> -100.0 * x));
+        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    sm.registerSubsystem(new Gearplacer(this.servoLeft,
+    this.gearplacer = new Gearplacer(this.servoLeft,
         this.servoRight,
-        this.driverPad.buttonX()));
+        this.driverPad.buttonX());
+    sm.registerSubsystem(gearplacer);
 
-    sm.registerSubsystem(new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB()));
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
+    sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
@@ -164,6 +171,9 @@ public class RobotBootstrapper extends Robot {
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
+    Command kpa40 = Command.parallel(this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
+        this.shooter.pulse().delayStart(1, TimeUnit.SECONDS).delayFinish(11, TimeUnit.SECONDS),
+        this.feeder.pulse().delayStart(5, TimeUnit.SECONDS).delayFinish(7, TimeUnit.SECONDS));
 
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
@@ -172,16 +182,22 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 5),
           RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
+          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))).then(kpa40);
       put("boiler; turn right", Command.serial(
           RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 5),
           RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
-      put("aim & shoot", RobotBootstrapper.this.shooter.pulse().terminable(Flowable.never()));
+          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))).then(kpa40);
+      put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
+          RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
+          RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
+      put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
+          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
+          .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
 
-    box = new RadioBox<>("auto3", autos, "intake");
+    box = new RadioBox<>("auto4", autos, "intake");
     sm.registerSubsystem(box);
 
     return sm;

@@ -91,7 +91,7 @@ public class Drivetrain implements Subsystem {
     return Command.just(x -> {
       // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
       Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
-      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z);
+      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
       Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
           Flowable.just(true), targetHeading)
@@ -129,15 +129,15 @@ public class Drivetrain implements Subsystem {
 
     // Construct closed-loop streams for distance / encoder based PID
     Flowable<Double> distanceError = toFlow(() ->
-        (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint);
+        (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint).share();
     Flowable<Double> distanceOutput = distanceError
         .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D))
-        .onBackpressureDrop();
+        .onBackpressureDrop().share();
 
     // Construct closed-loop streams for angle / gyro based PID
     Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
-        .onBackpressureDrop();
-    Flowable<Double> angleOutput = pidAngle(targetHeading);
+        .onBackpressureDrop().share();
+    Flowable<Double> angleOutput = pidAngle(targetHeading).share();;
     angleOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
     distanceOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance"));
 
@@ -145,20 +145,20 @@ public class Drivetrain implements Subsystem {
     Command right = Command.fromSubscription(() ->
         combineLatest(distanceOutput, angleOutput, (x, y) -> x + y)
             .map(limitWithin(-1.0, 1.0))
-            .map(Events::power).subscribe(rightDrive));
+            .map(Events::power).share().subscribe(rightDrive));
     Command left = Command.fromSubscription(() ->
         combineLatest(distanceOutput, angleOutput, (x, y) -> x - y)
             .map(limitWithin(-1.0, 1.0))
             .map(x -> -x)
-            .map(Events::power).subscribe(leftDrive));
+            .map(Events::power).share().subscribe(leftDrive));
     Flowable<Double> noDrive = Flowable.just(0.0);
 
     // Chaining all the commands together
-    return Command.parallel(Command.fromAction(() -> {
+    return Command.fromAction(() -> {
       targetHeading.connect();
       rightDrive.accept(reset);
       leftDrive.accept(reset);
-    }), right, left)
+    }).then(Command.parallel(right, left))
         // Terminates the distance PID when within acceptable error
         .terminable(pidTerminator(distanceError,
             distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION))
@@ -184,7 +184,7 @@ public class Drivetrain implements Subsystem {
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     return Command.fromSubscription(() -> {
-      Flowable<Double> output = pidAngle(targetHeading);
+      Flowable<Double> output = pidAngle(targetHeading).share();
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .onBackpressureDrop()
@@ -192,6 +192,7 @@ public class Drivetrain implements Subsystem {
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(Events::power)
+              .share()
               .subscribe(leftDrive),
           combineLatest(right, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
               .onBackpressureDrop()
@@ -199,6 +200,7 @@ public class Drivetrain implements Subsystem {
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(x -> Events.power(-x))
+              .share()
               .subscribe(rightDrive));
     })
         // Stop motors afterwards
@@ -231,7 +233,7 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io()).share();
   }
 
   /**
@@ -258,8 +260,8 @@ public class Drivetrain implements Subsystem {
    */
   public Command driveTeleop() {
     return driveHoldHeading(
-        combineLatest(throttle, yaw, (x, y) -> x + y).onBackpressureDrop(),
-        combineLatest(throttle, yaw, (x, y) -> x - y).onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x + y).share().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x - y).share().onBackpressureDrop(),
         Flowable.just(false).concatWith(this.teleHoldHeading));
   }
 

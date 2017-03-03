@@ -71,9 +71,9 @@ public class Turret implements Subsystem {
 
     FlowOperators.toFlow(hoodMaster::position)
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
-    this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
+    this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle_vis"));
     this.angle.map(x -> x < TOLERANCE_DEGREES).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
-    this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance"));
+    this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance_vis"));
     this.distance.map(x -> x > 108 && x < 168).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within distance range, GO!"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
