@@ -7,12 +7,13 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
 
-  private static final double PVAL = 125.0;
-  private static final double IVAL = 0.0;
+  private static final double PVAL = 200.0;
+  private static final double IVAL = 10.0;
   private static final double DVAL = 12.5;
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
@@ -61,7 +62,6 @@ public class Turret implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-
     this.hoodMaster.setReversedSensor(false); //used to be true
 
     FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
