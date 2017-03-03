@@ -42,7 +42,7 @@ public class Shooter implements Subsystem {
   }
 
   public Command pulse() {
-    return Command.fromSubscription(() -> variableSetpoint.withLatestFrom(setpointHint, (x, y) -> x + y)
+    return Command.fromSubscription(() -> setpointHint.withLatestFrom(variableSetpoint, (x, y) -> x + y)
         .map(aimEvent).subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }

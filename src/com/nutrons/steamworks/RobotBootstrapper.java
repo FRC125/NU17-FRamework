@@ -122,8 +122,8 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_LEFT);
-    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
   }
 
   @Override
@@ -133,7 +133,9 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(), toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), Flowable.just(0.0));
+    this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
+        toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
+        this.operatorPad.rightStickY().map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
     sm.registerSubsystem(new Gearplacer(this.servoLeft,

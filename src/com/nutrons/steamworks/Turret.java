@@ -52,11 +52,11 @@ public class Turret implements Subsystem {
   }
 
   public Command automagicMode() {
-    return Command.just(x -> {
+    return Command.fromAction(() -> {
       this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
       this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-      return Flowable.just(() -> this.hoodMaster.runAtPower(0));
-    }).then(Command.fromSubscription(() -> setpoint.map(Events::setpoint).subscribe(hoodMaster)));
+    }).then(Command.fromSubscription(() -> setpoint.map(Events::setpoint).subscribe(hoodMaster))
+        .addFinalTerminator(() -> hoodMaster.runAtPower(0)));
   }
 
   @Override
