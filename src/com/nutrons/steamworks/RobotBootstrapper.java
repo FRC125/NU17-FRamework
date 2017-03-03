@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 import com.ctre.CANTalon;
+import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.commands.Command;
@@ -14,12 +15,9 @@ import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
-import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.functions.Function;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -154,14 +152,14 @@ public class RobotBootstrapper extends Robot {
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
       put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
+          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 5),
-          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
+          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
       put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
+          RobotBootstrapper.this.drivetrain.driveDistance(8.25, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 5),
-          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).killAfter(3, TimeUnit.SECONDS),
+          RobotBootstrapper.this.drivetrain.driveDistance(2.5, 0.25, 5).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)));
       put("aim & shoot", RobotBootstrapper.this.shooter.pulse().terminable(Flowable.never()));
     }};
