@@ -64,7 +64,7 @@ public class Turret implements Subsystem {
 
     this.hoodMaster.setReversedSensor(false); //used to be true
 
-    FlowOperators.deadband(joyControl).map(Events::power)
+    FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power)
         .subscribe(hoodMaster);
     this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).
         subscribe(x -> x.execute(true));
