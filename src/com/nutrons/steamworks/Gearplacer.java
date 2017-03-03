@@ -31,14 +31,14 @@ public class Gearplacer implements Subsystem {
   }
 
   public Command pulse() {
-    return Command.just(() -> {
+    return Command.just(x -> {
       gearPlacerLeft.accept(maxPosition(!LEFT_INVERT));
       gearPlacerRight.accept(maxPosition(!RIGHT_INVERT));
       return Flowable.just(() -> {
         gearPlacerLeft.accept(maxPosition(LEFT_INVERT));
         gearPlacerRight.accept(maxPosition(RIGHT_INVERT));
-      })
-    })
+      });
+    });
   }
 
   @Override
