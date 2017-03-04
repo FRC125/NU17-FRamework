@@ -9,7 +9,6 @@ import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -43,9 +42,10 @@ public class Shooter implements Subsystem {
   }
 
   public Command pulse() {
-    return Command.fromSubscription(() -> setpointHint.withLatestFrom(Flowable.just(SETPOINT).share()
-        .mergeWith(variableSetpoint), (x, y) -> x + y).share()
-        .map(aimEvent).subscribe(shooterController))
+    Flowable<Double> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
+        .mergeWith(variableSetpoint), (x, y) -> x + y).share();
+    return Command.fromSubscription(() ->
+        combined.map(aimEvent).subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }
 

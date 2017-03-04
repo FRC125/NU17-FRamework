@@ -4,10 +4,9 @@ import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
-import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
-import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
@@ -20,7 +19,7 @@ public class Turret implements Subsystem {
   private static final double TOLERANCE_DEGREES = 1.0;
   private final Flowable<Double> angle;
   private final Flowable<Double> distance;
-  private final Talon hoodMaster;
+  private final LoopSpeedController hoodMaster;
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
@@ -36,13 +35,13 @@ public class Turret implements Subsystem {
    */
   public Turret(Flowable<Double> angle,
                 Flowable<Double> distance,
-                Talon master,
+                LoopSpeedController master,
                 Flowable<Double> joyControl,
                 Flowable<Boolean> aimButton) { //TODO: remove joycontrol
     this.angle = angle.map(Math::toDegrees);
     this.distance = distance;
     this.hoodMaster = master;
-    Events.resetPosition(0.0).actOn(this.hoodMaster);
+    this.hoodMaster.accept(Events.resetPosition(0.0));
     this.revLim = FlowOperators.toFlow(this.hoodMaster::revLimitSwitchClosed);
     this.fwdLim = FlowOperators.toFlow(this.hoodMaster::fwdLimitSwitchClosed);
     this.joyControl = joyControl;

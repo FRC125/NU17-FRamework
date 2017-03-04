@@ -15,6 +15,7 @@ import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
@@ -92,9 +93,10 @@ public class Drivetrain implements Subsystem {
    * @param tolerance the robot should attempt to remain within this error of the target
    */
   public Command turn(double angle, double tolerance) {
+    Flowable<Double> offsetHeading = currentHeading.map(y -> y + angle);
     return Command.just(x -> {
+      Flowable<Double> targetHeading = Flowable.just(FlowOperators.getLastValue(currentHeading));
       // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-      Flowable<Double> targetHeading = currentHeading.take(1).map(y -> y + angle);
       Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
       Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
@@ -187,8 +189,8 @@ public class Drivetrain implements Subsystem {
    */
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
+    Flowable<Double> output = pidAngle(targetHeading);
     return Command.fromSubscription(() -> {
-      Flowable<Double> output = pidAngle(targetHeading).share();
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .onBackpressureDrop()
@@ -237,7 +239,7 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io()).share();
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
   }
 
   /**
