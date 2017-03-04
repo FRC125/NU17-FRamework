@@ -165,10 +165,10 @@ public class Drivetrain implements Subsystem {
     }).then(Command.parallel(right, left))
         // Terminates the distance PID when within acceptable error
         .terminable(pidTerminator(distanceError,
-            distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION))
+            distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION, 100, TimeUnit.MILLISECONDS))
         // Turn to the targetHeading afterwards, and stop PID when within acceptable error
         .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
-            .terminable(pidTerminator(angleError, angleTolerance, 100, TimeUnit.MILLISECONDS))
+            .terminable(pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS))
             // Afterwards, stop the motors
             .then(Command.fromAction(() -> {
               leftDrive.runAtPower(0);

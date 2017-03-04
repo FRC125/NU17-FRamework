@@ -171,23 +171,27 @@ public class RobotBootstrapper extends Robot {
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
-    Command kpa40 = Command.parallel(this.turret.automagicMode().delayFinish(2, TimeUnit.SECONDS),
-        this.shooter.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(12, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(4, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS));
+    Command kpa40 = Command.parallel(
+        Command.fromAction(() -> {
+          RobotBootstrapper.this.leftLeader.runAtPower(0);
+          RobotBootstrapper.this.rightLeader.runAtPower(0);
+        }),
+        RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
+        this.turret.automagicMode().delayFinish(1250, TimeUnit.MILLISECONDS),
+        this.shooter.pulse().delayStart(1250, TimeUnit.MILLISECONDS).delayFinish(12, TimeUnit.SECONDS),
+        this.feeder.pulse().delayStart(3250, TimeUnit.MILLISECONDS).delayFinish(10, TimeUnit.SECONDS));
 
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
       put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
