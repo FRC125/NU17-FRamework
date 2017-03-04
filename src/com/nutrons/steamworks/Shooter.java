@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
   }
 
   public Command pulse() {
-    return Command.fromSubscription(() -> setpointHint.withLatestFrom(Flowable.just(SETPOINT)
+    return Command.fromSubscription(() -> setpointHint.withLatestFrom(Flowable.just(SETPOINT).share()
         .mergeWith(variableSetpoint), (x, y) -> x + y).share()
         .map(aimEvent).subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
@@ -64,7 +64,7 @@ public class Shooter implements Subsystem {
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
 
-    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
+    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop().share()
         .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
   }
 }

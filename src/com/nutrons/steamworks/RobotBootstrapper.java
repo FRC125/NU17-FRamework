@@ -187,11 +187,11 @@ public class RobotBootstrapper extends Robot {
       put("boiler; turn left", Command.serial(
           RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("boiler; turn right", Command.serial(
           RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(5.0, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
