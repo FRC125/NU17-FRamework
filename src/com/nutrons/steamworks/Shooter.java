@@ -39,6 +39,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0).share();
   }
 
   public Command pulse() {
@@ -52,9 +53,6 @@ public class Shooter implements Subsystem {
   @Override
   public void registerSubscriptions() {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
-
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0).share();
-
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
