@@ -37,7 +37,7 @@ public class Drivetrain implements Subsystem {
   private static final int DISTANCE_BUFFER_LENGTH = 5;
   // Time required to spend within the PID tolerance for the PID loop to terminate
   private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
-  private static final long PID_TERMINATE_TIME = 1000;
+  private static final long PID_TERMINATE_TIME = 500;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
@@ -73,8 +73,12 @@ public class Drivetrain implements Subsystem {
    * Intended use is to terminate a PID loop command.
    */
   private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance) {
+    return pidTerminator(error, tolerance, PID_TERMINATE_TIME, PID_TERMINATE_UNIT);
+  }
+
+  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance, long delay, TimeUnit unit) {
     return error.map(x -> abs(x) < tolerance)
-        .distinctUntilChanged().debounce(PID_TERMINATE_TIME, PID_TERMINATE_UNIT)
+        .distinctUntilChanged().debounce(delay, unit)
         .filter(x -> x);
   }
 
@@ -164,7 +168,7 @@ public class Drivetrain implements Subsystem {
             distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION))
         // Turn to the targetHeading afterwards, and stop PID when within acceptable error
         .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
-            .terminable(pidTerminator(angleError, angleTolerance))
+            .terminable(pidTerminator(angleError, angleTolerance, 100, TimeUnit.MILLISECONDS))
             // Afterwards, stop the motors
             .then(Command.fromAction(() -> {
               leftDrive.runAtPower(0);
