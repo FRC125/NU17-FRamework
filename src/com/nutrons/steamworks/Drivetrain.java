@@ -14,7 +14,6 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
@@ -95,7 +94,7 @@ public class Drivetrain implements Subsystem {
   public Command turn(double angle, double tolerance) {
     Flowable<Double> offsetHeading = currentHeading.map(y -> y + angle);
     return Command.just(x -> {
-      Flowable<Double> targetHeading = Flowable.just(FlowOperators.getLastValue(currentHeading));
+      Flowable<Double> targetHeading = Flowable.just(FlowOperators.getLastValue(offsetHeading));
       // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
       Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
@@ -129,7 +128,7 @@ public class Drivetrain implements Subsystem {
                                double distanceTolerance,
                                double angleTolerance) {
     // Get the current heading at the beginning
-    ConnectableFlowable<Double> targetHeading = currentHeading.take(1).cache().publish();
+    Flowable<Double> targetHeading = currentHeading.take(1);
     ControllerEvent reset = Events.resetPosition(0);
     double setpoint = distance / FEET_PER_ENCODER_ROTATION;
 
@@ -143,9 +142,7 @@ public class Drivetrain implements Subsystem {
     // Construct closed-loop streams for angle / gyro based PID
     Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
         .onBackpressureDrop().share();
-    Flowable<Double> angleOutput = pidAngle(targetHeading).share();;
-    angleOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
-    distanceOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance"));
+    Flowable<Double> angleOutput = pidAngle(targetHeading);
 
     // Create commands for each motor
     Command right = Command.fromSubscription(() ->
@@ -161,7 +158,6 @@ public class Drivetrain implements Subsystem {
 
     // Chaining all the commands together
     return Command.fromAction(() -> {
-      targetHeading.connect();
       rightDrive.accept(reset);
       leftDrive.accept(reset);
     }).then(Command.parallel(right, left))
@@ -239,7 +235,7 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).share();
   }
 
   /**
