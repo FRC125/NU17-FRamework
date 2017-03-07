@@ -63,10 +63,10 @@ public class Turret implements Subsystem {
   public void registerSubscriptions() {
     this.hoodMaster.setReversedSensor(false); //used to be true
 
-    FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
+    FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power)
         .subscribe(hoodMaster);
-    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).share().
-        subscribe(x -> x.execute(true));
+    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y)))
+        .subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));

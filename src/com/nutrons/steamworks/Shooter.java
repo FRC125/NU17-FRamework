@@ -34,25 +34,25 @@ public class Shooter implements Subsystem {
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
-    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0);
   }
 
   public Command pulse() {
-    Flowable<Double> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
-        .mergeWith(variableSetpoint), (x, y) -> x + y).share();
+    Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
+        .mergeWith(variableSetpoint), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
-        combined.map(aimEvent).subscribe(shooterController))
+        combined.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }
 
   @Override
   public void registerSubscriptions() {
-    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
@@ -62,7 +62,7 @@ public class Shooter implements Subsystem {
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
 
-    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop().share()
+    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop()
         .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
   }
 }

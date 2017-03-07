@@ -136,7 +136,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.operatorPad);
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
-        toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
+        toFlow(() -> VisionProcessor.getInstance().getDistance()),
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
@@ -148,7 +148,7 @@ public class RobotBootstrapper extends Robot {
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
-        toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
+        toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
     sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
@@ -159,7 +159,7 @@ public class RobotBootstrapper extends Robot {
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
-        gyro.getGyroReadings().share(),
+        gyro.getGyroReadings(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
         leftLeader, rightLeader);

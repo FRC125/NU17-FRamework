@@ -14,7 +14,6 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
@@ -38,11 +37,11 @@ public class Drivetrain implements Subsystem {
   // Time required to spend within the PID tolerance for the PID loop to terminate
   private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
   private static final long PID_TERMINATE_TIME = 500;
+  private static final double DEADBAND = 0.3;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
   private final LoopSpeedController rightDrive;
-  private static final double DEADBAND = 0.3;
   private final Flowable<Boolean> teleHoldHeading;
   private final ConnectableFlowable<Double> currentHeading;
 
@@ -92,11 +91,11 @@ public class Drivetrain implements Subsystem {
    * @param tolerance the robot should attempt to remain within this error of the target
    */
   public Command turn(double angle, double tolerance) {
-    Flowable<Double> offsetHeading = currentHeading.map(y -> y + angle);
+    Flowable<Double> targetHeading = currentHeading.map(y -> y + angle).take(1);
+    // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
+    Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).publish().autoConnect();
+    Flowable<?> terminator = pidTerminator(error, tolerance);
     return Command.just(x -> {
-      Flowable<Double> targetHeading = Flowable.just(FlowOperators.getLastValue(offsetHeading));
-      // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
       Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
           Flowable.just(true), targetHeading)
@@ -106,7 +105,7 @@ public class Drivetrain implements Subsystem {
             rightDrive.runAtPower(0);
           })
           // Terminate when the error is below the tolerance for long enough
-          .terminable(pidTerminator(error, tolerance))
+          .terminable(terminator)
           .execute(x);
       return terms;
       // Ensure we do not spend too long attempting to turn
@@ -134,39 +133,35 @@ public class Drivetrain implements Subsystem {
 
     // Construct closed-loop streams for distance / encoder based PID
     Flowable<Double> distanceError = toFlow(() ->
-        (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint).share();
+        (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint);
     Flowable<Double> distanceOutput = distanceError
-        .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D))
-        .onBackpressureDrop().share();
+        .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D));
 
     // Construct closed-loop streams for angle / gyro based PID
-    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
-        .onBackpressureDrop().share();
+    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop().publish().autoConnect();
     Flowable<Double> angleOutput = pidAngle(targetHeading);
 
+    Flowable<ControllerEvent> rightSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x + y).publish().autoConnect().onBackpressureDrop().map(limitWithin(-1.0, 1.0)).map(Events::power);
+    Flowable<ControllerEvent> leftSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x - y).publish().autoConnect().onBackpressureDrop()
+        .map(limitWithin(-1.0, 1.0)).map(x -> -x).map(Events::power);
     // Create commands for each motor
-    Command right = Command.fromSubscription(() ->
-        combineLatest(distanceOutput, angleOutput, (x, y) -> x + y)
-            .map(limitWithin(-1.0, 1.0))
-            .map(Events::power).share().subscribe(rightDrive));
-    Command left = Command.fromSubscription(() ->
-        combineLatest(distanceOutput, angleOutput, (x, y) -> x - y)
-            .map(limitWithin(-1.0, 1.0))
-            .map(x -> -x)
-            .map(Events::power).share().subscribe(leftDrive));
+    Command right = Command.fromSubscription(() -> rightSource.subscribe(rightDrive));
+    Command left = Command.fromSubscription(() -> leftSource.subscribe(leftDrive));
     Flowable<Double> noDrive = Flowable.just(0.0);
 
+    Flowable<?> distanceTerminator = pidTerminator(distanceError,
+        distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION, 100, TimeUnit.MILLISECONDS);
+    Flowable<?> angleTerminator = pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS);
     // Chaining all the commands together
     return Command.fromAction(() -> {
       rightDrive.accept(reset);
       leftDrive.accept(reset);
     }).then(Command.parallel(right, left))
         // Terminates the distance PID when within acceptable error
-        .terminable(pidTerminator(distanceError,
-            distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION, 100, TimeUnit.MILLISECONDS))
+        .terminable(distanceTerminator)
         // Turn to the targetHeading afterwards, and stop PID when within acceptable error
         .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
-            .terminable(pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS))
+            .terminable(angleTerminator)
             // Afterwards, stop the motors
             .then(Command.fromAction(() -> {
               leftDrive.runAtPower(0);
@@ -190,19 +185,17 @@ public class Drivetrain implements Subsystem {
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .onBackpressureDrop()
-              .subscribeOn(Schedulers.io())
+              .subscribeOn(Schedulers.computation())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(Events::power)
-              .share()
               .subscribe(leftDrive),
           combineLatest(right, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
               .onBackpressureDrop()
-              .subscribeOn(Schedulers.io())
+              .subscribeOn(Schedulers.computation())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(x -> Events.power(-x))
-              .share()
               .subscribe(rightDrive));
     })
         // Stop motors afterwards
@@ -224,7 +217,7 @@ public class Drivetrain implements Subsystem {
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading) {
     return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
-        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).share()));
+        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).publish().autoConnect()));
   }
 
   /**
@@ -234,8 +227,8 @@ public class Drivetrain implements Subsystem {
    */
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
-        .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).share();
+        .onBackpressureDrop().publish().autoConnect()
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
   }
 
   /**
@@ -262,8 +255,8 @@ public class Drivetrain implements Subsystem {
    */
   public Command driveTeleop() {
     return driveHoldHeading(
-        combineLatest(throttle, yaw, (x, y) -> x + y).share().onBackpressureDrop(),
-        combineLatest(throttle, yaw, (x, y) -> x - y).share().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x + y).publish().autoConnect().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x - y).publish().autoConnect().onBackpressureDrop(),
         Flowable.just(false).concatWith(this.teleHoldHeading));
   }
 
