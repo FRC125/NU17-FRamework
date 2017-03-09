@@ -107,11 +107,11 @@ public class Drivetrain implements Subsystem {
             rightDrive.runAtPower(0);
           })
           // Terminate when the error is below the tolerance for long enough
-          .terminable(pidTerminator(error, tolerance))
+          .endsWhen(pidTerminator(error, tolerance))
           .execute(x);
       return terms;
       // Ensure we do not spend too long attempting to turn
-    }).endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
+    }).terminable(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
   }
 
   /**
@@ -166,11 +166,11 @@ public class Drivetrain implements Subsystem {
       leftDrive.accept(reset);
     }).then(Command.parallel(right, left))
         // Terminates the distance PID when within acceptable error
-        .terminable(pidTerminator(distanceError,
+        .endsWhen(pidTerminator(distanceError,
             distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION, 100, TimeUnit.MILLISECONDS))
         // Turn to the targetHeading afterwards, and stop PID when within acceptable error
         .then(driveHoldHeading(noDrive, noDrive, Flowable.just(true), targetHeading)
-            .terminable(pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS))
+            .endsWhen(pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS))
             // Afterwards, stop the motors
             .then(Command.fromAction(() -> {
               leftDrive.runAtPower(0);
@@ -254,7 +254,7 @@ public class Drivetrain implements Subsystem {
             move.map(Events::power).subscribe(leftDrive),
             move.map(x -> -x).map(Events::power).subscribe(rightDrive)
         )
-    ).killAfter(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
+    ).delayFinish(time, TimeUnit.MILLISECONDS).then(Command.fromAction(() -> {
       leftDrive.runAtPower(0);
       rightDrive.runAtPower(0);
     }));

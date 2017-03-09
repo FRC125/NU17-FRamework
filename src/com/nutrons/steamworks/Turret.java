@@ -65,7 +65,7 @@ public class Turret implements Subsystem {
 
     FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
         .subscribe(hoodMaster);
-    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).share().
+    this.aimButton.filter(x -> x).map(x -> automagicMode().endsWhen(aimButton.filter(y -> !y))).share().
         subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)

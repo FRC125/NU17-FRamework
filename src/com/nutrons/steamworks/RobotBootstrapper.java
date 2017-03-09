@@ -77,7 +77,7 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerTele() {
-    return this.drivetrain.driveTeleop().terminable(Flowable.never());
+    return this.drivetrain.driveTeleop().endsWhen(Flowable.never());
   }
 
   @Override
@@ -182,17 +182,17 @@ public class RobotBootstrapper extends Robot {
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
       put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).terminable(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).terminable(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).terminable(Flowable.timer(2, TimeUnit.SECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).terminable(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
-      put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
+      put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).terminable(Flowable.timer(5, TimeUnit.SECONDS), true)
           .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
