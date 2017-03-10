@@ -1,5 +1,7 @@
 package com.nutrons.steamworks;
 
+import static io.reactivex.Flowable.combineLatest;
+
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
@@ -25,6 +27,7 @@ public class Turret implements Subsystem {
   private final Flowable<Double> joyControl; //TODO: Remoove
   private final Flowable<Boolean> aimButton;
   private final Flowable<Double> setpoint;
+  private Flowable<Double> joyedSetpoint;
   private Flowable<Double> position;
 
   /**
@@ -59,13 +62,29 @@ public class Turret implements Subsystem {
         .addFinalTerminator(() -> hoodMaster.runAtPower(0)));
   }
 
+  /**
+   * TeleControl lets the turret auto aim to any target, but also be controlled by the joystick
+   * (by way of altering the setpoint!)
+   * @return a command that aims the turret
+   */
+  public Command teleControl() {
+    return Command.fromAction(() -> {
+      this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
+      this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+    }).then(Command.fromSubscription(() -> joyedSetpoint.map(Events::setpoint).subscribe(hoodMaster))
+        .addFinalTerminator(() -> hoodMaster.runAtPower(0)));
+  }
+
   @Override
   public void registerSubscriptions() {
     this.hoodMaster.setReversedSensor(false); //used to be true
+    //Change joystick control into setpoints, full range is -4.7 to 4.7
 
-    FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
-        .subscribe(hoodMaster);
-    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).share().
+    this.joyedSetpoint = combineLatest(FlowOperators.deadband(joyControl).map(x -> -4.5 * x), this.setpoint, (j, s) -> j + s);
+
+    /**FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
+        .subscribe(hoodMaster);**/
+    this.aimButton.filter(x -> x).map(x -> teleControl().terminable(aimButton.filter(y -> !y))).share().
         subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)
