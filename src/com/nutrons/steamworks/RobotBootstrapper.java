@@ -48,8 +48,11 @@ public class RobotBootstrapper extends Robot {
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
+  private RadioBox<Boolean> brain;
   private Feeder feeder;
   private Gearplacer gearplacer;
+
+  private static final double AUTO_TURN_ANGLE = 85.0; // degrees
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -158,11 +161,13 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
+
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
         gyro.getGyroReadings().share(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
-        leftLeader, rightLeader);
+        leftLeader, rightLeader,
+            this.brain.selected());
     toFlow(() -> leftLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position())
@@ -181,13 +186,9 @@ public class RobotBootstrapper extends Robot {
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", Command.serial(
+      put("boiler; turn with respect to field position", Command.serial(
           RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
-      put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(85, 10),
+          RobotBootstrapper.this.drivetrain.turnWithRespectToField(85, 10),
           RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
@@ -199,8 +200,17 @@ public class RobotBootstrapper extends Robot {
     }};
 
     box = new RadioBox<>("auto4", autos, "intake");
+
+    Map<String, Boolean> fieldPosition = new HashMap<String, Boolean>();
+    fieldPosition.put("LEFT", true);
+    fieldPosition.put("RIGHT", false);
+
+    brain = new RadioBox("Field position", fieldPosition, "LEFT");
+
     sm.registerSubsystem(box);
+    sm.registerSubsystem(brain);
 
     return sm;
   }
+
 }
