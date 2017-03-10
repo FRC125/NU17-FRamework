@@ -36,7 +36,7 @@ public class TestDriveTime {
             record[1] = -1;
             assertTrue(System.currentTimeMillis() - 2000 < start);
           }
-        });
+        }, Flowable.just(true));
     dt.driveTimeAction(500).execute(true);
     assertTrue(System.currentTimeMillis() - start < 1000);
     Thread.sleep(4000);

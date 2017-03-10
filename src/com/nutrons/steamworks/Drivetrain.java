@@ -47,6 +47,8 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Boolean> teleHoldHeading;
   private final ConnectableFlowable<Double> currentHeading;
 
+  private volatile double angleMultiplier = 1.0;
+
   /**
    * A drivetrain which uses Arcade Drive.
    *
@@ -58,7 +60,7 @@ public class Drivetrain implements Subsystem {
    */
   public Drivetrain(Flowable<Boolean> teleHoldHeading, Flowable<Double> currentHeading,
                     Flowable<Double> throttle, Flowable<Double> yaw,
-                    LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
+                    LoopSpeedController leftDrive, LoopSpeedController rightDrive, Flowable<Boolean> autoSides) {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
     this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
@@ -66,6 +68,11 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
+    autoSides.subscribe((v) -> this.angleMultiplier =  v ? 1.0 : -1.0);
+  }
+
+  public Command turnWithRespectToField(double angle, double tolerance) {
+    return this.turn(this.angleMultiplier*angle, tolerance);
   }
 
   /**
