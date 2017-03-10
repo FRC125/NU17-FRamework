@@ -52,7 +52,7 @@ public class RobotBootstrapper extends Robot {
   private Feeder feeder;
   private Gearplacer gearplacer;
 
-  private double autoTurnAngle = 85.0; // degrees
+  private static final double AUTO_TURN_ANGLE = 85.0; // degrees
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -208,6 +208,7 @@ public class RobotBootstrapper extends Robot {
     brain = new RadioBox("Field position", fieldPosition, "LEFT");
 
     sm.registerSubsystem(box);
+    sm.registerSubsystem(brain);
 
     return sm;
   }
