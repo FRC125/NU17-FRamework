@@ -13,9 +13,9 @@ import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
 
-  private static final double PVAL = 200.0;
-  private static final double IVAL = 10.0;
-  private static final double DVAL = 12.5;
+  private static final double PVAL = 1;
+  private static final double IVAL = 0.0;
+  private static final double DVAL = 0.0;
   private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private static final double TOLERANCE_DEGREES = 1.0;
@@ -69,10 +69,14 @@ public class Turret implements Subsystem {
    */
   public Command teleControl() {
     return Command.fromAction(() -> {
+      System.out.println("doing teleControl");
       this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
       this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-    }).then(Command.fromSubscription(() -> joyedSetpoint.map(Events::setpoint).subscribe(hoodMaster))
-        .addFinalTerminator(() -> hoodMaster.runAtPower(0)));
+    }).then(Command.fromSubscription(() -> joyedSetpoint.map(FlowOperators::printId).map(Events::setpoint).subscribe(hoodMaster))
+        .addFinalTerminator(() -> {
+      System.out.println("final terminator");
+      hoodMaster.runAtPower(0);
+        }));
   }
 
   @Override
@@ -80,12 +84,14 @@ public class Turret implements Subsystem {
     this.hoodMaster.setReversedSensor(false); //used to be true
     //Change joystick control into setpoints, full range is -4.7 to 4.7
 
-    this.joyedSetpoint = combineLatest(FlowOperators.deadband(joyControl).map(x -> -4.5 * x), this.setpoint, (j, s) -> j + s);
+    this.joyedSetpoint = combineLatest(FlowOperators.deadband(joyControl).map(x -> -4.5 * x), this.setpoint
+        //.withLatestFrom(aimButton, (x, y) -> y ? x : 0.0)
+        , (j, s) -> j + s);
+
+    //this.joyedSetpoint.subscribe(System.out::println);
 
     /**FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
         .subscribe(hoodMaster);**/
-    this.aimButton.filter(x -> x).map(x -> teleControl().terminable(aimButton.filter(y -> !y))).share().
-        subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));

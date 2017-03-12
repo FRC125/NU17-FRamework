@@ -39,12 +39,12 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private RevServo servoLeft;
-  private RevServo servoRight;
+  //private RevServo servoLeft;
+  //private RevServo servoRight;
 
   private CommonController driverPad;
   private CommonController operatorPad;
-  private HeadingGyro gyro;
+  //private HeadingGyro gyro;
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
@@ -77,7 +77,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerTele() {
-    return this.drivetrain.driveTeleop().terminable(Flowable.never());
+    return Command.parallel(this.drivetrain.driveTeleop().terminable(Flowable.never()),
+        this.turret.teleControl().terminable(Flowable.never()));
   }
 
   @Override
@@ -85,7 +86,7 @@ public class RobotBootstrapper extends Robot {
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
-    this.gyro = new HeadingGyro();
+    //this.gyro = new HeadingGyro();
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
@@ -124,8 +125,8 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
   }
 
   @Override
@@ -140,10 +141,10 @@ public class RobotBootstrapper extends Robot {
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    this.gearplacer = new Gearplacer(this.servoLeft,
+    /**this.gearplacer = new Gearplacer(this.servoLeft,
         this.servoRight,
         this.driverPad.buttonX());
-    sm.registerSubsystem(gearplacer);
+    sm.registerSubsystem(gearplacer);**/
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
     sm.registerSubsystem(feeder);
@@ -159,7 +160,8 @@ public class RobotBootstrapper extends Robot {
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
-        gyro.getGyroReadings().share(),
+        Flowable.never(),
+        //gyro.getGyroReadings().share(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
         leftLeader, rightLeader);
@@ -193,7 +195,7 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
       put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          //.then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
