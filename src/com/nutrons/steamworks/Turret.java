@@ -13,10 +13,10 @@ import io.reactivex.Flowable;
 
 public class Turret implements Subsystem {
 
-  private static final double PVAL = 1;
+  private static final double PVAL = 0.25;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.0;
-  private static final double FVAL = 0.0;
+  private static final double FVAL = 0.001;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private static final double TOLERANCE_DEGREES = 1.0;
   private final Flowable<Double> angle;
