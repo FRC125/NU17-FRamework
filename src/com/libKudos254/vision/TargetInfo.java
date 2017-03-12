@@ -5,24 +5,24 @@ package com.libKudos254.vision;
  * location in three-dimensional space.
  */
 public class TargetInfo {
-    protected double x = 1.0;
-    protected double y;
-    protected double z;
+  protected double horizantalAxis = 1.0;
+  protected double verticalAxis;
+  protected double depthAxis;
 
-    public TargetInfo(double y, double z) {
-        this.y = y;
-        this.z = z;
-    }
+  public TargetInfo(double verticalAxis, double depthAxis) {
+    this.verticalAxis = verticalAxis;
+    this.depthAxis = depthAxis;
+  }
 
-    public double getX() {
-        return x;
-    }
+  public double getX() {
+    return horizantalAxis;
+  }
 
-    public double getY() {
-        return y;
-    }
+  public double getY() {
+    return verticalAxis;
+  }
 
-    public double getZ() {
-        return z;
-    }
+  public double getZ() {
+    return depthAxis;
+  }
 }

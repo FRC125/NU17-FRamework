@@ -1,10 +1,10 @@
 package com.nutrons.steamworks;
 
-import com.nutrons.framework.util.FlowOperators;
 import com.libKudos254.Rotation2d;
 import com.libKudos254.vision.TargetInfo;
 import com.libKudos254.vision.VisionUpdate;
 import com.libKudos254.vision.VisionUpdateReceiver;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
 /**
@@ -34,10 +34,11 @@ public class VisionProcessor implements VisionUpdateReceiver {
 
   /**
    * Gets the horizontal angle offset from the target.
+   *
    * @return horizontal angle offset from the target
    */
   public double getYawHorizAngle() {
-    if(update != null) {
+    if (update != null) {
       if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
         for (TargetInfo target : update.getTargets()) {
           double yawAngleRadians = Math.atan2(target.getY(), target.getX());
@@ -50,10 +51,11 @@ public class VisionProcessor implements VisionUpdateReceiver {
 
   /**
    * TODO: get the vertical angle offset from the target.
+   *
    * @return vertical angle offset from the target
    */
   public double getPitchVertAngle() {
-    if(update != null) {
+    if (update != null) {
       if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
         for (TargetInfo target : update.getTargets()) {
           double pitchAngleRadians = Math.atan2(target.getZ(), target.getX());
@@ -65,11 +67,12 @@ public class VisionProcessor implements VisionUpdateReceiver {
   }
 
   double getDistance() {
-    if(update != null) {
+    if (update != null) {
       if (!(update.getTargets() == null || update.getTargets().isEmpty())) {
         for (TargetInfo target : update.getTargets()) {
 
-          distance = differentialHeight / Math.tan(Math.atan(target.getZ() / target.getX()) + Math.toRadians(kCameraPitchAngleDegrees));
+          distance = differentialHeight / Math.tan(Math.atan(target.getZ()
+                  / target.getX()) + Math.toRadians(kCameraPitchAngleDegrees));
           return distance;
           /**double xyaw = target.getX() * cameraYawRotation.cos() + cameraYawRotation.sin();
            double yyaw = cameraYawRotation.cos() - target.getX() * cameraYawRotation.sin();

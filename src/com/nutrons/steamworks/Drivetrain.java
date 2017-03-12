@@ -60,7 +60,8 @@ public class Drivetrain implements Subsystem {
    */
   public Drivetrain(Flowable<Boolean> teleHoldHeading, Flowable<Double> currentHeading,
                     Flowable<Double> throttle, Flowable<Double> yaw,
-                    LoopSpeedController leftDrive, LoopSpeedController rightDrive, Flowable<Boolean> autoSides) {
+                    LoopSpeedController leftDrive, LoopSpeedController rightDrive,
+                    Flowable<Boolean> autoSides) {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
     this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
@@ -72,7 +73,7 @@ public class Drivetrain implements Subsystem {
   }
 
   public Command turnWithRespectToField(double angle, double tolerance) {
-    return this.turn(this.angleMultiplier*angle, tolerance);
+    return this.turn(this.angleMultiplier * angle, tolerance);
   }
 
   /**
@@ -84,7 +85,8 @@ public class Drivetrain implements Subsystem {
     return pidTerminator(error, tolerance, PID_TERMINATE_TIME, PID_TERMINATE_UNIT);
   }
 
-  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance, long delay, TimeUnit unit) {
+  private Flowable<?> pidTerminator(Flowable<Double> error,
+                                    double tolerance, long delay, TimeUnit unit) {
     return error.map(x -> abs(x) < tolerance)
         .distinctUntilChanged().debounce(delay, unit)
         .filter(x -> x);
@@ -102,11 +104,14 @@ public class Drivetrain implements Subsystem {
   public Command turn(double angle, double tolerance) {
     Flowable<Double> offsetHeading = currentHeading.map(y -> y + angle);
     return Command.just(x -> {
-      Flowable<Double> targetHeading = Flowable.just(FlowOperators.getLastValue(currentHeading));
+      Flowable<Double> targetHeading =
+              Flowable.just(FlowOperators.getLastValue(currentHeading));
       // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-      Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
+      Flowable<Double> error =
+              currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
-      Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
+      Flowable<? extends Terminator> terms =
+              driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
           Flowable.just(true), targetHeading)
           // Makes sure the final terminator will stop the motors
           .addFinalTerminator(() -> {
@@ -148,7 +153,8 @@ public class Drivetrain implements Subsystem {
         .onBackpressureDrop().share();
 
     // Construct closed-loop streams for angle / gyro based PID
-    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
+    Flowable<Double> angleError = combineLatest(targetHeading,
+            currentHeading, (x, y) -> x - y).subscribeOn(Schedulers.io())
         .onBackpressureDrop().share();
     Flowable<Double> angleOutput = pidAngle(targetHeading).share();;
     angleOutput.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
@@ -246,7 +252,8 @@ public class Drivetrain implements Subsystem {
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
         .onBackpressureDrop()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
+        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH,
+                ANGLE_I, ANGLE_D)).subscribeOn(Schedulers.io());
   }
 
   /**

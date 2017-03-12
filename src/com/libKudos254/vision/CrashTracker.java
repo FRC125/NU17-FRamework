@@ -1,12 +1,14 @@
 package com.libKudos254.vision;
 
-import java.io.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.UUID;
 
 /**
- * Tracks start-up and caught crash events, logging them to a file which dosn't
- * roll over
+ * Tracks start-up and caught crash events, logging them to a file which doesn't
+ * roll over.
  */
 public class CrashTracker {
 
@@ -46,7 +48,8 @@ public class CrashTracker {
 
   private static void logMarker(String mark, Throwable nullableException) {
 
-    try (PrintWriter writer = new PrintWriter(new FileWriter("/home/lvuser/crash_tracking.txt", true))) {
+    try (PrintWriter writer = new PrintWriter(
+    new FileWriter("/home/lvuser/crash_tracking.txt", true))) {
       writer.print(RUN_INSTANCE_UUID.toString());
       writer.print(", ");
       writer.print(mark);
@@ -59,8 +62,8 @@ public class CrashTracker {
       }
 
       writer.println();
-    } catch (IOException e) {
-      e.printStackTrace();
+    } catch (IOException exc) {
+      exc.printStackTrace();
     }
   }
 }
