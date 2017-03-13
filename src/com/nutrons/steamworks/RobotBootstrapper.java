@@ -139,7 +139,7 @@ public class RobotBootstrapper extends Robot {
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
-    sm.registerSubsystem(shooter);
+    //sm.registerSubsystem(shooter);
 
     /**this.gearplacer = new Gearplacer(this.servoLeft,
         this.servoRight,
@@ -147,14 +147,14 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(gearplacer);**/
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
-    sm.registerSubsystem(feeder);
+    //sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
     sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
-    sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+   // sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
+     //   this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
@@ -169,7 +169,7 @@ public class RobotBootstrapper extends Robot {
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
-    sm.registerSubsystem(this.drivetrain);
+    //sm.registerSubsystem(this.drivetrain);
     Command kpa40 = Command.parallel(
         Command.fromAction(() -> {
           RobotBootstrapper.this.leftLeader.runAtPower(0);

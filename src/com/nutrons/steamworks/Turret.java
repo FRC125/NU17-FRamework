@@ -1,5 +1,6 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static io.reactivex.Flowable.combineLatest;
 
 import com.nutrons.framework.Subsystem;
@@ -84,13 +85,13 @@ public class Turret implements Subsystem {
     this.hoodMaster.setReversedSensor(false); //used to be true
     //Change joystick control into setpoints, full range is -4.7 to 4.7
 
-    this.joyedSetpoint = combineLatest(FlowOperators.deadband(joyControl).map(x -> -4.5 * x), this.setpoint
+    this.joyedSetpoint = combineLatest(joyControl.map(deadbandMap(-0.15, 0.15, 0.0)).map(x -> -1.125 * x), this.setpoint
         //.withLatestFrom(aimButton, (x, y) -> y ? x : 0.0)
         , (j, s) -> j + s);
 
     //this.joyedSetpoint.subscribe(System.out::println);
 
-    /**FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
+    /**FlowOperators.deadfband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
         .subscribe(hoodMaster);**/
 
     FlowOperators.toFlow(hoodMaster::position)
