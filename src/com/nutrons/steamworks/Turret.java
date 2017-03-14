@@ -12,12 +12,14 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
+import java.util.concurrent.TimeUnit;
+
 public class Turret implements Subsystem {
 
-  private static final double PVAL = 0.25;
+  private static final double PVAL = 0.45;
   private static final double IVAL = 0.0;
   private static final double DVAL = 0.0;
-  private static final double FVAL = 0.001;
+  private static final double FVAL = 0.0;
   private static final double MOTOR_ROTATIONS_TO_TURRET_ROTATIONS = (double) 104 / 22;
   private static final double TOLERANCE_DEGREES = 1.0;
   private final Flowable<Double> angle;
@@ -52,7 +54,10 @@ public class Turret implements Subsystem {
     this.position = FlowOperators.toFlow(this.hoodMaster::position);
     this.aimButton = aimButton;
     this.setpoint = this.angle
-        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
+        .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0).map(x -> {
+          hoodMaster.accept(Events.resetPosition(0.0));
+          return x;
+        }); //used to be negative
   }
 
   public Command automagicMode() {
@@ -73,7 +78,7 @@ public class Turret implements Subsystem {
       System.out.println("doing teleControl");
       this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
       this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
-    }).then(Command.fromSubscription(() -> joyedSetpoint.map(FlowOperators::printId).map(Events::setpoint).subscribe(hoodMaster))
+    }).then(Command.fromSubscription(() -> joyedSetpoint.map(Events::setpoint).subscribe(hoodMaster))
         .addFinalTerminator(() -> {
       System.out.println("final terminator");
       hoodMaster.runAtPower(0);
@@ -95,7 +100,7 @@ public class Turret implements Subsystem {
         .subscribe(hoodMaster);**/
 
     FlowOperators.toFlow(hoodMaster::position)
-        .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
+        .subscribe(System.out::println);
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle_vis"));
     this.angle.map(x -> x < TOLERANCE_DEGREES).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
     this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance_vis"));
