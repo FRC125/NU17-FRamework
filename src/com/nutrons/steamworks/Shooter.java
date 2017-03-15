@@ -9,6 +9,7 @@ import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -39,7 +40,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0);
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 8.3059 * x + 2187.3).share();
   }
 
   public Command pulse() {
@@ -52,7 +53,6 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
