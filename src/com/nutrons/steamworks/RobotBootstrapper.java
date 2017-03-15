@@ -139,7 +139,7 @@ public class RobotBootstrapper extends Robot {
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
-    //sm.registerSubsystem(shooter);
+    sm.registerSubsystem(shooter);
 
     /**this.gearplacer = new Gearplacer(this.servoLeft,
         this.servoRight,

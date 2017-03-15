@@ -16,7 +16,7 @@ public class VisionProcessor implements VisionUpdateReceiver {
   public static final double CENTER_OF_TARGET_HEIGHT = 86.0;
   // Pose of the camera frame w.r.t. the turret frame
   public static double CAMERA_INCHES_FROM_FLOOR = 20.75;
-  public static double kCameraPitchAngleDegrees = 25.5;
+  public static double kCameraPitchAngleDegrees = 44.0;
   public static double kCameraYawAngleDegrees = 0.2;
   static VisionProcessor instance_ = new VisionProcessor();
   VisionUpdate update = null;

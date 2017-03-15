@@ -99,8 +99,6 @@ public class Turret implements Subsystem {
     /**FlowOperators.deadfband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
         .subscribe(hoodMaster);**/
 
-    FlowOperators.toFlow(hoodMaster::position)
-        .subscribe(System.out::println);
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle_vis"));
     this.angle.map(x -> x < TOLERANCE_DEGREES).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
     this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance_vis"));

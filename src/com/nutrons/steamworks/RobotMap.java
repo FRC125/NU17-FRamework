@@ -3,8 +3,8 @@ package com.nutrons.steamworks;
 public class RobotMap {
 
   // Intake or Shooter
-  public static final int SHOOTER_MOTOR_1 = 200;
-  public static final int SHOOTER_MOTOR_2 = 300;
+  public static final int SHOOTER_MOTOR_1 = 2;
+  public static final int SHOOTER_MOTOR_2 = 3;
   //TODO: Change climber ports to match robot.
   public static final int CLIMBTAKE_MOTOR_1 = 3000;
   public static final int CLIMBTAKE_MOTOR_2 = 1300;
