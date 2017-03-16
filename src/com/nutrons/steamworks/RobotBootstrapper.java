@@ -17,8 +17,12 @@ import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.CameraServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+import javafx.scene.Camera;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +87,10 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
+    UsbCamera camera = new UsbCamera("cam1",0);
+    camera.setResolution(1920,720);
+    camera.setFPS(24);
+    CameraServer.getInstance().startAutomaticCapture(camera);
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
@@ -199,7 +207,6 @@ public class RobotBootstrapper extends Robot {
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
-
     box = new RadioBox<>("auto4", autos, "intake");
     sm.registerSubsystem(box);
 
