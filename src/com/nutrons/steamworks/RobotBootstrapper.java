@@ -1,17 +1,11 @@
 package com.nutrons.steamworks;
 
-import static com.nutrons.framework.util.FlowOperators.toFlow;
-
 import com.ctre.CANTalon;
 import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.commands.Command;
-import com.nutrons.framework.controllers.ControlMode;
-import com.nutrons.framework.controllers.Events;
-import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.controllers.RevServo;
-import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.controllers.*;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
@@ -21,11 +15,12 @@ import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-import javafx.scene.Camera;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
 
@@ -43,12 +38,12 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  //private RevServo servoLeft;
-  //private RevServo servoRight;
+  private RevServo servoLeft;
+  private RevServo servoRight;
 
   private CommonController driverPad;
   private CommonController operatorPad;
-  //private HeadingGyro gyro;
+  private HeadingGyro gyro;
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
@@ -87,14 +82,16 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    UsbCamera camera = new UsbCamera("cam1",0);
-    camera.setResolution(1920,720);
+    /**UsbCamera camera = new UsbCamera("cam1", 0);
+    camera.setResolution(1920, 720);
     camera.setFPS(24);
-    CameraServer.getInstance().startAutomaticCapture(camera);
+    CameraServer.getInstance().startAutomaticCapture(camera);**/
+
+
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
-    //this.gyro = new HeadingGyro();
+    this.gyro = new HeadingGyro();
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
         CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
@@ -133,8 +130,8 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
   }
 
   @Override
@@ -146,30 +143,30 @@ public class RobotBootstrapper extends Robot {
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
-        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
+        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    /**this.gearplacer = new Gearplacer(this.servoLeft,
-        this.servoRight,
-        this.driverPad.buttonX());
-    sm.registerSubsystem(gearplacer);**/
+    this.gearplacer = new Gearplacer(this.servoLeft,
+     this.servoRight,
+     this.driverPad.buttonX());
+     sm.registerSubsystem(gearplacer);
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
-    //sm.registerSubsystem(feeder);
+    sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
     sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
-   // sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
-     //   this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+    sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
+        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
-        Flowable.never(),
-        //gyro.getGyroReadings().share(),
+        //Flowable.never(),
+        gyro.getGyroReadings().share(),
         driverPad.leftStickY().map(x -> -x),
         driverPad.rightStickX(),
         leftLeader, rightLeader);
@@ -177,7 +174,7 @@ public class RobotBootstrapper extends Robot {
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position())
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
-    //sm.registerSubsystem(this.drivetrain);
+    sm.registerSubsystem(this.drivetrain);
     Command kpa40 = Command.parallel(
         Command.fromAction(() -> {
           RobotBootstrapper.this.leftLeader.runAtPower(0);
@@ -203,7 +200,7 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
       put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          //.then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};

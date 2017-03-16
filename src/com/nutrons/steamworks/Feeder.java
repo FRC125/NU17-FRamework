@@ -10,7 +10,7 @@ public class Feeder implements Subsystem {
 
   // TODO: tune as needed
   private static final double SPIN_POWER = 0.6;
-  private static final double ROLLER_POWER = 0.85;
+  private static final double ROLLER_POWER = -0.85;
   private final LoopSpeedController feederController;
   private final LoopSpeedController rollerController;
   private final Flowable<Boolean> feederButton;
