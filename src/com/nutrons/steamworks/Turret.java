@@ -12,8 +12,6 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
-import java.util.concurrent.TimeUnit;
-
 public class Turret implements Subsystem {
 
   private static final double PVAL = 0.45;
@@ -91,8 +89,8 @@ public class Turret implements Subsystem {
     //Change joystick control into setpoints, full range is -4.7 to 4.7
 
     this.joyedSetpoint = combineLatest(joyControl.map(deadbandMap(-0.15, 0.15, 0.0)).map(x -> -1.125 * x), this.setpoint
-        //.withLatestFrom(aimButton, (x, y) -> y ? x : 0.0)
-        , (j, s) -> j + s);
+        .withLatestFrom(Flowable.just(false).mergeWith(aimButton), (x, y) -> y ? x : 0.0).onBackpressureDrop()
+        , (j, s) -> j + s).map(FlowOperators::printId);
 
     //this.joyedSetpoint.subscribe(System.out::println);
 
