@@ -82,12 +82,16 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    UsbCamera camera = new UsbCamera("cam1", 1);
-    camera.setResolution(1920, 720);
-    camera.setFPS(24);
-    CameraServer.getInstance().startAutomaticCapture(camera);
-
-
+   new Thread(() -> {
+     try {
+       UsbCamera camera = new UsbCamera("thecamera", 0);
+       camera.setResolution(320, 180);
+       camera.setFPS(24);
+       CameraServer.getInstance().startAutomaticCapture(camera);
+     } catch (Exception e) {
+       System.out.println("Plug in the USB camera!");
+     }
+   }).start();
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
@@ -189,13 +193,13 @@ public class RobotBootstrapper extends Robot {
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
       put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)).then(kpa40));
       put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
+          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
           RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
