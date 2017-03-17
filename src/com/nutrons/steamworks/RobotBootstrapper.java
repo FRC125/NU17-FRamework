@@ -82,10 +82,10 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    /**UsbCamera camera = new UsbCamera("cam1", 0);
+    UsbCamera camera = new UsbCamera("cam1", 1);
     camera.setResolution(1920, 720);
     camera.setFPS(24);
-    CameraServer.getInstance().startAutomaticCapture(camera);**/
+    CameraServer.getInstance().startAutomaticCapture(camera);
 
 
     // Gamepads
