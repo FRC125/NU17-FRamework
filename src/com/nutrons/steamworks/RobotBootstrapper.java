@@ -82,16 +82,16 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-   new Thread(() -> {
-     try {
-       UsbCamera camera = new UsbCamera("thecamera", 0);
-       camera.setResolution(320, 180);
-       camera.setFPS(24);
-       CameraServer.getInstance().startAutomaticCapture(camera);
-     } catch (Exception e) {
-       System.out.println("Plug in the USB camera!");
-     }
-   }).start();
+    new Thread(() -> {
+      try {
+        UsbCamera camera = new UsbCamera("thecamera", 0);
+        camera.setResolution(320, 180);
+        camera.setFPS(24);
+        CameraServer.getInstance().startAutomaticCapture(camera);
+      } catch (Exception e) {
+        System.out.println("Plug in the USB camera!");
+      }
+    }).start();
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
@@ -151,9 +151,9 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(shooter);
 
     this.gearplacer = new Gearplacer(this.servoLeft,
-     this.servoRight,
-     this.driverPad.buttonX());
-     sm.registerSubsystem(gearplacer);
+        this.servoRight,
+        this.driverPad.buttonX());
+    sm.registerSubsystem(gearplacer);
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
     sm.registerSubsystem(feeder);
@@ -184,22 +184,15 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.leftLeader.runAtPower(0);
           RobotBootstrapper.this.rightLeader.runAtPower(0);
         }),
-        RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
-        this.turret.automagicMode().delayFinish(1250, TimeUnit.MILLISECONDS),
-        this.shooter.pulse().delayStart(1250, TimeUnit.MILLISECONDS).delayFinish(12, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(3250, TimeUnit.MILLISECONDS).delayFinish(10, TimeUnit.SECONDS));
+        this.turret.automagicMode().delayFinish(1000, TimeUnit.MILLISECONDS),
+        this.shooter.pulse().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(13, TimeUnit.SECONDS),
+        this.feeder.pulse().delayStart(3000, TimeUnit.MILLISECONDS).delayFinish(11, TimeUnit.SECONDS));
 
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)).then(kpa40));
-      put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)).then(kpa40));
+      put("boiler; turn left", hopperDrive(6.0, -85, 5).then(kpa40));
+      put("boiler; turn right", hopperDrive(6.0, 85, 5).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
@@ -212,5 +205,13 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(box);
 
     return sm;
+  }
+
+  private Command hopperDrive(double distance1, double angle, double distance2) {
+    return
+        Command.parallel(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(RobotBootstrapper.this.climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            Command.serial(RobotBootstrapper.this.drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                RobotBootstrapper.this.drivetrain.turn(angle, 10),
+                RobotBootstrapper.this.drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)));
   }
 }

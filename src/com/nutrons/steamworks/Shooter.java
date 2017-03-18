@@ -25,7 +25,7 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
-  private static double SETPOINT = 3000.0;
+  private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private final Flowable<Double> setpointHint;
