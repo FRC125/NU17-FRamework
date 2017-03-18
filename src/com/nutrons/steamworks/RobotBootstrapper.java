@@ -84,7 +84,7 @@ public class RobotBootstrapper extends Robot {
   protected void constructStreams() {
     new Thread(() -> {
       try {
-        UsbCamera camera = new UsbCamera("thecamera", 0);
+        UsbCamera camera = new UsbCamera("thecamera", "/dev/video0");
         camera.setResolution(320, 180);
         camera.setFPS(24);
         CameraServer.getInstance().startAutomaticCapture(camera);
@@ -191,8 +191,8 @@ public class RobotBootstrapper extends Robot {
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", hopperDrive(6.0, -85, 5).then(kpa40));
-      put("boiler; turn right", hopperDrive(6.0, 85, 5).then(kpa40));
+      put("boiler; turn left", hopperDrive(5.75, -85, 5).then(kpa40));
+      put("boiler; turn right", hopperDrive(5.75, 85, 5).then(kpa40));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
