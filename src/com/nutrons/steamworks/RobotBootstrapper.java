@@ -84,10 +84,9 @@ public class RobotBootstrapper extends Robot {
   protected void constructStreams() {
     new Thread(() -> {
       try {
-        UsbCamera camera = new UsbCamera("thecamera", "/dev/video0");
+        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
         camera.setResolution(320, 180);
         camera.setFPS(24);
-        CameraServer.getInstance().startAutomaticCapture(camera);
       } catch (Exception e) {
         System.out.println("Plug in the USB camera!");
       }
@@ -201,7 +200,7 @@ public class RobotBootstrapper extends Robot {
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
-    box = new RadioBox<>("auto4", autos, "intake");
+    box = new RadioBox<>("autocat", autos, "intake");
     sm.registerSubsystem(box);
 
     return sm;
