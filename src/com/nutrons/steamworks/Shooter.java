@@ -10,6 +10,7 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -36,17 +37,19 @@ public class Shooter implements Subsystem {
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
-    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1858.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1808.7).share();
   }
 
   public Command pulse() {
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
-        .mergeWith(variableSetpoint.take(1)), (x, y) -> x + y).map(aimEvent);
+        .mergeWith(
+            toFlow(() -> this.prefs.getDouble("setpoint_cat", 3000))//variableSetpoint.take(1)
+        ), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
         combined.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
@@ -54,6 +57,7 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
+    this.prefs = Preferences.getInstance();
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
