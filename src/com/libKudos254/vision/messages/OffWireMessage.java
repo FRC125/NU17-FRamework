@@ -10,32 +10,37 @@ import org.json.simple.parser.ParseException;
  */
 public class OffWireMessage extends VisionMessage {
 
-    private boolean mValid = false;
-    private String mType = "unknown";
-    private String mMessage = "{}";
+  private boolean valid = false;
+  private String type = "unknown";
+  private String message = "{}";
 
-    public OffWireMessage(String message) {
-        JSONParser parser = new JSONParser();
-        try {
-            JSONObject j = (JSONObject) parser.parse(message);
-            mType = (String) j.get("type");
-            mMessage = (String) j.get("message");
-            mValid = true;
-        } catch (ParseException e) {
-        }
+  /**
+   * Initializes OffWireMessage object.
+   * @param message specifies message
+   */
+  public OffWireMessage(String message) {
+    JSONParser parser = new JSONParser();
+    try {
+      JSONObject jsonObj = (JSONObject) parser.parse(message);
+      type = (String) jsonObj.get("type");
+      this.message = (String) jsonObj.get("message");
+      valid = true;
+    } catch (ParseException exc) {
+      exc.printStackTrace();
     }
+  }
 
-    public boolean isValid() {
-        return mValid;
-    }
+  public boolean isValid() {
+    return valid;
+  }
 
-    @Override
-    public String getType() {
-        return mType;
-    }
+  @Override
+  public String getType() {
+    return type;
+  }
 
-    @Override
-    public String getMessage() {
-        return mMessage;
-    }
+  @Override
+  public String getMessage() {
+    return message;
+  }
 }

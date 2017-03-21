@@ -19,6 +19,7 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +49,11 @@ public class RobotBootstrapper extends Robot {
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
+  private RadioBox<Boolean> brain;
   private Feeder feeder;
   private Gearplacer gearplacer;
+
+  private static final double AUTO_TURN_ANGLE = 85.0; // degrees
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -69,9 +73,9 @@ public class RobotBootstrapper extends Robot {
     Flowable<Command> boxStream = box.selected().cache().map(FlowOperators::printId);
     boxStream.subscribe();
     return Command.defer(() -> {
-      Command c = FlowOperators.getLastValue(boxStream);
-      System.out.println(c);
-      return c;
+      Command com = FlowOperators.getLastValue(boxStream);
+      System.out.println(com);
+      return com;
     });
   }
 
@@ -88,7 +92,7 @@ public class RobotBootstrapper extends Robot {
     this.gyro = new HeadingGyro();
 
     this.hoodMaster = new Talon(RobotMap.HOOD_MOTOR_A,
-        CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+            CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     Events.setOutputVoltage(-6f, +6f).actOn(this.hoodMaster); //Move slow to set off limit switches
     //Events.resetPosition(0.0).actOn(this.hoodMaster);
     this.hoodMaster.setOutputFlipped(false);
@@ -97,7 +101,7 @@ public class RobotBootstrapper extends Robot {
     this.topFeederMotor = new Talon(RobotMap.TOP_HOPPER_MOTOR);
     this.spinFeederMotor = new Talon(RobotMap.SPIN_FEEDER_MOTOR, this.topFeederMotor);
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
-        CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+            CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
@@ -106,7 +110,7 @@ public class RobotBootstrapper extends Robot {
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
     this.climbtake = new Climbtake(climberMotor1, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper());
+            this.driverPad.rightBumper(), this.driverPad.leftBumper());
 
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
@@ -136,71 +140,90 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.operatorPad);
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
-        toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
-        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2,0)).map(x -> -100.0 * x));
+            toFlow(() -> VisionProcessor.getInstance().getDistance()).share(),
+            this.operatorPad.rightStickY()
+                    .map(FlowOperators.deadbandMap(-0.2, 0.2, 0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
     this.gearplacer = new Gearplacer(this.servoLeft,
-        this.servoRight,
-        this.driverPad.buttonX());
+            this.servoRight,
+            this.driverPad.buttonX());
     sm.registerSubsystem(gearplacer);
 
-    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
-        toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
-        this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
+            toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
+            this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
     sm.registerSubsystem(turret); //TODO: remove
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+            this.driverPad.rightBumper(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
+
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
-        gyro.getGyroReadings().share(),
-        driverPad.leftStickY().map(x -> -x),
-        driverPad.rightStickX(),
-        leftLeader, rightLeader);
+            gyro.getGyroReadings().share(),
+            driverPad.leftStickY().map(x -> -x),
+            driverPad.rightStickX(),
+            leftLeader, rightLeader,
+            this.brain.selected());
     toFlow(() -> leftLeader.position())
-        .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
+            .subscribe(new WpiSmartDashboard().getTextFieldDouble("lpos"));
     toFlow(() -> rightLeader.position())
-        .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
+            .subscribe(new WpiSmartDashboard().getTextFieldDouble("rpos"));
     sm.registerSubsystem(this.drivetrain);
     Command kpa40 = Command.parallel(
-        Command.fromAction(() -> {
-          RobotBootstrapper.this.leftLeader.runAtPower(0);
-          RobotBootstrapper.this.rightLeader.runAtPower(0);
-        }),
-        RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
-        this.turret.automagicMode().delayFinish(1250, TimeUnit.MILLISECONDS),
-        this.shooter.pulse().delayStart(1250, TimeUnit.MILLISECONDS).delayFinish(12, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(3250, TimeUnit.MILLISECONDS).delayFinish(10, TimeUnit.SECONDS));
+            Command.fromAction(() -> {
+              RobotBootstrapper.this.leftLeader.runAtPower(0);
+              RobotBootstrapper.this.rightLeader.runAtPower(0);
+            }),
+            RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
+            this.turret.automagicMode().delayFinish(1250, TimeUnit.MILLISECONDS),
+            this.shooter.pulse().delayStart(1250, TimeUnit.MILLISECONDS)
+                    .delayFinish(12, TimeUnit.SECONDS),
+            this.feeder.pulse().delayStart(3250, TimeUnit.MILLISECONDS)
+                    .delayFinish(10, TimeUnit.SECONDS));
 
     Map<String, Command> autos = new HashMap<String, Command>() {{
-      put("intake", RobotBootstrapper.this
-          .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(-85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
-      put("boiler; turn right", Command.serial(
-          RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
-          RobotBootstrapper.this.drivetrain.turn(85, 10),
-          RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10).endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
-      put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
-          RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
-          RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
-      put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
-          .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
-          .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-    }};
+        put("intake", RobotBootstrapper.this
+              .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
+        put("boiler; turn with respect to field position", Command.serial(
+              RobotBootstrapper.this.drivetrain.driveDistance(9.5, 1, 10)
+                      .endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true),
+              RobotBootstrapper.this.drivetrain.turnWithRespectToField(85, 10),
+              RobotBootstrapper.this.drivetrain.driveDistance(4.5, 1, 10)
+                      .endsWhen(Flowable.timer(2, TimeUnit.SECONDS), true)).then(kpa40));
+        put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse()
+                        .delayFinish(12, TimeUnit.SECONDS),
+              RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
+              RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS)
+                      .delayFinish(10, TimeUnit.SECONDS)));
+        put("forward gear", RobotBootstrapper.this.drivetrain
+                .driveDistance(-8, 0.25, 5)
+                .endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
+              .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+              .then(RobotBootstrapper.this.climbtake
+                      .pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
+              .then(RobotBootstrapper.this.drivetrain
+                      .driveDistance(2, 0.25, 5)));
+      }
+    };
 
     box = new RadioBox<>("auto4", autos, "intake");
+
+    Map<String, Boolean> fieldPosition = new HashMap<String, Boolean>();
+    fieldPosition.put("LEFT", true);
+    fieldPosition.put("RIGHT", false);
+
+    brain = new RadioBox("Field position", fieldPosition, "LEFT");
+
     sm.registerSubsystem(box);
+    sm.registerSubsystem(brain);
 
     return sm;
   }
+
 }

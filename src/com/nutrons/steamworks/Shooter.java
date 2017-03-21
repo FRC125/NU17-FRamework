@@ -32,16 +32,27 @@ public class Shooter implements Subsystem {
   private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
 
-
-  public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
+  /**
+   * Initializes shooter object.
+   * @param shooterController sets shooter controller
+   * @param shooterButton initializes boolean flowable for shooter button
+   * @param distance initializes double flowable for distance
+   * @param setpointHint initializes double flowable for set point hint
+   */
+  public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton,
+                 Flowable<Double> distance, Flowable<Double> setpointHint) {
     this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0).share();
+    this.variableSetpoint = this.distance
+            .filter(x -> x != 0.0).map(x -> 111.0 * x / 12.0 + 1950.0).share();
   }
 
+  /**
+   * Returns a command for the shooter.
+   */
   public Command pulse() {
     Flowable<Double> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
         .mergeWith(variableSetpoint), (x, y) -> x + y).share();
@@ -58,11 +69,14 @@ public class Shooter implements Subsystem {
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
-    this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
+    this.variableSetpoint
+            .subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
 
-    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop().share()
+    toFlow(this.shooterController::speed).withLatestFrom(
+            this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
+            .onBackpressureDrop().share()
         .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
   }
 }

@@ -51,6 +51,9 @@ public class Turret implements Subsystem {
         .map(x -> (x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS) / 360.0); //used to be negative
   }
 
+  /**
+   * Returns command for "automagic" mode.
+   */
   public Command automagicMode() {
     return Command.fromAction(() -> {
       this.hoodMaster.setControlMode(ControlMode.LOOP_POSITION);
@@ -65,15 +68,18 @@ public class Turret implements Subsystem {
 
     FlowOperators.deadband(joyControl).map(x -> -0.3 * x).map(Events::power).share()
         .subscribe(hoodMaster);
-    this.aimButton.filter(x -> x).map(x -> automagicMode().terminable(aimButton.filter(y -> !y))).share().
-        subscribe(x -> x.execute(true));
+    this.aimButton.filter(x -> x).map(x -> automagicMode()
+            .terminable(aimButton.filter(y -> !y))).share()
+            .subscribe(x -> x.execute(true));
 
     FlowOperators.toFlow(hoodMaster::position)
         .subscribe(new WpiSmartDashboard().getTextFieldDouble("position"));
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle_vis"));
-    this.angle.map(x -> x < TOLERANCE_DEGREES).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
+    this.angle.map(x -> x < TOLERANCE_DEGREES)
+            .subscribe(new WpiSmartDashboard().getTextFieldBoolean("within tolerance, GO!"));
     this.distance.subscribe(new WpiSmartDashboard().getTextFieldDouble("distance_vis"));
-    this.distance.map(x -> x > 108 && x < 168).subscribe(new WpiSmartDashboard().getTextFieldBoolean("within distance range, GO!"));
+    this.distance.map(x -> x > 108 && x < 168)
+            .subscribe(new WpiSmartDashboard().getTextFieldBoolean("within distance range, GO!"));
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));

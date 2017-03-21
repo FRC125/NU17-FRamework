@@ -30,6 +30,9 @@ public class Gearplacer implements Subsystem {
     this.openButton = openButton;
   }
 
+  /**
+   * Returns a command to move the servos.
+   */
   public Command pulse() {
     return Command.just(x -> {
       gearPlacerLeft.accept(maxPosition(!LEFT_INVERT));

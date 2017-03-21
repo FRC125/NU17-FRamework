@@ -7,74 +7,82 @@ import java.nio.file.Paths;
 /**
  * AdbBridge interfaces to an Android Debug Bridge (adb) binary, which is needed
  * to communicate to Android devices over USB.
- *
+ * <p/>
  * adb binary provided by https://github.com/Spectrum3847/RIOdroid
  */
 public class AdbBridge {
-    Path bin_location_;
-    public final static Path DEFAULT_LOCATION = Paths.get("/usr/bin/adb");
+  Path binLocation;
+  public static final Path DEFAULT_LOCATION = Paths.get("/usr/bin/adb");
 
-    public AdbBridge() {
-        Path adb_location;
-        String env_val = System.getenv("FRC_ADB_LOCATION");
-        if (env_val == null || "".equals(env_val)) {
-            adb_location = DEFAULT_LOCATION;
-        } else {
-            adb_location = Paths.get(env_val);
-        }
-        bin_location_ = adb_location;
+  /**
+   *  Constructor for AdBridge.
+   */
+  public AdbBridge() {
+    Path adbLocation;
+    String envVal = System.getenv("FRC_adbLocation");
+    if (envVal == null || "".equals(envVal)) {
+      adbLocation = DEFAULT_LOCATION;
+    } else {
+      adbLocation = Paths.get(envVal);
     }
+    binLocation = adbLocation;
+  }
 
-    public AdbBridge(Path location) {
-        bin_location_ = location;
+  public AdbBridge(Path location) {
+    binLocation = location;
+  }
+
+  private boolean runCommand(String args) {
+    Runtime run = Runtime.getRuntime();
+    String cmd = binLocation.toString() + " " + args;
+    try {
+      Process proc = run.exec(cmd);
+      proc.waitFor();
+    } catch (IOException exc) {
+      System.err.println("AdbBridge: Could not run command " + cmd);
+      exc.printStackTrace();
+      return false;
+    } catch (InterruptedException exc) {
+      System.err.println("AdbBridge: Could not run command " + cmd);
+      exc.printStackTrace();
+      return false;
     }
+    return true;
+  }
+    
+  public void start() {
+    System.out.println("Starting adb");
+    runCommand("start");
+  }
 
-    private boolean runCommand(String args) {
-        Runtime r = Runtime.getRuntime();
-        String cmd = bin_location_.toString() + " " + args;
+  public void stop() {
+    System.out.println("Stopping adb");
+    runCommand("kill-server");
+  }
 
-        try {
-            Process p = r.exec(cmd);
-            p.waitFor();
-        } catch (IOException e) {
-            System.err.println("AdbBridge: Could not run command " + cmd);
-            e.printStackTrace();
-            return false;
-        } catch (InterruptedException e) {
-            System.err.println("AdbBridge: Could not run command " + cmd);
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
+  /**
+   * Stops and starts the adb, restarting it.
+   */
+  public void restartAdb() {
+    System.out.println("Restarting adb");
+    stop();
+    start();
+  }
 
-    public void start() {
-        System.out.println("Starting adb");
-        runCommand("start");
-    }
+  public void portForward(int localPort, int remotePort) {
+    runCommand("forward tcp:" + localPort + " tcp:" + remotePort);
+  }
 
-    public void stop() {
-        System.out.println("Stopping adb");
-        runCommand("kill-server");
-    }
+  public void reversePortForward(int remotePort, int localPort) {
+    runCommand("reverse tcp:" + remotePort + " tcp:" + localPort);
+  }
 
-    public void restartAdb() {
-        System.out.println("Restarting adb");
-        stop();
-        start();
-    }
-
-    public void portForward(int local_port, int remote_port) {
-        runCommand("forward tcp:" + local_port + " tcp:" + remote_port);
-    }
-
-    public void reversePortForward(int remote_port, int local_port) {
-        runCommand("reverse tcp:" + remote_port + " tcp:" + local_port);
-    }
-
-    public void restartApp() {
-        System.out.println("Restarting app");
-        runCommand("shell am force-stop com.team254.cheezdroid \\; "
-                + "am start com.team254.cheezdroid/com.team254.cheezdroid.VisionTrackerActivity");
-    }
+  /**
+   * Restarts the app.
+   */
+  public void restartApp() {
+    System.out.println("Restarting app");
+    runCommand("shell am force-stop com.team254.cheezdroid \\; "
+            + "am start com.team254.cheezdroid/com.team254.cheezdroid.VisionTrackerActivity");
+  }
 }
