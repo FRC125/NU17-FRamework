@@ -104,16 +104,17 @@ public class Controller implements Initializable {
   }
 
   void startCompetition() {
-
-    Command kpa40 = Command.parallel(turret.automagicMode().delayFinish(2, TimeUnit.SECONDS),
-        shooter.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(12, TimeUnit.SECONDS),
-        feeder.pulse().delayStart(4, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS));
-
     sm.startCompetition(() ->
-        Command.serial(
-            drivetrain.driveDistance(9.5, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-            drivetrain.turn(-85, 10),
-            drivetrain.driveDistance(5.0, 0.5, 10).endsWhen(Flowable.timer(3, TimeUnit.SECONDS), true),
-            climb.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)).then(kpa40), () -> drivetrain.driveTeleop().terminable(Flowable.never()));
+        Command.parallel(climb.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(climb.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            Command.serial(drivetrain.driveDistance(5.75, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                drivetrain.turn(-85, 10),
+                Command.parallel(
+                    turret.automagicMode().delayFinish(13000, TimeUnit.MILLISECONDS),
+                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS),
+                    drivetrain.driveDistance(5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)
+                ),
+                feeder.pulse().delayFinish(15000, TimeUnit.MILLISECONDS)
+            )
+        ), () -> drivetrain.driveTeleop().terminable(Flowable.never()));
   }
 }
