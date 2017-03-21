@@ -29,7 +29,8 @@ public class Turret implements Subsystem {
    * @param master The talon controlling the movement of the turret.
    */
   public Turret(Flowable<Double> angle, Flowable<String> state, Talon master,
-                Flowable<Double> joyControl, Flowable<Boolean> slowDrive) { //TODO: remove joycontrol
+                Flowable<Double> joyControl,
+                Flowable<Boolean> slowDrive) { //TODO: remove joycontrol
     this.angle = angle;
     this.state = state;
     this.hoodMaster = master;
