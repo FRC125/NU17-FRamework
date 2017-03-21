@@ -117,7 +117,7 @@ public class RobotBootstrapper extends Robot {
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(this.climbtake);
     sm.registerSubsystem(new Turret(vision.getAngle(), vision.getState(), hoodMaster,
-        this.operatorPad.leftStickX()));
+        this.operatorPad.leftStickX(), this.operatorPad.buttonA()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));

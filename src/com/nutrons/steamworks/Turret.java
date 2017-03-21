@@ -20,6 +20,7 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
+  private final Flowable<Boolean> slowDrive;
 
   /**
    * The Turret System that is used for aiming our shooter.
@@ -28,7 +29,8 @@ public class Turret implements Subsystem {
    * @param master The talon controlling the movement of the turret.
    */
   public Turret(Flowable<Double> angle, Flowable<String> state, Talon master,
-                Flowable<Double> joyControl) { //TODO: remove joycontrol
+                Flowable<Double> joyControl,
+                Flowable<Boolean> slowDrive) { //TODO: remove joycontrol
     this.angle = angle;
     this.state = state;
     this.hoodMaster = master;
@@ -36,6 +38,7 @@ public class Turret implements Subsystem {
     this.revLim = FlowOperators.toFlow(this.hoodMaster::revLimitSwitchClosed);
     this.fwdLim = FlowOperators.toFlow(this.hoodMaster::fwdLimitSwitchClosed);
     this.joyControl = joyControl;
+    this.slowDrive = slowDrive;
   }
 
   @Override
@@ -61,6 +64,7 @@ public class Turret implements Subsystem {
     Flowable<Double> setpoint = this.angle.map(x -> x * MOTOR_ROTATIONS_TO_TURRET_ROTATIONS / 360.0)
         .map(x -> x + hoodMaster.position());
     this.hoodMaster.setPID(PVAL, IVAL, DVAL, FVAL);
+    setpoint.map(x -> slowDrive.map(y -> y ? x * 0.5 : x));
     setpoint.subscribe(x -> Events.setpoint(x).actOn(hoodMaster));
 
     this.angle.subscribe(new WpiSmartDashboard().getTextFieldDouble("angle"));
