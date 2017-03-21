@@ -26,6 +26,7 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
+  private static final double AUTO_SETPOINT = 3000;
   private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
@@ -43,6 +44,13 @@ public class Shooter implements Subsystem {
     this.distance = distance;
     this.setpointHint = setpointHint;
     this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1808.7).share();
+  }
+
+  public Command auto() {
+    Flowable<ControllerEvent> setpoint = Flowable.just(AUTO_SETPOINT).map(aimEvent);
+    return Command.fromSubscription(() ->
+        setpoint.subscribe(shooterController))
+        .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }
 
   public Command pulse() {

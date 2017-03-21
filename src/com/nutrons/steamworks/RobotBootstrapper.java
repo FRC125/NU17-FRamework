@@ -1,11 +1,17 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.ctre.CANTalon;
 import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.commands.Command;
-import com.nutrons.framework.controllers.*;
+import com.nutrons.framework.controllers.ControlMode;
+import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RevServo;
+import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
@@ -15,12 +21,9 @@ import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
 
@@ -190,8 +193,8 @@ public class RobotBootstrapper extends Robot {
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", hopperDrive(5.75, -85, 5).then(kpa40));
-      put("boiler; turn right", hopperDrive(5.75, 85, 5).then(kpa40));
+      put("boiler; turn left", hopperDrive(5.75, -85, 5));
+      put("boiler; turn right", hopperDrive(5.75, 85, 5));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
@@ -211,6 +214,15 @@ public class RobotBootstrapper extends Robot {
         Command.parallel(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(RobotBootstrapper.this.climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
             Command.serial(RobotBootstrapper.this.drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                 RobotBootstrapper.this.drivetrain.turn(angle, 10),
-                RobotBootstrapper.this.drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)));
+
+                Command.parallel(
+                    RobotBootstrapper.this.turret.automagicMode().delayFinish(13000, TimeUnit.MILLISECONDS),
+                    RobotBootstrapper.this.shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS),
+                    RobotBootstrapper.this.drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)
+                ),
+
+                RobotBootstrapper.this.feeder.pulse().delayFinish(15000, TimeUnit.MILLISECONDS)
+            )
+        );
   }
 }
