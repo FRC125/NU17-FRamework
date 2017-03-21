@@ -150,7 +150,7 @@ public class RobotBootstrapper extends Robot {
             this.driverPad.buttonX());
     sm.registerSubsystem(gearplacer);
 
-    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
             toFlow(() -> VisionProcessor.getInstance().getDistance()).share(), hoodMaster,
