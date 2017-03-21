@@ -50,7 +50,7 @@ public class RobotBootstrapper extends Robot {
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
-  private Feeder feeder;
+  public static Feeder feeder;
   private Gearplacer gearplacer;
 
   /**
