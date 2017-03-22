@@ -157,7 +157,7 @@ public class RobotBootstrapper extends Robot {
         this.driverPad.buttonX());
     sm.registerSubsystem(gearplacer);
 
-    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
@@ -203,7 +203,7 @@ public class RobotBootstrapper extends Robot {
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
-    box = new RadioBox<>("autocat", autos, "intake");
+    box = new RadioBox<>("automeme", autos, "intake");
     sm.registerSubsystem(box);
 
     return sm;
@@ -211,17 +211,17 @@ public class RobotBootstrapper extends Robot {
 
   private Command hopperDrive(double distance1, double angle, double distance2) {
     return
-        Command.parallel(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(RobotBootstrapper.this.climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
-            Command.serial(RobotBootstrapper.this.drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                RobotBootstrapper.this.drivetrain.turn(angle, 10),
-
+        Command.parallel(
+            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
+                .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            Command.serial(drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                drivetrain.turn(angle, 10),
                 Command.parallel(
-                    RobotBootstrapper.this.turret.automagicMode().delayFinish(13000, TimeUnit.MILLISECONDS),
-                    RobotBootstrapper.this.shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS),
-                    RobotBootstrapper.this.drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)
-                ),
-
-                RobotBootstrapper.this.feeder.pulse().delayFinish(15000, TimeUnit.MILLISECONDS)
+                    turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
+                    drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                    feeder.pulse().delayStart(2500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
+                )
             )
         );
   }

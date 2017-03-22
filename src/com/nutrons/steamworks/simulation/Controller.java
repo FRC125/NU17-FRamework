@@ -91,7 +91,7 @@ public class Controller implements Initializable {
     this.shooter = new Shooter(shooter1.controller(), Simulation.button(DEV_ID, "BTN_BASE2"), Flowable.just(0.0), Flowable.just(0.0));
     GUISpeedController roller = new GUISpeedController("roller");
     GUISpeedController spinner = new GUISpeedController("spinner");
-    this.feeder = new Feeder(roller.controller(), spinner.controller(), Simulation.button(DEV_ID, "BTN_TOP"));
+    this.feeder = new Feeder(roller.controller(), spinner.controller(), Simulation.button(DEV_ID, "BTN_TOP"), Simulation.button(DEV_ID, "BTN_TOP"));
     Slider turretAngle = new Slider(-45, 45, 0.0);
     Slider turretDistance = new Slider(0, 200, 0.0);
     GUISpeedController turretController = new GUISpeedController("turret");
@@ -110,7 +110,7 @@ public class Controller implements Initializable {
                 drivetrain.turn(-85, 10),
                 Command.parallel(
                     turret.automagicMode().delayFinish(13000, TimeUnit.MILLISECONDS),
-                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS),
+                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)
                 ),
                 feeder.pulse().delayFinish(15000, TimeUnit.MILLISECONDS)
