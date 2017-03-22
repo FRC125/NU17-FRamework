@@ -71,7 +71,9 @@ public class RobotBootstrapper extends Robot {
     Flowable<Command> boxStream = box.selected().cache().map(FlowOperators::printId);
     boxStream.subscribe();
     return Command.defer(() -> {
+      System.out.println("starting auto");
       Command c = FlowOperators.getLastValue(boxStream);
+      System.out.println("auto command retrieved from SD");
       System.out.println(c);
       return c;
     });
