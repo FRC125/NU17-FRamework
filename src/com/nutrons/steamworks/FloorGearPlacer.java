@@ -22,6 +22,7 @@ public class FloorGearPlacer implements Subsystem {
     private final static double WRIST_ASCENT_SPEED = -1.0;
     private final static double WRIST_PLACE_SPEED = 0.5; // descending again to place the gear onto the peg
     private final static double INTAKE_REVERSE_SPEED = -0.3; // expelling the gear onto the peg
+    private final static double PLACE_TIMEOUT_TIME = 1.0; // seconds
 
     public FloorGearPlacer(Flowable<Boolean> placeButton,
         Flowable<Boolean> intakeButton, LoopSpeedController intakeMotor,
@@ -67,6 +68,7 @@ public class FloorGearPlacer implements Subsystem {
 
     @Override
     public void registerSubscriptions() {
-
+        this.intakeButton.subscribe((x) -> intakeCommand.execute(true));
+        this.placeButton.subscribe((x) -> placeCommand.execute(true));
     }
 }
