@@ -19,6 +19,10 @@ public class RobotMap {
   public static final int FRONT_RIGHT = 14;
   public static final int BACK_RIGHT = 15;
 
+  // Ports of Floor Gear Placer TODO: Fix Port to match Talons on placer
+  public static final int WRIST_MOTOR = 19;
+  public static final int INTAKE_MOTOR = 23;
+
   // Ports of Servos TODO: Fix Port to match robot servos
   public static final int GEAR_SERVO_RIGHT = 7;
   public static final int GEAR_SERVO_LEFT = 8;

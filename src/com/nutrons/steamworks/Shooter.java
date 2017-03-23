@@ -10,6 +10,7 @@ import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -25,11 +26,12 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
+  private static final double AUTO_SETPOINT = 2800;
   private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private final Flowable<Double> setpointHint;
-  edu.wpi.first.wpilibj.Preferences prefs;
+  //edu.wpi.first.wpilibj.Preferences prefs;
   private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
   private double latestSetpoint;
@@ -41,12 +43,20 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1858.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1805).share();
+  }
+
+  public Command auto() {
+    Flowable<ControllerEvent> setpoint = Flowable.just(AUTO_SETPOINT).map(aimEvent);
+    return Command.fromSubscription(() ->
+        setpoint.subscribe(shooterController))
+        .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }
 
   public Command pulse() {
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
-        .mergeWith(variableSetpoint.take(1)), (x, y) -> x + y).map(aimEvent);
+        .mergeWith(variableSetpoint.take(1)
+        ), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
         combined.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
@@ -54,6 +64,7 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
+    //this.prefs = Preferences.getInstance();
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
@@ -62,6 +73,10 @@ public class Shooter implements Subsystem {
     this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
+
+    /**toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
+        .onBackpressureDrop().map(x -> RobotBootstrapper.feeder.pulse().terminable(shooterButton.filter(y -> !y)))
+        .subscribe(x -> x.execute(true));**/
 
     toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop()
         .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));

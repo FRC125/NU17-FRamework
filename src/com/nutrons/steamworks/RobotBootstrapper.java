@@ -1,11 +1,17 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.util.FlowOperators.toFlow;
+
 import com.ctre.CANTalon;
 import com.libKudos254.vision.VisionServer;
 import com.nutrons.framework.Robot;
 import com.nutrons.framework.StreamManager;
 import com.nutrons.framework.commands.Command;
-import com.nutrons.framework.controllers.*;
+import com.nutrons.framework.controllers.ControlMode;
+import com.nutrons.framework.controllers.Events;
+import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RevServo;
+import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
@@ -15,19 +21,20 @@ import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static com.nutrons.framework.util.FlowOperators.toFlow;
 
 public class RobotBootstrapper extends Robot {
 
   private Drivetrain drivetrain;
   private Climbtake climbtake;
+  private FloorGearPlacer floorGearPlacer;
+  private Gearplacer gearplacer;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
+  private Talon wristMotor;
+  private Talon intakeMotor;
   private Talon topFeederMotor;
   private Talon spinFeederMotor;
   private LoopSpeedController climberMotor1;
@@ -38,17 +45,15 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private RevServo servoLeft;
-  private RevServo servoRight;
-
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
   private Turret turret;
   private Shooter shooter;
   private RadioBox<Command> box;
-  private Feeder feeder;
-  private Gearplacer gearplacer;
+  public static Feeder feeder;
+  private RevServo servoRight;
+  private RevServo servoLeft;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -68,7 +73,9 @@ public class RobotBootstrapper extends Robot {
     Flowable<Command> boxStream = box.selected().cache().map(FlowOperators::printId);
     boxStream.subscribe();
     return Command.defer(() -> {
+      System.out.println("starting auto");
       Command c = FlowOperators.getLastValue(boxStream);
+      System.out.println("auto command retrieved from SD");
       System.out.println(c);
       return c;
     });
@@ -111,6 +118,9 @@ public class RobotBootstrapper extends Robot {
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
+    this.intakeMotor = new Talon(RobotMap.INTAKE_MOTOR);
+    this.wristMotor = new Talon(RobotMap.WRIST_MOTOR);
+
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
 
@@ -133,8 +143,11 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+
+    floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
+    //gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad.buttonX());
   }
 
   @Override
@@ -144,17 +157,15 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
+    //sm.registerSubsystem(this.gearplacer);
+    sm.registerSubsystem(this.floorGearPlacer);
+
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    this.gearplacer = new Gearplacer(this.servoLeft,
-        this.servoRight,
-        this.driverPad.buttonX());
-    sm.registerSubsystem(gearplacer);
-
-    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB());
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
@@ -190,17 +201,17 @@ public class RobotBootstrapper extends Robot {
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", hopperDrive(5.75, -85, 5).then(kpa40));
-      put("boiler; turn right", hopperDrive(5.75, 85, 5).then(kpa40));
+      put("boiler; turn left", hopperDrive(5.75, -85, 5));
+      put("boiler; turn right", hopperDrive(5.75, 85, 5));
       put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
       put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          //.then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
-    box = new RadioBox<>("autocat", autos, "intake");
+    box = new RadioBox<>("automeme", autos, "intake");
     sm.registerSubsystem(box);
 
     return sm;
@@ -208,9 +219,18 @@ public class RobotBootstrapper extends Robot {
 
   private Command hopperDrive(double distance1, double angle, double distance2) {
     return
-        Command.parallel(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(RobotBootstrapper.this.climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
-            Command.serial(RobotBootstrapper.this.drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                RobotBootstrapper.this.drivetrain.turn(angle, 10),
-                RobotBootstrapper.this.drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)));
+        Command.parallel(
+            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
+                .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            Command.serial(drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                drivetrain.turn(angle, 10),
+                Command.parallel(
+                    turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
+                    drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                    feeder.pulse().delayStart(2500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
+                )
+            )
+        );
   }
 }
