@@ -10,6 +10,7 @@ import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
@@ -29,6 +30,7 @@ public class RobotBootstrapper extends Robot {
   private Drivetrain drivetrain;
   private Climbtake climbtake;
   private FloorGearPlacer floorGearPlacer;
+  private Gearplacer gearplacer;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
   private Talon wristMotor;
@@ -50,6 +52,8 @@ public class RobotBootstrapper extends Robot {
   private Shooter shooter;
   private RadioBox<Command> box;
   public static Feeder feeder;
+  private RevServo servoRight;
+  private RevServo servoLeft;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -143,6 +147,7 @@ public class RobotBootstrapper extends Robot {
     //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
 
     floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
+    //gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad.buttonX());
   }
 
   @Override
@@ -151,6 +156,9 @@ public class RobotBootstrapper extends Robot {
 
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
+
+    //sm.registerSubsystem(this.gearplacer);
+    sm.registerSubsystem(this.floorGearPlacer);
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
