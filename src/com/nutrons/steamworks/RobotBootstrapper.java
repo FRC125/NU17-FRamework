@@ -29,8 +29,11 @@ public class RobotBootstrapper extends Robot {
 
   private Drivetrain drivetrain;
   private Climbtake climbtake;
+  private FloorGearPlacer floorGearPlacer;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
+  private Talon upDownGear;
+  private Talon inOutGear;
   private Talon topFeederMotor;
   private Talon spinFeederMotor;
   private LoopSpeedController climberMotor1;
@@ -115,6 +118,9 @@ public class RobotBootstrapper extends Robot {
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
+
+    this.upDownGear = new Talon(RobotMap.UP_DOWN_MOTOR);
+    this.inOutGear = new Talon(RobotMap.IN_OUT_MOTOR);
 
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
