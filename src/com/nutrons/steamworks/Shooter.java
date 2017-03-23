@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1798.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1805).share();
   }
 
   public Command auto() {
