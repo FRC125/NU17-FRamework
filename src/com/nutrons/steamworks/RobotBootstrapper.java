@@ -19,6 +19,7 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.buttons.Button;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.HashMap;
@@ -32,8 +33,8 @@ public class RobotBootstrapper extends Robot {
   private FloorGearPlacer floorGearPlacer;
   private LoopSpeedController shooterMotor1;
   private LoopSpeedController shooterMotor2;
-  private Talon upDownGear;
-  private Talon inOutGear;
+  private Talon wristMotor;
+  private Talon intakeMotor;
   private Talon topFeederMotor;
   private Talon spinFeederMotor;
   private LoopSpeedController climberMotor1;
@@ -119,8 +120,8 @@ public class RobotBootstrapper extends Robot {
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
-    this.upDownGear = new Talon(RobotMap.UP_DOWN_MOTOR);
-    this.inOutGear = new Talon(RobotMap.IN_OUT_MOTOR);
+    this.intakeMotor = new Talon(RobotMap.INTAKE_MOTOR);
+    this.wristMotor = new Talon(RobotMap.WRIST_MOTOR);
 
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
     this.climberMotor2 = new Talon(RobotMap.CLIMBTAKE_MOTOR_2);
@@ -144,8 +145,10 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+
+    floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
   }
 
   @Override
