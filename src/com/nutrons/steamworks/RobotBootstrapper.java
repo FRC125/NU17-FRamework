@@ -10,7 +10,6 @@ import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.ControlMode;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
@@ -19,7 +18,6 @@ import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
-import edu.wpi.first.wpilibj.buttons.Button;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import java.util.HashMap;
@@ -45,9 +43,6 @@ public class RobotBootstrapper extends Robot {
   private Talon rightLeader;
   private Talon rightFollower;
 
-  private RevServo servoLeft;
-  private RevServo servoRight;
-
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
@@ -55,7 +50,6 @@ public class RobotBootstrapper extends Robot {
   private Shooter shooter;
   private RadioBox<Command> box;
   public static Feeder feeder;
-  private Gearplacer gearplacer;
 
   /**
    * Converts booleans into streams, and if the boolean is true,
@@ -163,11 +157,6 @@ public class RobotBootstrapper extends Robot {
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0)).map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    this.gearplacer = new Gearplacer(this.servoLeft,
-        this.servoRight,
-        this.driverPad.buttonX());
-    sm.registerSubsystem(gearplacer);
-
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
@@ -210,7 +199,7 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
       put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          //.then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
