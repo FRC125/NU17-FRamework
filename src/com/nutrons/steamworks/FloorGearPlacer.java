@@ -68,7 +68,7 @@ public class FloorGearPlacer implements Subsystem {
 
     @Override
     public void registerSubscriptions() {
-        this.intakeButton.subscribe((x) -> intakeCommand.execute(true));
-        this.placeButton.subscribe((x) -> placeCommand.execute(true));
+        this.intakeButton.subscribe((x) -> intakeCommand.endsWhen(this.intakeButton.filter(y -> !y), true).execute(true));
+        this.placeButton.subscribe((x) -> placeCommand.endsWhen(this.placeButton.filter(y -> !y), true).execute(true));
     }
 }
