@@ -143,11 +143,11 @@ public class RobotBootstrapper extends Robot {
     visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 
     //Gear Placer Servos
-    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
 
-    floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
-    //gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad.buttonX());
+    //floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
+    gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad.buttonX());
   }
 
   @Override
@@ -157,8 +157,8 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    //sm.registerSubsystem(this.gearplacer);
-    sm.registerSubsystem(this.floorGearPlacer);
+    sm.registerSubsystem(this.gearplacer);
+    //sm.registerSubsystem(this.floorGearPlacer);
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
@@ -207,7 +207,7 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
           RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
       put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          //.then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
     }};
