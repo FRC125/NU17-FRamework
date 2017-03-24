@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nutrons.steamworks.simulation.Controller">
+   <top>
+      <GridPane BorderPane.alignment="CENTER">
+         <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+         </rowConstraints>
+         <children>
+            <ButtonBar buttonMinWidth="0.0" nodeOrientation="RIGHT_TO_LEFT">
+              <buttons>
+                <Button fx:id="enable" mnemonicParsing="false" text="ENABLE" />
+                  <Button fx:id="disable" layoutX="225.0" layoutY="16.0" mnemonicParsing="false" text="DISABLE" />
+              </buttons>
+            </ButtonBar>
+            <ButtonBar prefHeight="40.0" prefWidth="200.0" GridPane.columnIndex="1">
+              <buttons>
+                <Button id="test" fx:id="test" mnemonicParsing="false" text="TEST" />
+                  <Button id="auto" fx:id="auto" layoutX="242.0" layoutY="16.0" mnemonicParsing="false" text="AUTO" />
+                  <Button id="tele" fx:id="tele" layoutX="147.0" layoutY="16.0" mnemonicParsing="false" text="TELEOP" />
+              </buttons>
+            </ButtonBar>
+         </children>
+      </GridPane>
+   </top>
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <content>
+            <VBox fx:id="controllers" prefHeight="200.0" prefWidth="100.0" />
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>
