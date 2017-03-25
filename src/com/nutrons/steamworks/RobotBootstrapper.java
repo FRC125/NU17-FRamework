@@ -228,7 +228,7 @@ public class RobotBootstrapper extends Robot {
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(2500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
+                    feeder.pulse().delayStart(4500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
                 )
             )
         );
