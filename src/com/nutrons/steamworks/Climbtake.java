@@ -40,6 +40,7 @@ public class Climbtake implements Subsystem {
    */
   public Command pulse(boolean direction) {
     return Command.just(x -> {
+      System.out.println("starting climbtake");
       double sign = direction ? -1.0 : 1.0;
       climbtakeControllerLeft.runAtPower(sign * CLIMBTAKE_SPEED_LEFT);
       climbtakeControllerRight.runAtPower(sign * CLIMBTAKE_SPEED_RIGHT);

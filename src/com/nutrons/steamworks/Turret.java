@@ -90,7 +90,7 @@ public class Turret implements Subsystem {
 
     this.joyedSetpoint = combineLatest(joyControl.map(deadbandMap(-0.15, 0.15, 0.0)).map(x -> -1.125 * x), this.setpoint
         .withLatestFrom(Flowable.just(false).mergeWith(aimButton), (x, y) -> y ? x : 0.0).onBackpressureDrop()
-        , (j, s) -> j + s).map(FlowOperators::printId);
+        , (j, s) -> j + s);
 
     //this.joyedSetpoint.subscribe(System.out::println);
 

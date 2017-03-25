@@ -154,6 +154,7 @@ public class Drivetrain implements Subsystem {
     Flowable<?> angleTerminator = pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS);
     // Chaining all the commands together
     return Command.fromAction(() -> {
+      System.out.println("starting drive distance");
       rightDrive.accept(reset);
       leftDrive.accept(reset);
     }).then(Command.parallel(right, left))
