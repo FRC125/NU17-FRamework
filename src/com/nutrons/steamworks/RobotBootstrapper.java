@@ -17,10 +17,18 @@ import com.nutrons.framework.inputs.HeadingGyro;
 import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
+import javafx.scene.Camera;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +52,13 @@ public class RobotBootstrapper extends Robot {
   private Talon leftFollower;
   private Talon rightLeader;
   private Talon rightFollower;
+  private SendableChooser<Command> autoSelector;
 
   private CommonController driverPad;
   private CommonController operatorPad;
   private HeadingGyro gyro;
   private Turret turret;
   private Shooter shooter;
-  private RadioBox<Command> box;
   public static Feeder feeder;
   private RevServo servoRight;
   private RevServo servoLeft;
@@ -70,11 +78,8 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   public Command registerAuto() {
-    Flowable<Command> boxStream = box.selected().cache().map(FlowOperators::printId);
-    boxStream.subscribe();
     return Command.defer(() -> {
-      System.out.println("starting auto");
-      Command c = FlowOperators.getLastValue(boxStream);
+      Command c = autoSelector.getSelected();
       System.out.println("auto command retrieved from SD");
       System.out.println(c);
       return c;
@@ -92,10 +97,20 @@ public class RobotBootstrapper extends Robot {
     new Thread(() -> {
       try {
         UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-        camera.setResolution(320, 180);
-        camera.setFPS(24);
+        camera.setFPS(144);
+        camera.setResolution(1280, 720);
+        System.out.println("starting camera");
+        CvSink source = CameraServer.getInstance().getVideo();
+        CvSource output = CameraServer.getInstance().putVideo("ayylmao", 1280, 720);
+        Mat sourceFrame = new Mat();
+        Mat outputFrame = new Mat();
+        while (!Thread.interrupted()) {
+          source.grabFrame(sourceFrame);
+          Core.flip(sourceFrame, outputFrame, -1);
+          output.putFrame(outputFrame);
+        }
       } catch (Exception e) {
-        System.out.println("Plug in the USB camera!");
+        e.printStackTrace();
       }
     }).start();
     // Gamepads
@@ -162,10 +177,12 @@ public class RobotBootstrapper extends Robot {
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
-        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0)).map(x -> -100.0 * x));
+        this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0))
+            .map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(), this.operatorPad.buttonY());
+    this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(),
+        this.operatorPad.buttonY());
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
@@ -195,25 +212,30 @@ public class RobotBootstrapper extends Robot {
           RobotBootstrapper.this.rightLeader.runAtPower(0);
         }),
         this.turret.automagicMode().delayFinish(1000, TimeUnit.MILLISECONDS),
-        this.shooter.pulse().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(13, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(3000, TimeUnit.MILLISECONDS).delayFinish(11, TimeUnit.SECONDS));
+        this.shooter.pulse().delayStart(1000, TimeUnit.MILLISECONDS)
+            .delayFinish(13, TimeUnit.SECONDS),
+        this.feeder.pulse().delayStart(3000, TimeUnit.MILLISECONDS)
+            .delayFinish(11, TimeUnit.SECONDS));
 
-    Map<String, Command> autos = new HashMap<String, Command>() {{
-      put("intake", RobotBootstrapper.this
-          .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", hopperDrive(5.75, -85, 5));
-      put("boiler; turn right", hopperDrive(5.75, 85, 5));
-      put("aim & shoot", Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
-          RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
-          RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS).delayFinish(10, TimeUnit.SECONDS)));
-      put("forward gear", RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5).endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-          .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
-          .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
-          .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-    }};
-    box = new RadioBox<>("automeme", autos, "intake");
-    sm.registerSubsystem(box);
+    this.autoSelector = new SendableChooser<>();
+    this.autoSelector.addDefault("intake", RobotBootstrapper.this
+        .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.75, -85, 5));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.75, 85, 5));
+    this.autoSelector.addObject("aim & shoot",
+        Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
+            RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
+            RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS)
+                .delayFinish(10, TimeUnit.SECONDS)));
+    this.autoSelector.addObject("forward gear",
+        RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5)
+            .endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
+            .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+            .then(RobotBootstrapper.this.climbtake.pulse(true)
+                .delayFinish(500, TimeUnit.MILLISECONDS))
+            .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
+    SmartDashboard.putData("automeme4", this.autoSelector);
     return sm;
   }
 
@@ -222,13 +244,17 @@ public class RobotBootstrapper extends Robot {
         Command.parallel(
             climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
                 .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
-            Command.serial(drivetrain.driveDistance(distance1, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+            Command.serial(drivetrain.driveDistance(distance1, 1, 10)
+                    .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                 drivetrain.turn(angle, 10),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
-                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
-                    drivetrain.driveDistance(distance2, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(4500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
+                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS)
+                        .delayFinish(15, TimeUnit.SECONDS),
+                    drivetrain.driveDistance(distance2, 1, 10)
+                        .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                    feeder.pulse().delayStart(4500, TimeUnit.MILLISECONDS)
+                        .delayFinish(15000, TimeUnit.MILLISECONDS)
                 )
             )
         );
