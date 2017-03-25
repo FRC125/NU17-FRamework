@@ -205,8 +205,8 @@ public class RobotBootstrapper extends Robot {
     Map<String, Command> autos = new HashMap<String, Command>() {{
       put("intake", RobotBootstrapper.this
           .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
-      put("boiler; turn left", hopperDrive(5.75, -85, 5));
-      put("boiler; turn right", hopperDrive(5.75, 85, 5));
+      put("boiler; turn left", hopperDrive(5.75, -85, 5.25));
+      put("boiler; turn right", hopperDrive(5.75, 85, 5.25));
       put("aim & shoot",
           Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
               RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
