@@ -96,7 +96,7 @@ public class RobotBootstrapper extends Robot {
   protected void constructStreams() {
     new Thread(() -> {
       try {
-        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+        /*UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
         camera.setFPS(144);
         camera.setResolution(1280, 720);
         System.out.println("starting camera");
@@ -108,7 +108,10 @@ public class RobotBootstrapper extends Robot {
           source.grabFrame(sourceFrame);
           Core.flip(sourceFrame, outputFrame, -1);
           output.putFrame(outputFrame);
-        }
+        }*/
+        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+        camera.setResolution(1280, 720); // best a console can offer
+        camera.setFPS(24); // for cinematic value.
       } catch (Exception e) {
         e.printStackTrace();
       }
