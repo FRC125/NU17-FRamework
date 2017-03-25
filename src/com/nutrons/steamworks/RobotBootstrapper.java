@@ -253,7 +253,7 @@ public class RobotBootstrapper extends Robot {
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, 1, 10)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(4500, TimeUnit.MILLISECONDS)
+                    feeder.pulse().delayStart(4000, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS)
                 )
             )
