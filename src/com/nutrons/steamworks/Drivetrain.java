@@ -57,10 +57,10 @@ public class Drivetrain implements Subsystem {
   public Drivetrain(Flowable<Boolean> teleHoldHeading, Flowable<Double> currentHeading,
                     Flowable<Double> throttle, Flowable<Double> yaw,
                     LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
-    this.currentHeading = currentHeading.publish();
+    this.currentHeading = currentHeading.subscribeOn(Schedulers.io()).publish();
     this.currentHeading.connect();
-    this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
-    this.yaw = yaw.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
+    this.throttle = throttle.observeOn(Schedulers.io()).map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
+    this.yaw = yaw.observeOn(Schedulers.io()).map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
@@ -186,14 +186,14 @@ public class Drivetrain implements Subsystem {
       return combineDisposable(
           combineLatest(left, output, holdHeading, (x, o, h) -> x + (h ? o : 0.0))
               .onBackpressureDrop()
-              .subscribeOn(Schedulers.computation())
+              .subscribeOn(Schedulers.io())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(Events::power)
               .subscribe(leftDrive),
           combineLatest(right, output, holdHeading, (x, o, h) -> x - (h ? o : 0.0))
               .onBackpressureDrop()
-              .subscribeOn(Schedulers.computation())
+              .subscribeOn(Schedulers.io())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
               .map(x -> Events.power(-x))
@@ -256,8 +256,8 @@ public class Drivetrain implements Subsystem {
    */
   public Command driveTeleop() {
     return driveHoldHeading(
-        combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-        combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).subscribeOn(Schedulers.io()).publish().autoConnect().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).subscribeOn(Schedulers.io()).publish().autoConnect().onBackpressureDrop(),
         Flowable.just(false).concatWith(this.teleHoldHeading));
   }
 
