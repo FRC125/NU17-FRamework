@@ -94,28 +94,6 @@ public class RobotBootstrapper extends Robot {
 
   @Override
   protected void constructStreams() {
-    /*new Thread(() -> {
-      try {
-        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-        camera.setFPS(144);
-        camera.setResolution(1280, 720);
-        System.out.println("starting camera");
-        CvSink source = CameraServer.getInstance().getVideo();
-        CvSource output = CameraServer.getInstance().putVideo("ayylmao", 1280, 720);
-        Mat sourceFrame = new Mat();
-        Mat outputFrame = new Mat();
-        while (!Thread.interrupted()) {
-          source.grabFrame(sourceFrame);
-          Core.flip(sourceFrame, outputFrame, -1);
-          output.putFrame(outputFrame);
-        }
-        UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-        camera.setResolution(1280, 720); // best a console can offer
-        camera.setFPS(24); // for cinematic value.
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();**/
     // Gamepads
     this.driverPad = CommonController.xbox360(RobotMap.DRIVER_PAD);
     this.operatorPad = CommonController.xbox360(RobotMap.OP_PAD);
@@ -224,8 +202,9 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
-    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.75, -90, 5.50));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.25, 90, 5.50));
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(6.00, -90, 5.25));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.00, 90, 5.25));
+
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
