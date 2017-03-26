@@ -13,5 +13,14 @@
     <orderEntry type="library" name="ivy" level="project" />
     <orderEntry type="library" name="wpilib" level="project" />
     <orderEntry type="library" name="userlibs" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/json-simple-1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

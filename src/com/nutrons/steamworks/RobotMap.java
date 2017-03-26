@@ -26,4 +26,7 @@ public class RobotMap {
   // Controllers
   public static final int OP_PAD = 0;
   public static final int DRIVER_PAD = 1;
+
+  // Motion Profiles
+  public static final String AUTO_PROFILE_PATH = "";
 }

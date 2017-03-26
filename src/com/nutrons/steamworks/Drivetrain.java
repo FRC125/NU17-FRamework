@@ -1,12 +1,12 @@
 package com.nutrons.steamworks;
 
+import static com.nutrons.framework.profiling.MotionDeserialzer.read;
 import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.limitWithin;
 import static com.nutrons.framework.util.FlowOperators.pidLoop;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
-import static io.reactivex.Flowable.fromIterable;
 import static java.lang.Math.abs;
 
 import com.nutrons.framework.Subsystem;
@@ -15,17 +15,16 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.profiling.DrivePathSegment;
-import io.reactivex.Emitter;
+import com.nutrons.framework.util.Pair;
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
 import io.reactivex.flowables.ConnectableFlowable;
-import io.reactivex.internal.operators.flowable.FlowableInterval;
 import io.reactivex.schedulers.Schedulers;
-import java.util.List;
+import java.io.File;
+import java.io.Reader;
 import java.util.concurrent.TimeUnit;
 
 public class Drivetrain implements Subsystem {
+
   private static final double FEET_PER_WHEEL_ROTATION = 0.851;
   private static final double WHEEL_ROTATION_PER_ENCODER_ROTATION = 42.0 / 54.0;
   private static final double FEET_PER_ENCODER_ROTATION =
@@ -55,14 +54,14 @@ public class Drivetrain implements Subsystem {
    * A drivetrain which uses Arcade Drive.
    *
    * @param teleHoldHeading whether or not the drivetrain should maintain the target heading during
-   *                        teleop
-   * @param currentHeading  the current heading of the drivetrain
-   * @param leftDrive       all controllers on the left of the drivetrain
-   * @param rightDrive      all controllers on the right of the drivetrain
+   * teleop
+   * @param currentHeading the current heading of the drivetrain
+   * @param leftDrive all controllers on the left of the drivetrain
+   * @param rightDrive all controllers on the right of the drivetrain
    */
   public Drivetrain(Flowable<Boolean> teleHoldHeading, Flowable<Double> currentHeading,
-                    Flowable<Double> throttle, Flowable<Double> yaw,
-                    LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
+      Flowable<Double> throttle, Flowable<Double> yaw,
+      LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
     this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
@@ -81,7 +80,8 @@ public class Drivetrain implements Subsystem {
     return pidTerminator(error, tolerance, PID_TERMINATE_TIME, PID_TERMINATE_UNIT);
   }
 
-  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance, long delay, TimeUnit unit) {
+  private Flowable<?> pidTerminator(Flowable<Double> error, double tolerance, long delay,
+      TimeUnit unit) {
     return error.map(x -> abs(x) < tolerance)
         .distinctUntilChanged().debounce(delay, unit)
         .filter(x -> x);
@@ -93,17 +93,19 @@ public class Drivetrain implements Subsystem {
    * The command will abort after a certain period of time, to avoid
    * remaining stuck due to an imperfect turn.
    *
-   * @param angle     angle the robot should turn, positive is CW, negative is CCW
+   * @param angle angle the robot should turn, positive is CW, negative is CCW
    * @param tolerance the robot should attempt to remain within this error of the target
    */
   public Command turn(double angle, double tolerance) {
     Flowable<Double> targetHeading = currentHeading.map(y -> y + angle).take(1);
     // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-    Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).publish().autoConnect();
+    Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).publish()
+        .autoConnect();
     Flowable<?> terminator = pidTerminator(error, tolerance);
     return Command.just(x -> {
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
-      Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0), Flowable.just(0.0),
+      Flowable<? extends Terminator> terms = driveHoldHeading(Flowable.just(0.0),
+          Flowable.just(0.0),
           Flowable.just(true), targetHeading)
           // Makes sure the final terminator will stop the motors
           .addFinalTerminator(() -> {
@@ -122,16 +124,15 @@ public class Drivetrain implements Subsystem {
    * Drive the robot until a certain distance is reached,
    * while using the gyro to hold the current heading.
    *
-   * @param distance          the distance to drive forward in feet,
-   *                          (negative values drive backwards)
+   * @param distance the distance to drive forward in feet, (negative values drive backwards)
    * @param distanceTolerance the tolerance for distance error, which is based on encoder values;
-   *                          this error is based on encoder readings.
-   * @param angleTolerance    the tolerance for angle error in a sucessful PID loop;
-   *                          this error is based on gyro readings.
+   * this error is based on encoder readings.
+   * @param angleTolerance the tolerance for angle error in a sucessful PID loop; this error is
+   * based on gyro readings.
    */
   public Command driveDistance(double distance,
-                               double distanceTolerance,
-                               double angleTolerance) {
+      double distanceTolerance,
+      double angleTolerance) {
     // Get the current heading at the beginning
     Flowable<Double> targetHeading = currentHeading.take(1);
     ControllerEvent reset = Events.resetPosition(0);
@@ -144,11 +145,15 @@ public class Drivetrain implements Subsystem {
         .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D));
 
     // Construct closed-loop streams for angle / gyro based PID
-    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop().publish().autoConnect();
+    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
+        .onBackpressureDrop().publish().autoConnect();
     Flowable<Double> angleOutput = pidAngle(targetHeading);
 
-    Flowable<ControllerEvent> rightSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x + y).publish().autoConnect().onBackpressureDrop().map(limitWithin(-1.0, 1.0)).map(Events::power);
-    Flowable<ControllerEvent> leftSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x - y).publish().autoConnect().onBackpressureDrop()
+    Flowable<ControllerEvent> rightSource = combineLatest(distanceOutput, angleOutput,
+        (x, y) -> x + y).publish().autoConnect().onBackpressureDrop().map(limitWithin(-1.0, 1.0))
+        .map(Events::power);
+    Flowable<ControllerEvent> leftSource = combineLatest(distanceOutput, angleOutput,
+        (x, y) -> x - y).publish().autoConnect().onBackpressureDrop()
         .map(limitWithin(-1.0, 1.0)).map(x -> -x).map(Events::power);
     // Create commands for each motor
     Command right = Command.fromSubscription(() -> rightSource.subscribe(rightDrive));
@@ -157,7 +162,8 @@ public class Drivetrain implements Subsystem {
 
     Flowable<?> distanceTerminator = pidTerminator(distanceError,
         distanceTolerance / WHEEL_ROTATION_PER_ENCODER_ROTATION, 100, TimeUnit.MILLISECONDS);
-    Flowable<?> angleTerminator = pidTerminator(angleError, angleTolerance, 200, TimeUnit.MILLISECONDS);
+    Flowable<?> angleTerminator = pidTerminator(angleError, angleTolerance, 200,
+        TimeUnit.MILLISECONDS);
     // Chaining all the commands together
     return Command.fromAction(() -> {
       rightDrive.accept(reset);
@@ -178,14 +184,14 @@ public class Drivetrain implements Subsystem {
   /**
    * Drive the robot, and attempt to retain the desired heading with the gyro.
    *
-   * @param left          the ideal power of the left motors
-   * @param right         the ideal power of the right motors
-   * @param holdHeading   a flowable that represents whether or not the 'hold-heading' mode should
-   *                      be active.
+   * @param left the ideal power of the left motors
+   * @param right the ideal power of the right motors
+   * @param holdHeading a flowable that represents whether or not the 'hold-heading' mode should be
+   * active.
    * @param targetHeading the desired heading the drivetrain should obtain
    */
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
-                                  Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
+      Flowable<Boolean> holdHeading, Flowable<Double> targetHeading) {
     Flowable<Double> output = pidAngle(targetHeading);
     return Command.fromSubscription(() -> {
       return combineDisposable(
@@ -215,15 +221,16 @@ public class Drivetrain implements Subsystem {
    * Drive the robot, and attempt to retain the current heading with the gyro.
    * When hold-heading mode is activated, the target heading will become its current heading.
    *
-   * @param left        the ideal power of the left motors
-   * @param right       the ideal power of the right motors
+   * @param left the ideal power of the left motors
+   * @param right the ideal power of the right motors
    * @param holdHeading a flowable that represents whether or not the 'hold-heading' mode should be
-   *                    active.
+   * active.
    */
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
-                                  Flowable<Boolean> holdHeading) {
+      Flowable<Boolean> holdHeading) {
     return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
-        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).publish().autoConnect()));
+        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).publish()
+            .autoConnect()));
   }
 
   /**
@@ -255,26 +262,30 @@ public class Drivetrain implements Subsystem {
     }));
   }
 
-  public Command drivePathSegmentDrive(List<DrivePathSegment> trajectories) {
-
-    Flowable<DrivePathSegment> drivePath = Flowable.fromIterable(trajectories);
-    Flowable<Long> timer = Flowable.interval(50, TimeUnit.MILLISECONDS);
-    Flowable<DrivePathSegment> timedDrivePath = Flowable.zip(drivePath, timer, (x, y) -> x)
-    .take(trajectories.size());
+  public Command runMotionProfile(File file) {
+    Flowable<Pair<Double, Double>> velocities = read(file);
+    velocities.subscribe();
     return Command.fromSubscription(() ->
-    combineDisposable(
-    timedDrivePath.map(x -> x.getLeft().getVelocity()).subscribe(v -> leftDrive.runAtPower(v)),
-    timedDrivePath.map(x -> x.getRight().getVelocity()).subscribe(v -> leftDrive.runAtPower(v))));
+        velocities.subscribeOn(Schedulers.io()).subscribe(x -> {
+          leftDrive.runAtPower(x.left());
+          rightDrive.runAtPower(x.right());
+        }));
   }
 
-  /**
+  public Command autoProfileDrive() {
+    return runMotionProfile(new File(RobotMap.AUTO_PROFILE_PATH));
+  }
+
+  /**5
    * Drive the robot using the arcade-style joystick streams that were passed to the Drivetrain.
    * This is usually run during teleop.
    */
   public Command driveTeleop() {
     return driveHoldHeading(
-        combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-        combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish()
+            .autoConnect().onBackpressureDrop(),
+        combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish()
+            .autoConnect().onBackpressureDrop(),
         Flowable.just(false).concatWith(this.teleHoldHeading));
   }
 
