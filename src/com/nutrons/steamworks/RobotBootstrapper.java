@@ -177,6 +177,8 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
+    this.leftLeader.setVoltageRampRate(48);
+    this.rightLeader.setVoltageRampRate(48);
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
         //Flowable.never(),
         gyro.getGyroReadings().share(),
