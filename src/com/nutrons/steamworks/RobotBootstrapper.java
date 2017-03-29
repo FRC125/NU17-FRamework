@@ -14,23 +14,12 @@ import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
-import edu.wpi.cscore.CvSink;
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-import javafx.scene.Camera;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -176,6 +165,8 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
+    this.leftLeader.setVoltageRampRate(48);
+    this.rightLeader.setVoltageRampRate(48);
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
         //Flowable.never(),
         gyro.getGyroReadings().share(),
@@ -204,7 +195,6 @@ public class RobotBootstrapper extends Robot {
 
     this.autoSelector.addObject("boiler; turn left", hopperDrive(6.00, -90, 5.25));
     this.autoSelector.addObject("boiler; turn right", hopperDrive(6.00, 90, 5.25));
-
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
