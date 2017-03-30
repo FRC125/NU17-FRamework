@@ -25,8 +25,8 @@ public class FloorGearPlacer implements Subsystem {
     private final static double PLACE_TIMEOUT_TIME = 1.0; // seconds
 
     public FloorGearPlacer(Flowable<Boolean> placeButton,
-        Flowable<Boolean> intakeButton, LoopSpeedController intakeMotor,
-        LoopSpeedController wristMotor) {
+                           Flowable<Boolean> intakeButton, LoopSpeedController intakeMotor,
+                           LoopSpeedController wristMotor) {
         this.placeButton = placeButton;
         this.intakeButton = intakeButton;
         this.intakeMotor = intakeMotor;
@@ -44,13 +44,13 @@ public class FloorGearPlacer implements Subsystem {
         }).until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD)
             .then(Command.fromAction(() -> {
                 wristMotor.runAtPower(0.0);
-        })).until(() -> intakeMotor.getCurrent() > CURRENT_THRESHOLD)
+            })).until(() -> intakeMotor.getCurrent() > CURRENT_THRESHOLD)
             .then(Command.fromAction(() -> {
                 wristMotor.runAtPower(WRIST_ASCENT_SPEED);
-        })).until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD)
+            })).until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD)
             .then(Command.fromAction(() -> {
                 intakeMotor.runAtPower(INTAKE_IDLE_SPEED);
-        }));
+            }));
 
         /*
          * Brings the wrist down again, more slowly, onto the peg to place the gear.
