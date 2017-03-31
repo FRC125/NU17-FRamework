@@ -205,8 +205,8 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
-    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.75, -85, 5.25));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.75, 85, 5.25));
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.50, -85, 5.25));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.50, 85, 5.25));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
@@ -226,8 +226,8 @@ public class RobotBootstrapper extends Robot {
   private Command hopperDrive(double distance1, double angle, double distance2) {
     return
         Command.parallel(
-            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
-                .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            climbtake.pulse(true).delayFinish(300, TimeUnit.MILLISECONDS)
+                .then(climbtake.pulse(false).delayFinish(200, TimeUnit.MILLISECONDS)),
             Command.serial(drivetrain.driveDistance(distance1, 1, 10)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                 drivetrain.turn(angle, 10),
