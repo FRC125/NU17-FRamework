@@ -209,7 +209,7 @@ public class RobotBootstrapper extends Robot {
             .then(RobotBootstrapper.this.climbtake.pulse(true)
                 .delayFinish(500, TimeUnit.MILLISECONDS))
             .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-    SmartDashboard.putData("automeme5", this.autoSelector);
+    SmartDashboard.putData("automesdjme5", this.autoSelector);
     return sm;
   }
 
