@@ -150,7 +150,8 @@ public class RobotBootstrapper extends Robot {
             .map(x -> -100.0 * x));
     sm.registerSubsystem(shooter);
 
-    this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(), this.intakeMotor, this.wristMotor);
+    this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(),
+        this.driverPad.leftTrigger(), this.driverPad.rightTrigger(), this.intakeMotor, this.wristMotor);
     sm.registerSubsystem(this.floorGearPlacer);
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(),
@@ -223,6 +224,7 @@ public class RobotBootstrapper extends Robot {
                 drivetrain.turn(angle, 10),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, 1, 10)
