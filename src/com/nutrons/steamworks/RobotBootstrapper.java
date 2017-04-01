@@ -205,8 +205,8 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
-    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.50, -85, 5.25));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.50, 85, 5.25));
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.75, -85, 5.25));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.75, 85, 5.25));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
@@ -227,17 +227,18 @@ public class RobotBootstrapper extends Robot {
     return
         Command.parallel(
             climbtake.pulse(true).delayFinish(300, TimeUnit.MILLISECONDS)
-                .then(climbtake.pulse(false).delayFinish(200, TimeUnit.MILLISECONDS)),
+                //.then(climbtake.pulse(false).delayFinish(200, TimeUnit.MILLISECONDS))
+            ,
             Command.serial(drivetrain.driveDistance(distance1, 1, 10)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                 drivetrain.turn(angle, 10),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
-                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS)
+                    shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, 1, 10)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(4000, TimeUnit.MILLISECONDS)
+                    feeder.pulse().delayStart(4300, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS)
                 )
             )
