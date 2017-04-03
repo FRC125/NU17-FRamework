@@ -31,23 +31,23 @@ public class Shooter implements Subsystem {
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private final Flowable<Double> setpointHint;
-  //edu.wpi.first.wpilibj.Preferences prefs;
+  edu.wpi.first.wpilibj.Preferences prefs;
   private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
   private double latestSetpoint;
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
-    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 11.778 * x + 1798.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> .062067* x * x - 3.405*x + 2589.3).share();
   }
 
   public Command auto() {
-    Flowable<ControllerEvent> setpoint = Flowable.just(AUTO_SETPOINT).map(aimEvent);
+    Flowable<ControllerEvent> setpoint = variableSetpoint.take(1).map(aimEvent);
     return Command.fromSubscription(() ->
         setpoint.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
@@ -64,7 +64,7 @@ public class Shooter implements Subsystem {
 
   @Override
   public void registerSubscriptions() {
-    //this.prefs = Preferences.getInstance();
+    this.prefs = Preferences.getInstance();
     this.shooterController.setControlMode(ControlMode.MANUAL);
     this.shooterController.setReversedSensor(true);
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
