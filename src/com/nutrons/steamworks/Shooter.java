@@ -47,7 +47,10 @@ public class Shooter implements Subsystem {
   }
 
   public Command auto() {
-    Flowable<ControllerEvent> setpoint = variableSetpoint.take(1).map(aimEvent);
+    Flowable<ControllerEvent> setpoint =
+        //TODO: hard coded shooter setpoint
+        //Flowable.just(AUTO_SETPOINT).map(aimEvent);
+        variableSetpoint.take(1).map(aimEvent);
     return Command.fromSubscription(() ->
         setpoint.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
