@@ -6,7 +6,6 @@ import static com.nutrons.framework.util.FlowOperators.limitWithin;
 import static com.nutrons.framework.util.FlowOperators.pidLoop;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
-import static io.reactivex.Flowable.fromIterable;
 import static java.lang.Math.abs;
 
 import com.nutrons.framework.Subsystem;
@@ -15,14 +14,12 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
-import com.nutrons.framework.profiling.DrivePathSegment;
-import io.reactivex.Emitter;
+import com.nutrons.framework.profiling.MotionDeserialzer;
+import com.nutrons.framework.util.Pair;
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
 import io.reactivex.flowables.ConnectableFlowable;
-import io.reactivex.internal.operators.flowable.FlowableInterval;
 import io.reactivex.schedulers.Schedulers;
-import java.util.List;
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class Drivetrain implements Subsystem {
@@ -255,16 +252,15 @@ public class Drivetrain implements Subsystem {
     }));
   }
 
-  public Command drivePathSegmentDrive(List<DrivePathSegment> trajectories) {
+  public Command driveMotionProfiledAuto() {
+    return driveMotionProfile(MotionDeserialzer.read(new File("/home/lvuser/something-or-other")));
+  }
 
-    Flowable<DrivePathSegment> drivePath = Flowable.fromIterable(trajectories);
-    Flowable<Long> timer = Flowable.interval(50, TimeUnit.MILLISECONDS);
-    Flowable<DrivePathSegment> timedDrivePath = Flowable.zip(drivePath, timer, (x, y) -> x)
-    .take(trajectories.size());
-    return Command.fromSubscription(() ->
-    combineDisposable(
-    timedDrivePath.map(x -> x.getLeft().getVelocity()).subscribe(v -> leftDrive.runAtPower(v)),
-    timedDrivePath.map(x -> x.getRight().getVelocity()).subscribe(v -> leftDrive.runAtPower(v))));
+  public Command driveMotionProfile(Flowable<Pair<Double[], Double[]>> trajectories) {
+    return Command.fromAction(() -> {
+      this.leftDrive.runMotionProfile(trajectories.map(Pair::left));
+      this.rightDrive.runMotionProfile(trajectories.map(Pair::right));
+    });
   }
 
   /**
