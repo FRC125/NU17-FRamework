@@ -15,11 +15,11 @@ public class FloorGearPlacer implements Subsystem {
   private final static double CURRENT_THRESHOLD_INTAKE = 20.0;
   private final static double CURRENT_THRESHOLD_WRIST = 4.0;
   // counterclockwise
-  private final static double INTAKE_SPEED = -1.0; // collecting gear speed
+  private final static double INTAKE_SPEED = -0.3; // collecting gear speed
   private final static double ARM_DOWN_SPEED = 0.3;
   private final static double ARM_UP_SPEED = -0.3;
   private final static double WRIST_PLACE_SPEED = -0.3; // descending again to place the gear onto the peg
-  private final static double INTAKE_REVERSE_SPEED = 1.0; // expelling the gear onto the peg
+  private final static double INTAKE_REVERSE_SPEED = 0.3; // expelling the gear onto the peg
   private final static double PLACE_TIMEOUT_TIME = 1.0; // seconds
   private final Flowable<Boolean> placeButton;
   private final Flowable<Boolean> intakeButton;
