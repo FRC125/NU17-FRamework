@@ -203,7 +203,12 @@ public class RobotBootstrapper extends Robot {
           .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
           .then(RobotBootstrapper.this.climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS))
           .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-      put("boiler; turn ?; motion profiled",  drivetrain.runMotionProfile(new File(RobotMap.AUTO_PROFILE_PATH)));
+      put("boiler; turn ?; motion profiled",  drivetrain.runMotionProfile(new File("File Location"))
+      .then(Command.parallel(
+          turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+          shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
+          feeder.pulse().delayStart(2500, TimeUnit.MILLISECONDS).delayFinish(15000, TimeUnit.MILLISECONDS)
+      )));
     }};
     box = new RadioBox<>("automeme", autos, "intake");
     sm.registerSubsystem(box);
