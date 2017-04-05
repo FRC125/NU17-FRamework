@@ -3,7 +3,7 @@ package com.nutrons.steamworks;
 import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.limitWithin;
-import static com.nutrons.framework.util.FlowOperators.pidLoop;
+import static com.nutrons.framework.util.FlowOperators.pdLoop;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
 import static java.lang.Math.abs;
@@ -93,7 +93,7 @@ public class Drivetrain implements Subsystem {
   public Command turn(double angle, double tolerance) {
     Flowable<Double> targetHeading = currentHeading.map(y -> y + angle).take(1);
     // Sets the targetHeading to the sum of one currentHeading value, with angle added to it.
-    Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).publish().autoConnect();
+    Flowable<Double> error = currentHeading.withLatestFrom(targetHeading, (y, z) -> y - z).share();
     Flowable<?> terminator = pidTerminator(error, tolerance);
     return Command.just(x -> {
       // driveHoldHeading, with 0.0 ideal left and right speed, to turn in place.
@@ -135,14 +135,14 @@ public class Drivetrain implements Subsystem {
     Flowable<Double> distanceError = toFlow(() ->
         (rightDrive.position() + leftDrive.position()) / 2.0 - setpoint);
     Flowable<Double> distanceOutput = distanceError
-        .compose(pidLoop(DISTANCE_P, DISTANCE_BUFFER_LENGTH, DISTANCE_I, DISTANCE_D));
+        .compose(pdLoop(DISTANCE_P, DISTANCE_D));
 
     // Construct closed-loop streams for angle / gyro based PID
-    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).onBackpressureDrop().publish().autoConnect();
+    Flowable<Double> angleError = combineLatest(targetHeading, currentHeading, (x, y) -> x - y).share().onBackpressureDrop();
     Flowable<Double> angleOutput = pidAngle(targetHeading);
 
-    Flowable<ControllerEvent> rightSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x + y).publish().autoConnect().onBackpressureDrop().map(limitWithin(-1.0, 1.0)).map(Events::power);
-    Flowable<ControllerEvent> leftSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x - y).publish().autoConnect().onBackpressureDrop()
+    Flowable<ControllerEvent> rightSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x + y).share().onBackpressureDrop().map(limitWithin(-1.0, 1.0)).map(Events::power);
+    Flowable<ControllerEvent> leftSource = combineLatest(distanceOutput, angleOutput, (x, y) -> x - y).share().onBackpressureDrop()
         .map(limitWithin(-1.0, 1.0)).map(x -> -x).map(Events::power);
     // Create commands for each motor
     Command right = Command.fromSubscription(() -> rightSource.subscribe(rightDrive));
@@ -217,7 +217,7 @@ public class Drivetrain implements Subsystem {
   public Command driveHoldHeading(Flowable<Double> left, Flowable<Double> right,
                                   Flowable<Boolean> holdHeading) {
     return driveHoldHeading(left, right, holdHeading, Flowable.just(0.0).mergeWith(
-        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).publish().autoConnect()));
+        holdHeading.filter(x -> x).withLatestFrom(currentHeading, (x, y) -> y).share()));
   }
 
   /**
@@ -227,8 +227,7 @@ public class Drivetrain implements Subsystem {
    */
   private Flowable<Double> pidAngle(Flowable<Double> targetHeading) {
     return combineLatest(targetHeading, currentHeading, (x, y) -> x - y)
-        .onBackpressureDrop().publish().autoConnect()
-        .compose(pidLoop(ANGLE_P, ANGLE_BUFFER_LENGTH, ANGLE_I, ANGLE_D));
+        .onBackpressureDrop().share().compose(pdLoop(ANGLE_P, ANGLE_D));
   }
 
   /**
