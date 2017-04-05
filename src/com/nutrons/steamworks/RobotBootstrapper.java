@@ -116,6 +116,7 @@ public class RobotBootstrapper extends Robot {
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
+    //TODO: floor gear placer
     //this.intakeMotor = new Talon(RobotMap.INTAKE_MOTOR);
     //this.wristMotor = new Talon(RobotMap.WRIST_MOTOR);
 
@@ -156,6 +157,11 @@ public class RobotBootstrapper extends Robot {
     gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad
         .buttonX());
     sm.registerSubsystem(this.gearplacer);
+
+    //TODO: floor gear placer
+    /*this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(),
+        this.driverPad.leftTrigger(), this.driverPad.rightTrigger(), this.intakeMotor, this.wristMotor);
+    sm.registerSubsystem(this.floorGearPlacer);*/
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
@@ -215,6 +221,8 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addObject("forward gear",
         RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5)
             .endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
+            //TODO: floor gear placer
+            //.then(RobotBootstrapper.this.floorGearPlacer.pulse().delayFinish(1, TimeUnit.SECONDS)
             .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
             .then(RobotBootstrapper.this.climbtake.pulse(true)
                 .delayFinish(500, TimeUnit.MILLISECONDS))
@@ -233,6 +241,8 @@ public class RobotBootstrapper extends Robot {
                 drivetrain.turn(angle, 5),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    //TODO: floor gear placer
+                    //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, .25, 5)
