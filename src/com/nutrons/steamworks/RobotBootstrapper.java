@@ -234,8 +234,7 @@ public class RobotBootstrapper extends Robot {
   private Command hopperDrive(double distance1, double angle, double distance2) {
     return
         Command.parallel(
-            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
-                .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
+            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
             Command.serial(drivetrain.driveDistance(distance1, .25, 5)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                 drivetrain.turn(angle, 5),

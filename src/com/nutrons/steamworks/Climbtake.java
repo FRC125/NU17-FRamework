@@ -40,7 +40,7 @@ public class Climbtake implements Subsystem {
    */
   public Command pulse(boolean direction) {
     return Command.just(x -> {
-      double sign = direction ? -1.0 : 1.0;
+      double sign = true ? -1.0 : 1.0;
       climbtakeControllerLeft.runAtPower(sign * CLIMBTAKE_SPEED_LEFT);
       climbtakeControllerRight.runAtPower(sign * CLIMBTAKE_SPEED_RIGHT);
       return Flowable.just(() -> {
