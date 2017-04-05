@@ -2,6 +2,7 @@ package com.nutrons.steamworks;
 
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
+import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
@@ -24,84 +25,45 @@ public class FloorGearPlacer implements Subsystem {
   private final Flowable<Boolean> intakeButton;
   private final LoopSpeedController intakeMotor;
   private final LoopSpeedController wristMotor;
+  private final Flowable<Double> armUp;
+  private final Flowable<Double> armDown;
 
   public FloorGearPlacer(Flowable<Boolean> placeButton,
-                         Flowable<Boolean> intakeButton, LoopSpeedController intakeMotor,
-                         LoopSpeedController wristMotor) {
+      Flowable<Boolean> intakeButton,
+      Flowable<Double> armUp,
+      Flowable<Double> armDown,
+      LoopSpeedController intakeMotor,
+      LoopSpeedController wristMotor) {
     this.placeButton = placeButton;
     this.intakeButton = intakeButton;
     this.intakeMotor = intakeMotor;
     this.wristMotor = wristMotor;
+    this.armUp = armUp;
+    this.armDown = armDown;
   }
 
-  /*
-   * Brings the wrist down until it has touched the floor.
-   * Runs the intake motor until the gear has been collected,
-   * then brings the wrist back up with the gear.
-   */
-
-  Command intakeCommand() {
-    return Command.fromAction(() -> {
-      System.out.println("i: running intake and wrist");
-      intakeMotor.runAtPower(INTAKE_SPEED);
-      wristMotor.runAtPower(WRIST_DESCENT_SPEED);
-    })
-        .until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD_WRIST)
-        .then(Command.fromAction(() -> {
-          System.out.println("i: Hit thresh 1 stop wrist");
-          wristMotor.runAtPower(0.0);
-        }))
-
-        .until(() -> intakeMotor.getCurrent() > CURRENT_THRESHOLD_INTAKE)
-        .then(Command.fromAction(() -> {
-          System.out.println("i: ascend wrist");
-          wristMotor.runAtPower(WRIST_ASCENT_SPEED);
-        }))
-
-        .until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD_WRIST)
-        .addFinalTerminator(() -> {
-      wristMotor.runAtPower(0.0);
-      intakeMotor.runAtPower(0.0);
-        });
-  }
-
-
-  /*
-   * Brings the wrist down again, more slowly, onto the peg to place the gear.
-   */
-  Command placeCommand() {
-    return Command.fromAction(() -> {
-      wristMotor.runAtPower(WRIST_PLACE_SPEED);
-      intakeMotor.runAtPower(INTAKE_REVERSE_SPEED);
-      System.out.println("running wrist and intake");
-    }).until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD_WRIST)
-        .then(Command.fromAction(() -> {
-          System.out.println("hit current threshold 1 and running wrist");
-          wristMotor.runAtPower(WRIST_ASCENT_SPEED);
-        }).until(() -> wristMotor.getCurrent() > CURRENT_THRESHOLD_WRIST))
-        .then(Command.fromAction(() -> {
-          System.out.println("hit current threshold 2 and stopping");
-          intakeMotor.runAtPower(0.0);
-          wristMotor.runAtPower(0.0);
-        }))
-        .addFinalTerminator(() -> {
-      intakeMotor.runAtPower(0.0);
-      wristMotor.runAtPower(0.0);
-        });
+  public Command pulse(){
+    return Command.just(x -> {
+      wristMotor.runAtPower(1.0);
+      wristMotor.runAtPower(1.0);
+      return Flowable.just(() -> {
+        wristMotor.runAtPower(0);
+        wristMotor.runAtPower(0);
+      });
+    });
   }
 
   @Override
   public void registerSubscriptions() {
-    this.intakeButton.filter(x -> x).map(x -> intakeCommand().terminable(intakeButton.filter(y -> !y)).then(Command.fromAction(() -> {
-      wristMotor.runAtPower(0.0);
-      intakeMotor.runAtPower(0.0);
-    })))
-        .subscribe(x -> x.execute(true));
-    this.placeButton.filter(x -> x).map(x -> placeCommand().terminable(placeButton.filter(y -> !y)).then(Command.fromAction(() -> {
-      wristMotor.runAtPower(0.0);
-      intakeMotor.runAtPower(0.0);
-    }))).subscribe(x -> x.execute(true));
-    FlowOperators.toFlow(() -> this.intakeMotor.getCurrent()).subscribe(new WpiSmartDashboard().getTextFieldDouble("intake current"));
-    FlowOperators.toFlow(() -> this.wristMotor.getCurrent()).subscribe(new WpiSmartDashboard().getTextFieldDouble("wrist current"));
+    this.intakeButton.map(b -> b ? INTAKE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
+    this.placeButton.map(b -> b ? INTAKE_REVERSE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
+
+    this.armUp.map(x -> x > 0.9 ? true : false).distinctUntilChanged().map(x -> x ? Events.power(-1.0) : Events.power(0.0)).subscribe(wristMotor);
+    this.armDown.map(x -> x > 0.9 ? true : false).distinctUntilChanged().map(x -> x ? Events.power(1.0) : Events.power(0.0)).subscribe(wristMotor);
+
+    FlowOperators.toFlow(() -> this.intakeMotor.getCurrent())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("intake current"));
+    FlowOperators.toFlow(() -> this.wristMotor.getCurrent())
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("wrist current"));
   }
 }
