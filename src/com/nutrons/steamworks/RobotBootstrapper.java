@@ -218,14 +218,14 @@ public class RobotBootstrapper extends Robot {
         Command.parallel(
             climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS)
                 .then(climbtake.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
-            Command.serial(drivetrain.driveDistance(distance1, 1, 10)
+            Command.serial(drivetrain.driveDistance(distance1, .25, 5)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(angle, 10),
+                drivetrain.turn(angle, 5),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
-                    drivetrain.driveDistance(distance2, 1, 10)
+                    drivetrain.driveDistance(distance2, .25, 5)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                     feeder.pulse().delayStart(4000, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS)
