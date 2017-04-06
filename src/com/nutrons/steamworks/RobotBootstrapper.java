@@ -232,7 +232,9 @@ public class RobotBootstrapper extends Robot {
                     drivetrain.driveDistance(distance2, 0.5, 10)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                     feeder.pulseSafe().delayStart(3300, TimeUnit.MILLISECONDS)
-                        .delayFinish(15000, TimeUnit.MILLISECONDS)
+                        .delayFinish(15000, TimeUnit.MILLISECONDS),
+                    climbtake.pulse(true).delayStart(7300, TimeUnit.MILLISECONDS)
+                        .delayFinish(9300, TimeUnit.MILLISECONDS)
                 )
             )
         );

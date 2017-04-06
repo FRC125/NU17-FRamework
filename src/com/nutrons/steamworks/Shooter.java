@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.0721* x * x - 4.8639*x + 2673.8).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1976* x * x - 29.662*x + 3887.7).share();
   }
 
   public Command auto() {
@@ -59,8 +59,8 @@ public class Shooter implements Subsystem {
   public Command pulse() {
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
         .mergeWith(
-            //toFlow(() -> this.prefs.getDouble("shotst", 3000))
-            variableSetpoint.take(1)
+            toFlow(() -> this.prefs.getDouble("shotst", 3000))
+            //variableSetpoint.take(1)
         ), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
         combined.subscribe(shooterController))
