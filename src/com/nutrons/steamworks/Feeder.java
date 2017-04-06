@@ -15,6 +15,7 @@ public class Feeder implements Subsystem {
   private final LoopSpeedController rollerController;
   private final Flowable<Boolean> feederButton;
   private final Flowable<Boolean> agitatorButton;
+  private volatile boolean safe = false;
 
   /**
    * The feeder hopper used for primarily feeding balls to the shooter.
@@ -22,16 +23,24 @@ public class Feeder implements Subsystem {
    * @param feederController The controller responsible for the control of the feeder.
    * @param rollerController The controller responsible for the control of the roller.
    * @param feederButton     The button mapped to running the hopper system.
+   * @param safeToUse
    */
   public Feeder(LoopSpeedController feederController,
                 LoopSpeedController rollerController,
                 Flowable<Boolean> feederButton,
-                Flowable<Boolean> agitatorButton) {
+                Flowable<Boolean> agitatorButton,
+                Flowable<Boolean> safeToUse) {
     this.feederController = feederController;
     this.rollerController = rollerController;
     this.feederButton = feederButton;
     this.agitatorButton = agitatorButton;
+    safeToUse.subscribe(x -> this.safe = x);
   }
+
+  public Command pulseSafe() {
+    return Command.just(x -> this.safe ? pulse().execute(x) : Flowable.empty());
+  }
+
 
   /**
    * When started, feeder is engaged. When terminated, it is disengaged.
@@ -47,16 +56,16 @@ public class Feeder implements Subsystem {
     });
   }
 
-  public Command agitate(){
+  public Command agitate() {
     return Command.just(x -> {
       feederController.runAtPower(SPIN_POWER);
       rollerController.runAtPower(-ROLLER_POWER);
       return Flowable.just(() -> {
-              feederController.runAtPower(0);
-              rollerController.runAtPower(0);
-            });
-          });
-    }
+        feederController.runAtPower(0);
+        rollerController.runAtPower(0);
+      });
+    });
+  }
 
   @Override
   public void registerSubscriptions() {

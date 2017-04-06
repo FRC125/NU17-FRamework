@@ -14,23 +14,13 @@ import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
-import edu.wpi.cscore.CvSink;
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-import javafx.scene.Camera;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -168,7 +158,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(shooter);
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(),
-        this.operatorPad.buttonY());
+        this.operatorPad.buttonY(), toFlow(this.shooterMotor2::speed).map(x -> x > 500.0));
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
@@ -202,7 +192,7 @@ public class RobotBootstrapper extends Robot {
         this.turret.automagicMode().delayFinish(1000, TimeUnit.MILLISECONDS),
         this.shooter.pulse().delayStart(1000, TimeUnit.MILLISECONDS)
             .delayFinish(13, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(3000, TimeUnit.MILLISECONDS)
+        this.feeder.pulseSafe().delayStart(3000, TimeUnit.MILLISECONDS)
             .delayFinish(11, TimeUnit.SECONDS));
 
     this.autoSelector = new SendableChooser<>();
@@ -214,7 +204,7 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
-            RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS)
+            RobotBootstrapper.this.feeder.pulseSafe().delayStart(2, TimeUnit.SECONDS)
                 .delayFinish(10, TimeUnit.SECONDS)));
     this.autoSelector.addObject("forward gear",
         RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5)
@@ -241,7 +231,7 @@ public class RobotBootstrapper extends Robot {
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, .25, 5)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(4300, TimeUnit.MILLISECONDS)
+                    feeder.pulseSafe().delayStart(4300, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS)
                 )
             )

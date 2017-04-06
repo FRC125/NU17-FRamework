@@ -28,7 +28,7 @@ public class VirtualBootstrapper {
     Flowable never = Flowable.never();
     Drivetrain drivetrain = new Drivetrain(flip, Flowable.just(100.0), Flowable.just(1.0), Flowable.just(1.0), new VirtualSpeedController(), new VirtualSpeedController());
     Shooter shooter = new Shooter(new VirtualSpeedController(), flip, interval, interval);
-    Feeder feeder = new Feeder(vs, vs, flip, flip);
+    Feeder feeder = new Feeder(vs, vs, flip, flip, Flowable.empty());
     Turret turret = new Turret(Flowable.just(50.0), Flowable.just(10.0), vs, Flowable.just(0.0), Flowable.just(false));
     Observable.just(climb, drivetrain, shooter, feeder, turret).blockingSubscribe(sm::registerSubsystem);
     Command kpa40 = Command.parallel(turret.automagicMode().delayFinish(2, TimeUnit.SECONDS),
