@@ -15,11 +15,11 @@ public class FloorGearPlacer implements Subsystem {
   private final static double CURRENT_THRESHOLD_INTAKE = 20.0;
   private final static double CURRENT_THRESHOLD_WRIST = 4.0;
   // counterclockwise
-  private final static double INTAKE_SPEED = -0.8; // collecting gear speed
+  private final static double INTAKE_SPEED = -1.0; // collecting gear speed
   private final static double ARM_DOWN_SPEED = 0.3;
   private final static double ARM_UP_SPEED = -0.3;
   private final static double WRIST_PLACE_SPEED = -0.3; // descending again to place the gear onto the peg
-  private final static double INTAKE_REVERSE_SPEED = 0.8; // expelling the gear onto the peg
+  private final static double INTAKE_REVERSE_SPEED = 1.0; // expelling the gear onto the peg
   private final static double PLACE_TIMEOUT_TIME = 1.0; // seconds
   private final Flowable<Boolean> placeButton;
   private final Flowable<Boolean> intakeButton;
@@ -31,7 +31,7 @@ public class FloorGearPlacer implements Subsystem {
   public FloorGearPlacer(Flowable<Boolean> placeButton,
       Flowable<Boolean> intakeButton,
       Flowable<Double> armUp,
-      Flowable<Double> armDown,
+      Flowable<Boolean> armDown,
       LoopSpeedController intakeMotor,
       LoopSpeedController wristMotor) {
     this.placeButton = placeButton;
@@ -39,13 +39,13 @@ public class FloorGearPlacer implements Subsystem {
     this.intakeMotor = intakeMotor;
     this.wristMotor = wristMotor;
     this.armUp = armUp.map(x -> x > 0.9).distinctUntilChanged();
-    this.armDown = armDown.map(x -> x > 0.9).distinctUntilChanged();
+    this.armDown = armDown;
   }
 
   public Command pulse(){
     return Command.just(x -> {
-      wristMotor.runAtPower(1.0);
-      wristMotor.runAtPower(1.0);
+      wristMotor.runAtPower(-0.3);
+      wristMotor.runAtPower(-0.3);
       return Flowable.just(() -> {
         wristMotor.runAtPower(0);
         wristMotor.runAtPower(0);
@@ -59,7 +59,7 @@ public class FloorGearPlacer implements Subsystem {
       return Flowable.just(() -> {
         intakeMotor.runAtPower(0.0);
       });
-    });
+    }).endsWhen(intakeButton.filter(y -> !y), true);
   }
 
   public Command place(){
@@ -68,7 +68,7 @@ public class FloorGearPlacer implements Subsystem {
       return Flowable.just(() -> {
         intakeMotor.runAtPower(0.0);
       });
-    });
+    }).endsWhen(placeButton.filter(y -> !y), true);
   }
 
   public Command armUp(){
@@ -77,7 +77,7 @@ public class FloorGearPlacer implements Subsystem {
       return Flowable.just(() -> {
         wristMotor.runAtPower(0.0);
       });
-    }).delayFinish(200, TimeUnit.MILLISECONDS).endsWhen(armUp.filter(y -> !y), true);
+    }).delayFinish(500, TimeUnit.MILLISECONDS).endsWhen(armUp.filter(y -> !y), true);
   }
 
   public Command armDown(){
@@ -86,17 +86,17 @@ public class FloorGearPlacer implements Subsystem {
       return Flowable.just(() -> {
         wristMotor.runAtPower(0.0);
       });
-    }).delayFinish(200, TimeUnit.MILLISECONDS).endsWhen(armDown.filter(y -> !y), true);
+    }).delayFinish(500, TimeUnit.DAYS).endsWhen(armDown.filter(y -> !y), true);
   }
 
   @Override
   public void registerSubscriptions() {
-    //this.intakeButton.map(b -> b ? INTAKE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
-    //this.placeButton.map(b -> b ? INTAKE_REVERSE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
-    this.intakeButton.filter(x -> x).map(x -> intake().terminable(intakeButton.filter(y -> !y)))
+    this.intakeButton.map(b -> b ? INTAKE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
+    this.placeButton.map(b -> b ? INTAKE_REVERSE_SPEED : 0.0).map(Events::power).subscribe(intakeMotor);
+    /**this.intakeButton.filter(x -> x).map(x -> intake().terminable(intakeButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
     this.placeButton.filter(x -> x).map(x -> place().terminable(intakeButton.filter(y -> !y)))
-        .subscribe(x -> x.execute(true));
+        .subscribe(x -> x.execute(true));**/
     this.armUp.filter(x -> x).map(x -> armUp().terminable(armUp.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
     this.armDown.filter(x -> x).map(x -> armDown().terminable(armDown.filter(y -> !y)))

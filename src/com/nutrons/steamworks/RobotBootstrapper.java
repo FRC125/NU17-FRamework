@@ -116,12 +116,12 @@ public class RobotBootstrapper extends Robot {
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
-    this.intakeMotor = new Talon(RobotMap.INTAKE_MOTOR);
-    this.wristMotor = new Talon(RobotMap.WRIST_MOTOR);
+    //this.intakeMotor = new Talon(RobotMap.INTAKE_MOTOR);
+    //this.wristMotor = new Talon(RobotMap.WRIST_MOTOR);
 
     //Gear Placer Servos
-    //this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
-    //this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
+    this.servoLeft = new RevServo(RobotMap.GEAR_SERVO_RIGHT);
+    this.servoRight = new RevServo(RobotMap.GEAR_SERVO_LEFT);
 
 
     this.climberMotor1 = new Talon(RobotMap.CLIMBTAKE_MOTOR_1);
@@ -153,13 +153,13 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
 
-    /*gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad
+    gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad
         .buttonX());
-    sm.registerSubsystem(this.gearplacer);*/
+    sm.registerSubsystem(this.gearplacer);
 
-    this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonA(), this.driverPad.buttonX(),
-        this.driverPad.leftTrigger(), this.driverPad.rightTrigger(), this.intakeMotor, this.wristMotor);
-    sm.registerSubsystem(this.floorGearPlacer);
+    /**this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonX(), this.driverPad.buttonA(),
+        this.driverPad.rightTrigger(), this.driverPad.rightBumper(), this.intakeMotor, this.wristMotor);
+    sm.registerSubsystem(this.floorGearPlacer);**/
 
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
@@ -176,7 +176,7 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(turret);
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+        Flowable.never(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
@@ -219,11 +219,11 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addObject("forward gear",
         RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5)
             .endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-            .then(RobotBootstrapper.this.floorGearPlacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+            //.then(RobotBootstrapper.this.floorGearPlacer.pulse().delayFinish(1, TimeUnit.SECONDS))
             .then(RobotBootstrapper.this.climbtake.pulse(true)
                 .delayFinish(500, TimeUnit.MILLISECONDS))
             .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-    SmartDashboard.putData("automesdjme5", this.autoSelector);
+    SmartDashboard.putData("autos", this.autoSelector);
     return sm;
   }
 
@@ -236,7 +236,7 @@ public class RobotBootstrapper extends Robot {
                 drivetrain.turn(angle, 5),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
-                    floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
+                    //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, .25, 5)

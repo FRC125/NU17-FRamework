@@ -38,12 +38,12 @@ public class Shooter implements Subsystem {
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
-    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> .062067* x * x - 3.405*x + 2589.3).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> .062067* x * x - 3.405*x + 2599.3).share();
   }
 
   public Command auto() {
@@ -59,8 +59,8 @@ public class Shooter implements Subsystem {
   public Command pulse() {
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
         .mergeWith(
-            toFlow(() -> this.prefs.getDouble("shotst", 3000))
-            //variableSetpoint.take(1)
+            //toFlow(() -> this.prefs.getDouble("shotst", 3000))
+            variableSetpoint.take(1)
         ), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
         combined.subscribe(shooterController))
