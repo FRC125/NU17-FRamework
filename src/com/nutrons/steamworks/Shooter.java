@@ -38,12 +38,12 @@ public class Shooter implements Subsystem {
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
-    //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
+    this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> .062067* x * x - 3.405*x + 2599.3).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.0721* x * x - 4.8639*x + 2673.8).share();
   }
 
   public Command auto() {
