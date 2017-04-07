@@ -9,7 +9,6 @@ import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
-import com.nutrons.framework.util.FlowOperators;
 import edu.wpi.first.wpilibj.Preferences;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Consumer;
@@ -27,6 +26,7 @@ public class Shooter implements Subsystem {
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
   private static final double AUTO_SETPOINT = 2800;
+  private static final double SETPOINT_TOLERANCE = 100;
   private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1976* x * x - 29.662*x + 3887.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1863 * x * x - 27.133 * x + 3747.3).share();
   }
 
   public Command auto() {
@@ -80,10 +80,13 @@ public class Shooter implements Subsystem {
         .subscribe(x -> x.execute(true));
 
     /**toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
-        .onBackpressureDrop().map(x -> RobotBootstrapper.feeder.pulse().terminable(shooterButton.filter(y -> !y)))
-        .subscribe(x -> x.execute(true));**/
+     .onBackpressureDrop().map(x -> RobotBootstrapper.feeder.pulse().terminable(shooterButton.filter(y -> !y)))
+     .subscribe(x -> x.execute(true));**/
 
-    toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y).onBackpressureDrop()
-        .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
+    Flowable<Boolean> okToShoot = toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint,
+        (x, y) -> x + SETPOINT_TOLERANCE > y && x - SETPOINT_TOLERANCE < y && y > 500).onBackpressureDrop();
+    okToShoot.subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
+    Command feed = RobotBootstrapper.feeder.pulseSafe().terminable(shooterButton.filter(x -> !x));
+    okToShoot.withLatestFrom(shooterButton, (x,y) -> x && y).filter(x -> x).subscribe(x -> feed.execute(true));
   }
 }
