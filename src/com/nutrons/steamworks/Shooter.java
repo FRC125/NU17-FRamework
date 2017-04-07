@@ -59,8 +59,8 @@ public class Shooter implements Subsystem {
   public Command pulse() {
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
         .mergeWith(
-            toFlow(() -> this.prefs.getDouble("shotst", 3000))
-            //variableSetpoint.take(1)
+            //toFlow(() -> this.prefs.getDouble("shotst", 3000))
+            variableSetpoint.take(1)
         ), (x, y) -> x + y).map(aimEvent);
     return Command.fromSubscription(() ->
         combined.subscribe(shooterController))
