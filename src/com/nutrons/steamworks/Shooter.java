@@ -25,7 +25,7 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
-  private static final double AUTO_SETPOINT = 2800;
+  private static final double AUTO_SETPOINT = 2771.8;
   private static final double SETPOINT_TOLERANCE = 100;
   private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
@@ -43,7 +43,7 @@ public class Shooter implements Subsystem {
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1863 * x * x - 27.133 * x + 3747.3).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
   }
 
   public Command auto() {

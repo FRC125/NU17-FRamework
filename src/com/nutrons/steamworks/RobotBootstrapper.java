@@ -200,7 +200,7 @@ public class RobotBootstrapper extends Robot {
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
     this.autoSelector.addObject("boiler; turn left", hopperDrive(6.25, -85, 5.30));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.25, 85, 5.30));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.45, 85, 5.30));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
@@ -233,8 +233,8 @@ public class RobotBootstrapper extends Robot {
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                     feeder.pulseSafe().delayStart(3300, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS),
-                    climbtake.pulse(true).delayStart(7300, TimeUnit.MILLISECONDS)
-                        .delayFinish(9300, TimeUnit.MILLISECONDS)
+                    climbtake.pulse(true).delayStart(6300, TimeUnit.MILLISECONDS)
+                        .delayFinish(10300, TimeUnit.MILLISECONDS)
                 )
             )
         );
