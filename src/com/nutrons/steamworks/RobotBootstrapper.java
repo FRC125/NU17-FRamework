@@ -223,7 +223,8 @@ public class RobotBootstrapper extends Robot {
             climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
             Command.serial(drivetrain.driveDistance(distance1, 0.5, 10)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(angle, 10),
+                drivetrain.turn(angle, 10)
+                    .endsWhen(Flowable.timer(1000, TimeUnit.MILLISECONDS), true),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
                     //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),

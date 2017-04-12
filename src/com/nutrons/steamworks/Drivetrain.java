@@ -44,6 +44,7 @@ public class Drivetrain implements Subsystem {
   private final LoopSpeedController rightDrive;
   private final Flowable<Boolean> teleHoldHeading;
   private final ConnectableFlowable<Double> currentHeading;
+  private Flowable<Boolean> autoHoldHeading;
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -251,12 +252,14 @@ public class Drivetrain implements Subsystem {
   /**
    * Drive the robot using the arcade-style joystick streams that were passed to the Drivetrain.
    * This is usually run during teleop.
+   * If the l-r joystick is not in use, hold heading is automatically applied.
    */
   public Command driveTeleop() {
+    this.autoHoldHeading = this.yaw.map(x -> x == 0.0);
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-        Flowable.just(false).concatWith(this.teleHoldHeading));
+        Flowable.just(false).concatWith(this.teleHoldHeading).concatWith(this.autoHoldHeading));
   }
 
   @Override
