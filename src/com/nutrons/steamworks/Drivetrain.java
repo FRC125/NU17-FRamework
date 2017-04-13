@@ -259,7 +259,7 @@ public class Drivetrain implements Subsystem {
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-        Flowable.just(false).concatWith(this.teleHoldHeading).concatWith(this.autoHoldHeading));
+    Flowable.just(false).concatWith(this.autoHoldHeading));
     /*return driveHoldHeading(throttle, throttle, Flowable.just(true).mergeWith(Flowable.never()),
         this.currentHeading.take(1).concatWith(Flowable.interval(0, 100, TimeUnit.MILLISECONDS, Schedulers.io())
             .withLatestFrom(yaw, (x, y) -> y)).scan((x,y) -> x + y));*/
