@@ -14,23 +14,13 @@ import com.nutrons.framework.controllers.RevServo;
 import com.nutrons.framework.controllers.Talon;
 import com.nutrons.framework.inputs.CommonController;
 import com.nutrons.framework.inputs.HeadingGyro;
-import com.nutrons.framework.inputs.RadioBox;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
-import edu.wpi.cscore.CvSink;
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
-import javafx.scene.Camera;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RobotBootstrapper extends Robot {
@@ -157,6 +147,10 @@ public class RobotBootstrapper extends Robot {
         .buttonX());
     sm.registerSubsystem(this.gearplacer);
 
+    /**this.floorGearPlacer = new FloorGearPlacer(this.driverPad.buttonX(), this.driverPad.buttonA(),
+        this.driverPad.rightTrigger(), this.driverPad.rightBumper(), this.intakeMotor, this.wristMotor);
+    sm.registerSubsystem(this.floorGearPlacer);**/
+
     this.shooter = new Shooter(shooterMotor2, this.operatorPad.rightBumper(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()),
         this.operatorPad.rightStickY().map(FlowOperators.deadbandMap(-0.2, 0.2, 0))
@@ -164,15 +158,15 @@ public class RobotBootstrapper extends Robot {
     sm.registerSubsystem(shooter);
 
     this.feeder = new Feeder(spinFeederMotor, topFeederMotor, this.operatorPad.buttonB(),
-        this.operatorPad.buttonY());
+        this.operatorPad.buttonY(), toFlow(this.shooterMotor2::speed).map(x -> x > 500.0));
     sm.registerSubsystem(feeder);
     this.turret = new Turret(VisionProcessor.getInstance().getHorizAngleFlow(),
         toFlow(() -> VisionProcessor.getInstance().getDistance()), hoodMaster,
         this.operatorPad.leftStickX(), this.operatorPad.leftBumper());
-    sm.registerSubsystem(turret); //TODO: remove
+    sm.registerSubsystem(turret);
     this.driverPad.rightBumper().subscribe(System.out::println);
     sm.registerSubsystem(new Climbtake(climberMotor1, climberMotor2,
-        this.driverPad.rightBumper(), this.driverPad.leftBumper()));
+        Flowable.never(), this.driverPad.leftBumper()));
     leftLeader.setControlMode(ControlMode.MANUAL);
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
@@ -198,48 +192,50 @@ public class RobotBootstrapper extends Robot {
         this.turret.automagicMode().delayFinish(1000, TimeUnit.MILLISECONDS),
         this.shooter.pulse().delayStart(1000, TimeUnit.MILLISECONDS)
             .delayFinish(13, TimeUnit.SECONDS),
-        this.feeder.pulse().delayStart(3000, TimeUnit.MILLISECONDS)
+        this.feeder.pulseSafe().delayStart(3000, TimeUnit.MILLISECONDS)
             .delayFinish(11, TimeUnit.SECONDS));
 
     this.autoSelector = new SendableChooser<>();
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
-    this.autoSelector.addObject("boiler; turn left", hopperDrive(5.75, -85, 5.25));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(5.75, 85, 5.25));
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(6.25, -85, 5.30));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.45, 85, 5.30));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
-            RobotBootstrapper.this.feeder.pulse().delayStart(2, TimeUnit.SECONDS)
+            RobotBootstrapper.this.feeder.pulseSafe().delayStart(2, TimeUnit.SECONDS)
                 .delayFinish(10, TimeUnit.SECONDS)));
     this.autoSelector.addObject("forward gear",
         RobotBootstrapper.this.drivetrain.driveDistance(-8, 0.25, 5)
             .endsWhen(Flowable.timer(5, TimeUnit.SECONDS), true)
-            .then(RobotBootstrapper.this.gearplacer.pulse().delayFinish(1, TimeUnit.SECONDS))
+            //.then(RobotBootstrapper.this.floorGearPlacer.pulse().delayFinish(1, TimeUnit.SECONDS))
             .then(RobotBootstrapper.this.climbtake.pulse(true)
                 .delayFinish(500, TimeUnit.MILLISECONDS))
             .then(RobotBootstrapper.this.drivetrain.driveDistance(2, 0.25, 5)));
-    SmartDashboard.putData("automesdjme5", this.autoSelector);
+    SmartDashboard.putData("autos", this.autoSelector);
     return sm;
   }
 
   private Command hopperDrive(double distance1, double angle, double distance2) {
     return
         Command.parallel(
-            climbtake.pulse(true).delayFinish(300, TimeUnit.MILLISECONDS)
-                //.then(climbtake.pulse(false).delayFinish(200, TimeUnit.MILLISECONDS))
-            ,
-            Command.serial(drivetrain.driveDistance(distance1, 1, 10)
+            climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
+            Command.serial(drivetrain.driveDistance(distance1, 0.5, 10)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(angle, 10),
+                drivetrain.turn(angle, 10)
+                    .endsWhen(Flowable.timer(1000, TimeUnit.MILLISECONDS), true),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
-                    drivetrain.driveDistance(distance2, 1, 10)
+                    drivetrain.driveDistance(distance2, 0.5, 10)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                    feeder.pulse().delayStart(4300, TimeUnit.MILLISECONDS)
-                        .delayFinish(15000, TimeUnit.MILLISECONDS)
+                    feeder.pulseSafe().delayStart(3300, TimeUnit.MILLISECONDS)
+                        .delayFinish(15000, TimeUnit.MILLISECONDS),
+                    climbtake.pulse(true).delayStart(6300, TimeUnit.MILLISECONDS)
+                        .delayFinish(10300, TimeUnit.MILLISECONDS)
                 )
             )
         );

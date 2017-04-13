@@ -91,7 +91,7 @@ public class Controller implements Initializable {
     this.shooter = new Shooter(shooter1.controller(), Simulation.button(DEV_ID, "BTN_BASE2"), Flowable.just(0.0), Flowable.just(0.0));
     GUISpeedController roller = new GUISpeedController("roller");
     GUISpeedController spinner = new GUISpeedController("spinner");
-    this.feeder = new Feeder(roller.controller(), spinner.controller(), Simulation.button(DEV_ID, "BTN_TOP"), Simulation.button(DEV_ID, "BTN_TOP"));
+    this.feeder = new Feeder(roller.controller(), spinner.controller(), Simulation.button(DEV_ID, "BTN_TOP"), Simulation.button(DEV_ID, "BTN_TOP"), Flowable.empty());
     Slider turretAngle = new Slider(-45, 45, 0.0);
     Slider turretDistance = new Slider(0, 200, 0.0);
     GUISpeedController turretController = new GUISpeedController("turret");
@@ -105,16 +105,25 @@ public class Controller implements Initializable {
 
   void startCompetition() {
     sm.startCompetition(() ->
-        Command.parallel(climb.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS).then(climb.pulse(false).delayFinish(500, TimeUnit.MILLISECONDS)),
-            Command.serial(drivetrain.driveDistance(5.75, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(-85, 10),
+        Command.parallel(
+            climb.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
+            Command.serial(drivetrain.driveDistance(6.25, 0.2, 5)
+                    .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                drivetrain.turn(85, 5)
+                    .endsWhen(Flowable.timer(1000, TimeUnit.MILLISECONDS), true),
                 Command.parallel(
-                    turret.automagicMode().delayFinish(13000, TimeUnit.MILLISECONDS),
-                    shooter.auto().delayStart(1000, TimeUnit.MILLISECONDS).delayFinish(15, TimeUnit.SECONDS),
-                    drivetrain.driveDistance(5, 1, 10).endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true)
-                ),
-                feeder.pulse().delayFinish(15000, TimeUnit.MILLISECONDS)
+                    turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
+                    //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
+                    shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
+                        .delayFinish(15, TimeUnit.SECONDS),
+                    drivetrain.driveDistance(5.3, 0.2, 5)
+                        .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
+                    feeder.pulseSafe().delayStart(3300, TimeUnit.MILLISECONDS)
+                        .delayFinish(15000, TimeUnit.MILLISECONDS),
+                    climb.pulse(true).delayStart(6300, TimeUnit.MILLISECONDS)
+                        .delayFinish(10300, TimeUnit.MILLISECONDS)
+                )
             )
-        ), () -> drivetrain.driveTeleop().terminable(Flowable.never()));
+        ) , () -> drivetrain.driveTeleop().terminable(Flowable.never()));
   }
 }
