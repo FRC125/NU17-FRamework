@@ -259,7 +259,7 @@ public class Drivetrain implements Subsystem {
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-        Flowable.just(false).concatWith(this.teleHoldHeading).concatWith(this.autoHoldHeading));
+        Flowable.just(false).concatWith(this.autoHoldHeading));
   }
 
   @Override
