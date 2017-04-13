@@ -65,6 +65,7 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
+    this.autoHoldHeading = this.yaw.map(x -> x == 0.0);
   }
 
   /**
@@ -110,7 +111,7 @@ public class Drivetrain implements Subsystem {
           .execute(x);
       return terms;
       // Ensure we do not spend too long attempting to turn
-    }).endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true);
+    });
   }
 
   /**
@@ -255,7 +256,6 @@ public class Drivetrain implements Subsystem {
    * If the l-r joystick is not in use, hold heading is automatically applied.
    */
   public Command driveTeleop() {
-    this.autoHoldHeading = this.yaw.map(x -> x == 0.0);
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),

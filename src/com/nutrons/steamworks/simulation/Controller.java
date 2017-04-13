@@ -107,16 +107,16 @@ public class Controller implements Initializable {
     sm.startCompetition(() ->
         Command.parallel(
             climb.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
-            Command.serial(drivetrain.driveDistance(6.25, 0.5, 10)
+            Command.serial(drivetrain.driveDistance(6.25, 0.2, 5)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(85, 10)
+                drivetrain.turn(85, 5)
                     .endsWhen(Flowable.timer(1000, TimeUnit.MILLISECONDS), true),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
                     //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
                     shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
                         .delayFinish(15, TimeUnit.SECONDS),
-                    drivetrain.driveDistance(5.3, 0.5, 10)
+                    drivetrain.driveDistance(5.3, 0.2, 5)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
                     feeder.pulseSafe().delayStart(3300, TimeUnit.MILLISECONDS)
                         .delayFinish(15000, TimeUnit.MILLISECONDS),
