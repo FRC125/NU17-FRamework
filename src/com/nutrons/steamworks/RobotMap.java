@@ -15,10 +15,10 @@ public class RobotMap {
   public static final int HOOD_MOTOR_A = 5000;
 
   // Ports of Drivetrain
-  public static final int FRONT_LEFT = 1000;
-  public static final int BACK_LEFT = 20000;
-  public static final int FRONT_RIGHT = 14000;
-  public static final int BACK_RIGHT = 15000;
+  public static final int FRONT_LEFT = 1;
+  public static final int BACK_LEFT = 2;
+  public static final int FRONT_RIGHT = 4;
+  public static final int BACK_RIGHT = 3;
 
   // Ports of Floor Gear Placer TODO: Fix Port to match Talons on placer
   public static final int WRIST_MOTOR = 19;
