@@ -31,10 +31,12 @@ public class Shooter implements Subsystem {
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private final Flowable<Double> setpointHint;
+  private final Flowable<Double> averagedSetpoint;
   //edu.wpi.first.wpilibj.Preferences prefs;
   private Flowable<Double> variableSetpoint;
   private Flowable<Double> distance;
   private double latestSetpoint;
+  private Flowable<Double> movingAverageDist;
 
 
   public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
@@ -44,12 +46,21 @@ public class Shooter implements Subsystem {
     this.distance = distance;
     this.setpointHint = setpointHint;
     this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
+    this.movingAverageDist = this.distance.buffer(5, 1).map(x -> {
+      double sum = 0.0;
+      for(Double a : x){
+        sum += a;
+      }
+      return sum;
+    });
+    this.averagedSetpoint = this.movingAverageDist.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
   }
 
   public Command auto() {
     Flowable<ControllerEvent> setpoint =
         //TODO: hard coded shooter setpoint
         //Flowable.just(AUTO_SETPOINT).map(aimEvent);
+        //this.averagedSetpoint.map(aimEvent);
         variableSetpoint.take(1).map(aimEvent);
     return Command.fromSubscription(() ->
         setpoint.subscribe(shooterController))
