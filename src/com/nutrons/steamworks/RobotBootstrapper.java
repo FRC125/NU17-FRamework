@@ -141,7 +141,7 @@ public class RobotBootstrapper extends Robot {
     StreamManager sm = new StreamManager(this);
 
     sm.registerSubsystem(this.driverPad);
-    sm.registerSubsystem(this.operatorPad);
+  //  sm.registerSubsystem(this.operatorPad);
 
     gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad
         .buttonX());

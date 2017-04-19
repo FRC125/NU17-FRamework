@@ -4,6 +4,7 @@ import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.limitWithin;
 import static com.nutrons.framework.util.FlowOperators.pdLoop;
+import static com.nutrons.framework.util.FlowOperators.printId;
 import static com.nutrons.framework.util.FlowOperators.toFlow;
 import static io.reactivex.Flowable.combineLatest;
 import static java.lang.Math.abs;
@@ -14,6 +15,7 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
@@ -65,7 +67,7 @@ public class Drivetrain implements Subsystem {
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
-    this.autoHoldHeading = this.yaw.map(x -> x == 0.0);
+    this.autoHoldHeading = this.yaw.map(x -> x == 0.0).distinctUntilChanged().map(FlowOperators::printId);
   }
 
   /**
