@@ -123,13 +123,18 @@ public class RobotBootstrapper extends Robot {
     // Drivetrain Motors
     this.leftLeader = new Talon(RobotMap.BACK_LEFT);
     this.leftLeader.setControlMode(ControlMode.MANUAL);
-    this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
-    this.leftLeader.setReversedSensor(true);
+    this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+
     this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
+    this.leftLeader.setOutputFlipped(false); //TODO: REMOVE FOR EVENT HORIZON
+    this.leftLeader.setReversedSensor(false); //TODO: MAKE TRUE FOR EVENT HORIZON =^-^=
 
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
-    this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
+    this.rightLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
+    this.rightLeader.setOutputFlipped(false); //TODO: MAKE TRUE FOR EVENT HORIZON =^-^=
+
+    this.rightLeader.setReversedSensor(false); //TODO: MAKE FALSE FOR EVENT HORIZON
     this.rightFollower = new Talon(RobotMap.FRONT_RIGHT, this.rightLeader);
 
     VisionServer visionServer = VisionServer.getInstance();
@@ -197,6 +202,7 @@ public class RobotBootstrapper extends Robot {
             .delayFinish(11, TimeUnit.SECONDS)**/);
 
     this.autoSelector = new SendableChooser<>();
+    this.autoSelector.addObject("asdfasdfasdf", this.drivetrain.driveMotionProfiledAuto().terminable(Flowable.never()));
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 

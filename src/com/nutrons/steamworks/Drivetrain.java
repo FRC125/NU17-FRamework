@@ -200,7 +200,7 @@ public class Drivetrain implements Subsystem {
               .subscribeOn(Schedulers.computation())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
-              .map(x -> Events.power(-x))
+              .map(x -> Events.power(x)) // TODO: FLIP X ON EVENT HORIZON
               .subscribe(rightDrive));
     })
         // Stop motors afterwards
@@ -259,8 +259,8 @@ public class Drivetrain implements Subsystem {
 
   public Command driveMotionProfile(Flowable<Pair<Double[], Double[]>> trajectories) {
     return Command.fromAction(() -> {
-      this.leftDrive.runMotionProfile(trajectories.map(Pair::left));
-      this.rightDrive.runMotionProfile(trajectories.map(Pair::right));
+      this.leftDrive.runMotionProfile(trajectories.map(Pair::left).map(x -> new Double[]{x[0] / FEET_PER_ENCODER_ROTATION, x[1] / FEET_PER_ENCODER_ROTATION}));
+      this.rightDrive.runMotionProfile(trajectories.map(Pair::right).map(x -> new Double[]{x[0] / FEET_PER_ENCODER_ROTATION, x[1] / FEET_PER_ENCODER_ROTATION}));
     });
   }
 
