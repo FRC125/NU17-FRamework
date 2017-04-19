@@ -39,7 +39,7 @@ public class Drivetrain implements Subsystem {
   // Time required to spend within the PID tolerance for the PID loop to terminate
   private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
   private static final long PID_TERMINATE_TIME = 500;
-  private static final double DEADBAND = 0.3;
+  private static final double DEADBAND = 0.05;
   private final Flowable<Double> throttle;
   private final Flowable<Double> yaw;
   private final LoopSpeedController leftDrive;
@@ -62,8 +62,9 @@ public class Drivetrain implements Subsystem {
                     LoopSpeedController leftDrive, LoopSpeedController rightDrive) {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
-    this.throttle = throttle.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
-    this.yaw = yaw.map(deadbandMap(-DEADBAND, DEADBAND, 0.0)).onBackpressureDrop();
+
+    this.throttle = throttle.map(FlowOperators.deadbandAssign(DEADBAND, 2)).onBackpressureDrop();
+    this.yaw = yaw.map(FlowOperators.deadbandAssign(DEADBAND, 1.5)).onBackpressureDrop();
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
