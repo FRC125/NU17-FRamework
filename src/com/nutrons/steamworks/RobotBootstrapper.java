@@ -125,6 +125,7 @@ public class RobotBootstrapper extends Robot {
     this.leftLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute);
     this.leftLeader.setReversedSensor(true);
+
     this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
 
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
@@ -139,9 +140,10 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
+    FlowOperators.toFlow(() -> this.gyro.getAngle()).subscribe(new WpiSmartDashboard().getTextFieldDouble("gyrosmyro"));
 
     sm.registerSubsystem(this.driverPad);
-  //  sm.registerSubsystem(this.operatorPad);
+    sm.registerSubsystem(this.operatorPad);
 
     gearplacer = new Gearplacer(this.servoLeft, this.servoRight, this.driverPad
         .buttonX());
@@ -196,6 +198,7 @@ public class RobotBootstrapper extends Robot {
             .delayFinish(11, TimeUnit.SECONDS));
 
     this.autoSelector = new SendableChooser<>();
+    this.autoSelector.addObject("asdfasdfasdf", this.drivetrain.driveMotionProfiledAuto().terminable(Flowable.never()));
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 

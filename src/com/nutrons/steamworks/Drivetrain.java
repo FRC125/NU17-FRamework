@@ -15,10 +15,13 @@ import com.nutrons.framework.commands.Terminator;
 import com.nutrons.framework.controllers.ControllerEvent;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.profiling.MotionDeserialzer;
 import com.nutrons.framework.util.FlowOperators;
+import com.nutrons.framework.util.Pair;
 import io.reactivex.Flowable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class Drivetrain implements Subsystem {
@@ -253,6 +256,17 @@ public class Drivetrain implements Subsystem {
     }));
   }
 
+  public Command driveMotionProfiledAuto() {
+    return driveMotionProfile(MotionDeserialzer.read(new File("/home/lvuser/something-or-other")));
+  }
+
+  public Command driveMotionProfile(Flowable<Pair<Double[], Double[]>> trajectories) {
+    return Command.fromAction(() -> {
+      this.leftDrive.runMotionProfile(trajectories.map(Pair::left).map(x -> new Double[]{-x[0] / FEET_PER_ENCODER_ROTATION, -x[1] / FEET_PER_ENCODER_ROTATION}));
+      this.rightDrive.runMotionProfile(trajectories.map(Pair::right).map(x -> new Double[]{x[0] / FEET_PER_ENCODER_ROTATION, x[1] / FEET_PER_ENCODER_ROTATION}));
+    });
+  }
+
   /**
    * Drive the robot using the arcade-style joystick streams that were passed to the Drivetrain.
    * This is usually run during teleop.
@@ -262,10 +276,10 @@ public class Drivetrain implements Subsystem {
     return driveHoldHeading(
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
-    Flowable.just(false).concatWith(this.autoHoldHeading));
+    Flowable.just(false).concatWith(this.autoHoldHeading)); //drive with always holding heading
     /*return driveHoldHeading(throttle, throttle, Flowable.just(true).mergeWith(Flowable.never()),
         this.currentHeading.take(1).concatWith(Flowable.interval(0, 100, TimeUnit.MILLISECONDS, Schedulers.io())
-            .withLatestFrom(yaw, (x, y) -> y)).scan((x,y) -> x + y));*/
+            .withLatestFrom(yaw, (x, y) -> y)).scan((x,y) -> x + y));*/ //drive with changing hold heading setpoint
   }
 
   @Override
