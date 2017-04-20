@@ -127,7 +127,7 @@ public class RobotBootstrapper extends Robot {
 
     this.leftFollower = new Talon(RobotMap.FRONT_LEFT, this.leftLeader);
     this.leftLeader.setOutputFlipped(false); //TODO: REMOVE FOR EVENT HORIZON
-    this.leftLeader.setReversedSensor(false); //TODO: MAKE TRUE FOR EVENT HORIZON =^-^=
+    this.leftLeader.setReversedSensor(true); //TODO: MAKE TRUE FOR EVENT HORIZON =^-^=
 
     this.rightLeader = new Talon(RobotMap.BACK_RIGHT);
     this.rightLeader.setControlMode(ControlMode.MANUAL);
