@@ -4,6 +4,8 @@ import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.controllers.Tuneable;
+import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
 
 public class Climbtake implements Subsystem {
@@ -14,6 +16,8 @@ public class Climbtake implements Subsystem {
   private final LoopSpeedController climbtakeControllerRight;
   private final Flowable<Boolean> forward;
   private final Flowable<Boolean> reverse;
+  private Tuneable climbMotorLeft = new Tuneable("climbMotorLeft", CLIMBTAKE_SPEED_LEFT);
+  private Tuneable climbMotorRight = new Tuneable("climbrMotorRight", CLIMBTAKE_SPEED_RIGHT);
 
   /**
    * Climber and Intake subsystem, used for boarding the airship and intaking fuel.
@@ -65,6 +69,8 @@ public class Climbtake implements Subsystem {
     reverse.map(b -> b ? -CLIMBTAKE_SPEED_RIGHT : 0.0)
         .map(Events::power)
         .subscribe(climbtakeControllerRight);
+    FlowOperators.toFlow(climbMotorLeft::get).subscribe(System.out::println);
+    FlowOperators.toFlow(climbMotorRight::get).subscribe(System.out::println);
   }
 }
 

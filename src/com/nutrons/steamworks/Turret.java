@@ -3,6 +3,7 @@ package com.nutrons.steamworks;
 import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.Talon;
+import com.nutrons.framework.controllers.TuneablePID;
 import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import com.nutrons.framework.util.FlowOperators;
 import io.reactivex.Flowable;
@@ -20,6 +21,7 @@ public class Turret implements Subsystem {
   private final Flowable<Boolean> revLim;
   private final Flowable<Boolean> fwdLim;
   private final Flowable<Double> joyControl; //TODO: Remoove
+  private TuneablePID turretPID = new TuneablePID("turret");
 
   /**
    * The Turret System that is used for aiming our shooter.
@@ -68,5 +70,6 @@ public class Turret implements Subsystem {
     this.revLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("revLim"));
     this.fwdLim.subscribe(new WpiSmartDashboard().getTextFieldBoolean("fwdLim"));
     setpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("setpoint"));
+    FlowOperators.toFlow(turretPID::getPID).subscribe(System.out::println);
   }
 }
