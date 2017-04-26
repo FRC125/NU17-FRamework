@@ -140,7 +140,7 @@ public class RobotBootstrapper extends Robot {
   @Override
   protected StreamManager provideStreamManager() {
     StreamManager sm = new StreamManager(this);
-    FlowOperators.toFlow(() -> this.gyro.getAngle()).subscribe(new WpiSmartDashboard().getTextFieldDouble("gyrosmyro"));
+    //FlowOperators.toFlow(() -> this.gyro.getAngle()).subscribe(new WpiSmartDashboard().getTextFieldDouble("gyrosmyro"));
 
     sm.registerSubsystem(this.driverPad);
     sm.registerSubsystem(this.operatorPad);
@@ -198,7 +198,7 @@ public class RobotBootstrapper extends Robot {
             .delayFinish(11, TimeUnit.SECONDS));
 
     this.autoSelector = new SendableChooser<>();
-    this.autoSelector.addObject("asdfasdfasdf", this.drivetrain.driveMotionProfiledAuto().terminable(Flowable.never()));
+   // this.autoSelector.addObject("asdfasdfasdf", this.drivetrain.driveMotionProfiledAuto().terminable(Flowable.never()));
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
