@@ -38,6 +38,7 @@ public class Drivetrain implements Subsystem {
   private static final double DISTANCE_P = 0.08;
   private static final double DISTANCE_I = 0.0;
   private static final double DISTANCE_D = 0.0;
+  private static final double TURN_MODIFIER = 10.0;
   private static final int DISTANCE_BUFFER_LENGTH = 5;
   // Time required to spend within the PID tolerance for the PID loop to terminate
   private static final TimeUnit PID_TERMINATE_UNIT = TimeUnit.MILLISECONDS;
@@ -66,12 +67,19 @@ public class Drivetrain implements Subsystem {
     this.currentHeading = currentHeading.publish();
     this.currentHeading.connect();
 
-    this.throttle = throttle.map(FlowOperators.deadbandAssign(DEADBAND, 2)).onBackpressureDrop();
-    this.yaw = yaw.map(FlowOperators.deadbandAssign(DEADBAND, 1.5)).onBackpressureDrop();
+    this.throttle = throttle.map(FlowOperators.deadbandMap(-DEADBAND, DEADBAND, 0.0))
+        .map(FlowOperators.deadbandMap(DEADBAND, 0.2, 0.2))
+        .map(FlowOperators.deadbandMap(-0.2, -DEADBAND, -0.2))
+        .onBackpressureDrop();//.map(FlowOperators.deadbandAssign(DEADBAND, 1)).onBackpressureDrop();
+    this.yaw = yaw.map(FlowOperators.deadbandMap(-DEADBAND, DEADBAND, 0.0))
+        .map(FlowOperators.deadbandMap(DEADBAND, 0.4, 0.4))
+        .map(FlowOperators.deadbandMap(-0.4, -DEADBAND, -0.4))
+        .onBackpressureDrop();//.map(FlowOperators.deadbandAssign(DEADBAND, 1)).onBackpressureDrop();
     this.leftDrive = leftDrive;
     this.rightDrive = rightDrive;
     this.teleHoldHeading = teleHoldHeading;
-    this.autoHoldHeading = this.yaw.map(x -> x == 0.0).distinctUntilChanged().map(FlowOperators::printId);
+    this.autoHoldHeading = this.yaw.map(x -> x == 0.0).distinctUntilChanged().switchMap(x ->
+        x ? Flowable.timer(450, TimeUnit.MILLISECONDS).map(y -> true) : Flowable.just(x)).map(FlowOperators::printId);
   }
 
   /**
@@ -203,6 +211,7 @@ public class Drivetrain implements Subsystem {
               .subscribeOn(Schedulers.computation())
               .onBackpressureDrop()
               .map(limitWithin(-1.0, 1.0))
+              .map(FlowOperators::printId)
               .map(x -> Events.power(-x))
               .subscribe(rightDrive));
     })
@@ -277,9 +286,9 @@ public class Drivetrain implements Subsystem {
         combineLatest(throttle, yaw, (x, y) -> x + y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
         combineLatest(throttle, yaw, (x, y) -> x - y).map(x -> Math.abs(x) * x).publish().autoConnect().onBackpressureDrop(),
     Flowable.just(false).concatWith(this.autoHoldHeading)); //drive with always holding heading
-    /*return driveHoldHeading(throttle, throttle, Flowable.just(true).mergeWith(Flowable.never()),
+    /**return driveHoldHeading(throttle, throttle, Flowable.just(true).mergeWith(Flowable.never()),
         this.currentHeading.take(1).concatWith(Flowable.interval(0, 100, TimeUnit.MILLISECONDS, Schedulers.io())
-            .withLatestFrom(yaw, (x, y) -> y)).scan((x,y) -> x + y));*/ //drive with changing hold heading setpoint
+            .withLatestFrom(yaw, (x, y) -> y)).scan((x,y) -> x + TURN_MODIFIER*y));**/ //drive with changing hold heading setpoint
   }
 
   @Override

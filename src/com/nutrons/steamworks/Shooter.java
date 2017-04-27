@@ -25,7 +25,7 @@ public class Shooter implements Subsystem {
       .combine(Events.setpoint(0), Events.power(0));
   private static final Function<Double, ControllerEvent> aimEvent = x ->
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
-  private static final double AUTO_SETPOINT = 2771.8;
+  private static final double AUTO_SETPOINT = 2750;
   private static final double SETPOINT_TOLERANCE = 100;
   private static double SETPOINT = 3080.0;
   private final LoopSpeedController shooterController;
@@ -46,12 +46,12 @@ public class Shooter implements Subsystem {
     this.distance = distance;
     this.setpointHint = setpointHint;
     this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
-    this.movingAverageDist = this.distance.buffer(5, 1).map(x -> {
+    this.movingAverageDist = this.distance.filter(x -> x != 0.0).buffer(3, 1).map(x -> {
       double sum = 0.0;
       for(Double a : x){
         sum += a;
       }
-      return sum;
+      return sum / 3;
     });
     this.averagedSetpoint = this.movingAverageDist.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
   }
@@ -60,8 +60,8 @@ public class Shooter implements Subsystem {
     Flowable<ControllerEvent> setpoint =
         //TODO: hard coded shooter setpoint
         //Flowable.just(AUTO_SETPOINT).map(aimEvent);
-        //this.averagedSetpoint.map(aimEvent);
-        variableSetpoint.take(1).map(aimEvent);
+        this.averagedSetpoint.map(aimEvent);
+        //variableSetpoint.take(1).map(aimEvent);
     return Command.fromSubscription(() ->
         setpoint.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
@@ -87,6 +87,7 @@ public class Shooter implements Subsystem {
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
     this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
+    this.averagedSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("averaged setpoint"));
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
 

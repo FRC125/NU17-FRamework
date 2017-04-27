@@ -173,8 +173,8 @@ public class RobotBootstrapper extends Robot {
     rightLeader.setControlMode(ControlMode.MANUAL);
     this.leftLeader.accept(Events.resetPosition(0.0));
     this.rightLeader.accept(Events.resetPosition(0.0));
-    this.leftLeader.setVoltageRampRate(80); //48
-    this.rightLeader.setVoltageRampRate(80); //48
+    this.leftLeader.setVoltageRampRate(48); //80
+    this.rightLeader.setVoltageRampRate(48); //80
     this.drivetrain = new Drivetrain(driverPad.buttonB(),
         //Flowable.never(),
         gyro.getGyroReadings().share(),
@@ -203,7 +203,7 @@ public class RobotBootstrapper extends Robot {
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
     this.autoSelector.addObject("boiler; turn left", hopperDrive(6.25, -85, 5.30));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.45, 85, 5.30));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.25, 85, 5.30));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
@@ -226,12 +226,12 @@ public class RobotBootstrapper extends Robot {
             climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS),
             Command.serial(drivetrain.driveDistance(distance1, 0.5, 10)
                     .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
-                drivetrain.turn(angle, 10)
-                    .endsWhen(Flowable.timer(1000, TimeUnit.MILLISECONDS), true),
+                drivetrain.turn(angle, 10),
+                    //.endsWhen(Flowable.timer(1500, TimeUnit.MILLISECONDS), true),
                 Command.parallel(
                     turret.automagicMode().delayFinish(15000, TimeUnit.MILLISECONDS),
                     //floorGearPlacer.pulse().delayFinish(250, TimeUnit.MILLISECONDS),
-                    shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS)
+                    shooter.auto().delayStart(1500, TimeUnit.MILLISECONDS) //1500
                         .delayFinish(15, TimeUnit.SECONDS),
                     drivetrain.driveDistance(distance2, 0.5, 10)
                         .endsWhen(Flowable.timer(1300, TimeUnit.MILLISECONDS), true),
