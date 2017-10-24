@@ -1,5 +1,6 @@
 package com.nutrons.steamworks;
 
+import com.nutrons.steamworks.TrapezoidalMotionProfiling.*;
 import static com.nutrons.framework.util.FlowOperators.combineDisposable;
 import static com.nutrons.framework.util.FlowOperators.deadbandMap;
 import static com.nutrons.framework.util.FlowOperators.limitWithin;
@@ -30,9 +31,9 @@ public class Drivetrain implements Subsystem {
   private static final double FEET_PER_ENCODER_ROTATION =
       FEET_PER_WHEEL_ROTATION * WHEEL_ROTATION_PER_ENCODER_ROTATION;
   // PID for turning to an angle based on the gyro
-  private static final double ANGLE_P = 0.09;
+  private static final double ANGLE_P = 0.07; // 0.09
   private static final double ANGLE_I = 0.0;
-  private static final double ANGLE_D = 0.035;
+  private static final double ANGLE_D = 0.02; // 0.035
   private static final int ANGLE_BUFFER_LENGTH = 5;
   // PID for distance driving based on encoders
   private static final double DISTANCE_P = 0.08;
@@ -51,6 +52,12 @@ public class Drivetrain implements Subsystem {
   private final Flowable<Boolean> teleHoldHeading;
   private final ConnectableFlowable<Double> currentHeading;
   private Flowable<Boolean> autoHoldHeading;
+  private static final double kp = 0.0;
+  private static final double kd = 0.0;
+  private static final double ka = 0.0;
+  private static final double kv = 0.0;
+  private final Path testProfile;
+  private final ProfileDeserializer profiler = new ProfileDeserializer();
 
   /**
    * A drivetrain which uses Arcade Drive.
@@ -80,6 +87,39 @@ public class Drivetrain implements Subsystem {
     this.teleHoldHeading = teleHoldHeading;
     this.autoHoldHeading = this.yaw.map(x -> x == 0.0).distinctUntilChanged().switchMap(x ->
         x ? Flowable.timer(450, TimeUnit.MILLISECONDS).map(y -> true) : Flowable.just(x)).map(FlowOperators::printId);
+    this.testProfile = profiler.deserialize("PLACEHOLDER");
+  }
+
+  public void followProfile(Path profile) {
+    double leftStartPos = leftDrive.position();
+    double rightStartPos = rightDrive.position();
+    double lastErrorLeft = 0.0;
+    double lastErrorRight = 0.0;
+    Trajectory left = profile.getLeftTrajectory();
+    Trajectory right = profile.getRightTrajectory();
+    int size = left.getNumSegments();
+    double leftError;
+    double rightError;
+    int currentSegment = 0;
+    if(currentSegment < size) {
+      Trajectory.Segment lSeg = left.segments[currentSegment];
+      Trajectory.Segment rSeg = right.segments[currentSegment];
+      leftError = lSeg.pos - (leftDrive.position() - leftStartPos);
+      rightError = rSeg.pos - (rightDrive.position() - rightStartPos);
+
+      double lOutput = kp * leftError + kd * ((leftError - lastErrorLeft) / lSeg.dt - lSeg.vel) // Feed Back
+          + (kv * lSeg.vel + ka * lSeg.acc); // Feed Forward
+
+      double rOutput = kp * rightError + kd * ((rightError - lastErrorRight) / rSeg.dt - rSeg.vel) // Feed Back
+          + (kv * rSeg.vel + ka * rSeg.acc); // Feed Forward
+
+      leftDrive.runAtPower(lOutput);
+      rightDrive.runAtPower(rOutput);
+
+      lastErrorLeft = leftError;
+      lastErrorRight = rightError;
+      currentSegment++;
+    }
   }
 
   /**
@@ -275,6 +315,7 @@ public class Drivetrain implements Subsystem {
       this.rightDrive.runMotionProfile(trajectories.map(Pair::right).map(x -> new Double[]{x[0] / FEET_PER_ENCODER_ROTATION, x[1] / FEET_PER_ENCODER_ROTATION}));
     });
   }
+
 
   /**
    * Drive the robot using the arcade-style joystick streams that were passed to the Drivetrain.

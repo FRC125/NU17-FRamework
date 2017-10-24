@@ -4,13 +4,18 @@ import com.nutrons.framework.Subsystem;
 import com.nutrons.framework.commands.Command;
 import com.nutrons.framework.controllers.Events;
 import com.nutrons.framework.controllers.LoopSpeedController;
+import com.nutrons.framework.subsystems.WpiSmartDashboard;
 import io.reactivex.Flowable;
+import io.reactivex.functions.Consumer;
 
 public class Feeder implements Subsystem {
 
   // TODO: tune as needed
-  private static final double SPIN_POWER = .70; //.6
-  private static final double ROLLER_POWER = -1.0; //.85
+
+  private static double SPIN_POWER = 1.0; //.6   //***********************0.5 es gud**************************
+
+  private static final double ROLLER_POWER = -1.0; //.85   //***********************0.5 es gud**************************
+
   private final LoopSpeedController feederController;
   private final LoopSpeedController rollerController;
   private final Flowable<Boolean> feederButton;
@@ -71,6 +76,7 @@ public class Feeder implements Subsystem {
   public void registerSubscriptions() {
     feederButton.map(b -> b ? SPIN_POWER : 0.0).map(Events::power).subscribe(feederController);
     feederButton.map(b -> b ? ROLLER_POWER : 0.0).map(Events::power).subscribe(rollerController);
+
 
     this.agitatorButton.filter(x -> x).map(x -> agitate().terminable(agitatorButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));

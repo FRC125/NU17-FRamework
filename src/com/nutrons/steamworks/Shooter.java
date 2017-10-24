@@ -27,7 +27,7 @@ public class Shooter implements Subsystem {
       Events.combine(Events.mode(ControlMode.LOOP_SPEED), Events.setpoint(x));
   private static final double AUTO_SETPOINT = 2750;
   private static final double SETPOINT_TOLERANCE = 100;
-  private static double SETPOINT = 3080.0;
+  private double SETPOINT = 3050.0;
   private final LoopSpeedController shooterController;
   private final Flowable<Boolean> shooterButton;
   private final Flowable<Double> setpointHint;
@@ -39,35 +39,40 @@ public class Shooter implements Subsystem {
   private Flowable<Double> movingAverageDist;
 
 
-  public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton, Flowable<Double> distance, Flowable<Double> setpointHint) {
+  public Shooter(LoopSpeedController shooterController, Flowable<Boolean> shooterButton,
+      Flowable<Double> distance, Flowable<Double> setpointHint) {
     //this.prefs = edu.wpi.first.wpilibj.Preferences.getInstance();
     this.shooterController = shooterController;
     this.shooterButton = shooterButton;
     this.distance = distance;
     this.setpointHint = setpointHint;
-    this.variableSetpoint = this.distance.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
+    this.variableSetpoint = this.distance.filter(x -> x != 0.0)
+        .map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
     this.movingAverageDist = this.distance.filter(x -> x != 0.0).buffer(3, 1).map(x -> {
       double sum = 0.0;
-      for(Double a : x){
+      for (Double a : x) {
         sum += a;
       }
       return sum / 3;
     });
-    this.averagedSetpoint = this.movingAverageDist.filter(x -> x != 0.0).map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
+    this.averagedSetpoint = this.movingAverageDist.filter(x -> x != 0.0)
+        .map(x -> 0.1403 * x * x - 18.17 * x + 3315.7).share();
   }
+
 
   public Command auto() {
     Flowable<ControllerEvent> setpoint =
         //TODO: hard coded shooter setpoint
         //Flowable.just(AUTO_SETPOINT).map(aimEvent);
         this.averagedSetpoint.map(aimEvent);
-        //variableSetpoint.take(1).map(aimEvent);
+    //variableSetpoint.take(1).map(aimEvent);
     return Command.fromSubscription(() ->
         setpoint.subscribe(shooterController))
         .addFinalTerminator(() -> shooterController.accept(stopEvent));
   }
 
   public Command pulse() {
+
     Flowable<ControllerEvent> combined = setpointHint.withLatestFrom(Flowable.just(SETPOINT)
         .mergeWith(
             //toFlow(() -> this.prefs.getDouble("shotst", 3000))
@@ -86,19 +91,26 @@ public class Shooter implements Subsystem {
     this.shooterController.setPID(PVAL, IVAL, DVAL, FVAL);
     Consumer<Double> speed = new WpiSmartDashboard().getTextFieldDouble("shooter speed");
     toFlow(this.shooterController::speed).subscribe(speed);
-    this.variableSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
-    this.averagedSetpoint.subscribe(new WpiSmartDashboard().getTextFieldDouble("averaged setpoint"));
+    this.variableSetpoint
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("calculated setpoint"));
+    this.averagedSetpoint
+        .subscribe(new WpiSmartDashboard().getTextFieldDouble("averaged setpoint"));
     this.shooterButton.filter(x -> x).map(x -> pulse().terminable(shooterButton.filter(y -> !y)))
         .subscribe(x -> x.execute(true));
+    this.shooterButton.map(x -> x ? SETPOINT : 3050);
 
     /**toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint, (x, y) -> x + 100 > y && x - 100 < y)
      .onBackpressureDrop().map(x -> RobotBootstrapper.feeder.pulse().terminable(shooterButton.filter(y -> !y)))
      .subscribe(x -> x.execute(true));**/
 
-    Flowable<Boolean> okToShoot = toFlow(this.shooterController::speed).withLatestFrom(this.variableSetpoint,
-        (x, y) -> x + SETPOINT_TOLERANCE > y && x - SETPOINT_TOLERANCE < y && y > 500).onBackpressureDrop();
-    okToShoot.subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
+    Flowable<Boolean> okToShoot = toFlow(this.shooterController::speed)
+        .withLatestFrom(this.variableSetpoint,
+            (x, y) -> x + SETPOINT_TOLERANCE > y && x - SETPOINT_TOLERANCE < y && y > 500)
+        .onBackpressureDrop();
+    okToShoot
+        .subscribe(new WpiSmartDashboard().getTextFieldBoolean("shooter rpm within range GO!!"));
     Command feed = RobotBootstrapper.feeder.pulseSafe().terminable(shooterButton.filter(x -> !x));
-    okToShoot.withLatestFrom(shooterButton, (x,y) -> x && y).filter(x -> x).subscribe(x -> feed.execute(true));
+    okToShoot.withLatestFrom(shooterButton, (x, y) -> x && y).filter(x -> x)
+        .subscribe(x -> feed.execute(true));
   }
 }

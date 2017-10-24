@@ -103,6 +103,8 @@ public class RobotBootstrapper extends Robot {
     this.shooterMotor2 = new Talon(RobotMap.SHOOTER_MOTOR_2,
         CANTalon.FeedbackDevice.CtreMagEncoder_Relative);
     this.shooterMotor1 = new Talon(RobotMap.SHOOTER_MOTOR_1, (Talon) this.shooterMotor2);
+
+    //***********************4f es gud**************************
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor2);
     Events.setOutputVoltage(-12f, +12f).actOn((Talon) this.shooterMotor1);
 
@@ -202,8 +204,8 @@ public class RobotBootstrapper extends Robot {
     this.autoSelector.addDefault("intake", RobotBootstrapper.this
         .climbtake.pulse(true).delayFinish(500, TimeUnit.MILLISECONDS));
 
-    this.autoSelector.addObject("boiler; turn left", hopperDrive(6.25, -85, 5.30));
-    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.25, 85, 5.30));
+    this.autoSelector.addObject("boiler; turn left", hopperDrive(6.25, -85, 5.50));
+    this.autoSelector.addObject("boiler; turn right", hopperDrive(6.25, 85, 5.50));
     this.autoSelector.addObject("aim & shoot",
         Command.parallel(RobotBootstrapper.this.shooter.pulse().delayFinish(12, TimeUnit.SECONDS),
             RobotBootstrapper.this.turret.automagicMode().delayFinish(12, TimeUnit.SECONDS),
